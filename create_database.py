@@ -1,5 +1,4 @@
 import psycopg2
-import pygrametl
 import configparser
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
@@ -12,7 +11,6 @@ dw_string = "host='{}' dbname='postgres' user='{}' password='{}'".format(
     config["Database"]["dbpass"],
 )
 connection = psycopg2.connect(dw_string)
-dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
 
 connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
 
@@ -28,6 +26,7 @@ dw_string = "host='{}' dbname='{}' user='{}' password='{}'".format(
     config["Database"]["dbpass"],
 )
 connection = psycopg2.connect(dw_string)
+connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
 cur = connection.cursor()
 cur.execute("CREATE EXTENSION postgis;")
 cur.close()
