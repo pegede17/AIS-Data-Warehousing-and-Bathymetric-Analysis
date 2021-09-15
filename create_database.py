@@ -1,6 +1,7 @@
 import psycopg2
 import pygrametl
 import configparser
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 config = configparser.ConfigParser()
 config.read('application.properties')
@@ -12,6 +13,8 @@ dw_string = "host='{}' dbname='postgres' user='{}' password='{}'".format(
 )
 connection = psycopg2.connect(dw_string)
 dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
+
+connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
 
 cur = connection.cursor()
 cur.execute('CREATE DATABASE "{}";'.format(config["Database"]["dbname"]))
