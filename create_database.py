@@ -14,7 +14,7 @@ connection = psycopg2.connect(dw_string)
 dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
 
 cur = connection.cursor()
-cur.execute("CREATE DATABASE {};".format(config["Database"]["dbname"]))
+cur.execute('CREATE DATABASE "{}";'.format(config["Database"]["dbname"]))
 cur.close()
 connection.close()
 
