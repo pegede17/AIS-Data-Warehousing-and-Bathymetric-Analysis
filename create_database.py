@@ -6,7 +6,7 @@ connection = psycopg2.connect(dw_string)
 dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
 
 cur = connection.cursor()
-cur.execute('CREATE DATABASE p9-test')
+cur.execute('CREATE DATABASE p9-test;')
 cur.execute("CREATE EXTENSION postgis;")
 cur.close()
 connection.close()
