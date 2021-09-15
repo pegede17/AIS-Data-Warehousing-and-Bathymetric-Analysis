@@ -8,9 +8,11 @@ from (SELECT '0:00'::time + (sequence.second || ' seconds')::interval AS second
 	FROM generate_series(0,86399) AS sequence(second)
     GROUP BY sequence.second
 	 ) DQ
- 	order by 1
+ 	order by 1;
 
-
+INSERT INTO public.date(
+	date_id, millennium, century, decade, iso_year, year, month, day, day_of_week, iso_day_of_week, day_of_year, quarter, epoch, week)
+	VALUES (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
 INSERT INTO public.date(
 	date_id, millennium, century, decade, iso_year, year, month, day, day_of_week, iso_day_of_week, day_of_year, quarter, epoch, week)

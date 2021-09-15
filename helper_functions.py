@@ -153,6 +153,50 @@ def create_tables():
                 ON UPDATE CASCADE
         )
         """,
+        """
+        INSERT INTO public."time"(time_id, hour, minute, second)
+        select to_char(second, 'hh24miss')::integer AS time_id,
+        extract(hour from second) as Hour, 
+        extract(minute from second) as Minute,
+        extract(second from second) as Second
+        from (SELECT '0:00'::time + (sequence.second || ' seconds')::interval AS second
+        FROM generate_series(0,86399) AS sequence(second)
+        GROUP BY sequence.second
+        ) DQ
+        order by 1;
+""",
+"""
+INSERT INTO public.date(
+	date_id, millennium, century, decade, iso_year, year, month, day, day_of_week, iso_day_of_week, day_of_year, quarter, epoch, week)
+	VALUES (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+""",
+"""
+    INSERT INTO public.date(
+        date_id, millennium, century, decade, iso_year, year, month, day, day_of_week, iso_day_of_week, day_of_year, quarter, epoch, week)
+        SELECT
+    -- 	datum as Date,
+        to_char(datum, 'YYYYMMDD')::integer,
+        extract(millennium from datum) AS Millenium,
+        extract(century from datum) AS Century,
+        extract(decade from datum) AS Decade,
+        extract(isoyear from datum) AS iso_year,
+        extract(year from datum) AS Year,
+        extract(month from datum) AS Month,
+        extract(day from datum) AS Day,
+        extract(dow from datum) AS day_of_week,
+        extract(isodow from datum) AS iso_day_of_week,
+        extract(doy from datum) AS DayOfYear,
+        extract(quarter from datum) AS Quarter,
+        extract(epoch from datum) AS Epoch,
+        extract(week from datum) AS Week
+    FROM (
+        -- There are 3 leap years in this range, so calculate 365 * 10 + 3 records
+        SELECT '2021-01-01'::DATE + sequence.day AS datum
+        FROM generate_series(0,2000) AS sequence(day)
+        GROUP BY sequence.day
+        ) DQ
+    order by 1;
+        """
         )
 
     
