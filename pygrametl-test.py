@@ -4,12 +4,21 @@ from pygrametl.datasources import SQLSource, CSVSource
 from pygrametl.tables import BulkFactTable, Dimension, CachedDimension, FactTable, SlowlyChangingDimension
 from helper_functions import create_tables
 from datetime import datetime
+import configparser
 import time
 
+# Parse configuration file
+config = configparser.ConfigParser()
+config.read('application.properties')
 
 connection = None
 
-dw_string = "host='localhost' dbname='p9-test' user='postgres' password='admin'"
+dw_string = "host='{}' dbname='{}' user='{}' password='{}'".format(
+    config["Database"]["hostname"],
+    config["Database"]["dbname"],
+    config["Database"]["dbuser"],
+    config["Database"]["dbpass"],
+)
 connection = psycopg2.connect(dw_string)
 dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
 ais_file_handle = open('aisdk-2021-07/aisdk-2021-07-31.csv', 'r')
