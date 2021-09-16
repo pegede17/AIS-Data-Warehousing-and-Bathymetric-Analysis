@@ -21,23 +21,23 @@ dw_string = "host='{}' dbname='{}' user='{}' password='{}'".format(
 )
 connection = psycopg2.connect(dw_string)
 dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
-ais_file_handle = open('aisdk-2021-07/aisdk-2021-09-05.csv', 'r')
+ais_file_handle = open('home/ubuntu/data/aisdk-2021-09-05.csv', 'r')
 ais_source = CSVSource(f=ais_file_handle, delimiter=',')
 
 # psycopg initialization
 
 commands = create_tables()
 
-try:
-    cur = connection.cursor()
-    for command in commands:
-        cur.execute(command)
-        # close communication with the PostgreSQL database server
-    # cur.close()
-        # commit the changes
-    connection.commit()
-except (Exception, psycopg2.DatabaseError) as error:
-        print(error)
+# try:
+#     cur = connection.cursor()
+#     for command in commands:
+#         cur.execute(command)
+#         # close communication with the PostgreSQL database server
+#     # cur.close()
+#         # commit the changes
+#     connection.commit()
+# except (Exception, psycopg2.DatabaseError) as error:
+#         print(error)
 # finally:
 #     if connection is not None:
 #         connection.close()
