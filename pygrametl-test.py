@@ -84,7 +84,8 @@ ship_dimension = CachedDimension(
     name='ship',
     key='ship_id',
     attributes=['mmsi', 'imo', 'name', 'width', 'length', 'callsign', 'draught', 'size_a', 'size_b', 'size_c', 'size_d'],
-        prefill=True,
+    cachefullrows=True,
+    prefill=True,
     cacheoninsert=True,
 )
 
