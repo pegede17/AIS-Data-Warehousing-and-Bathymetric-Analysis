@@ -78,3 +78,8 @@ FROM (
 	GROUP BY sequence.day
      ) DQ
 order by 1;
+
+
+-- Find points in polygon
+SELECT fact_id, coordinate from fact_table 
+WHERE  ts_time_id > 100000 AND ts_time_id < 100500 AND ST_CONTAINS(ST_Polygon('LINESTRING(11 55, 11 54, 12 54, 12 55, 11 55)'::geometry, 4326),coordinate::geometry);
