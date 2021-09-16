@@ -70,6 +70,7 @@ date_dimension = CachedDimension(
     attributes=['millennium', 'century', 'decade', 'iso_year', 'year', 'month', 'day', 'day_of_week', 'iso_day_of_week', 'day_of_year', 'quarter', 'epoch', 'week'],
     prefill=True,
     cacheoninsert=True,
+    size=0
     )
 
 time_dimension = CachedDimension(
@@ -78,6 +79,7 @@ time_dimension = CachedDimension(
     attributes=['hour', 'minute', 'second'],
         prefill=True,
     cacheoninsert=True,
+    size=0
 )
 
 ship_dimension = CachedDimension(
@@ -87,6 +89,7 @@ ship_dimension = CachedDimension(
     cachefullrows=True,
     prefill=True,
     cacheoninsert=True,
+    size=0
 )
 
 ship_type_dimension = CachedDimension(
@@ -95,6 +98,7 @@ ship_type_dimension = CachedDimension(
     attributes=['ship_type'],
         prefill=True,
     cacheoninsert=True,
+    size=0
 )
 
 type_of_position_fixing_device_dimension = CachedDimension(
@@ -103,6 +107,7 @@ type_of_position_fixing_device_dimension = CachedDimension(
     attributes=['device_type'],
         prefill=True,
     cacheoninsert=True,
+    size=0
 )
 
 cargo_type_dimension = CachedDimension(
@@ -111,6 +116,7 @@ cargo_type_dimension = CachedDimension(
     attributes=['cargo_type'],
         prefill=True,
     cacheoninsert=True,
+    size=0
 )
 
 navigational_status_dimension = CachedDimension(
@@ -119,6 +125,7 @@ navigational_status_dimension = CachedDimension(
     attributes=['navigational_status'],
         prefill=True,
     cacheoninsert=True,
+    size=0
 )
 
 type_of_mobile_dimension = CachedDimension(
@@ -127,6 +134,7 @@ type_of_mobile_dimension = CachedDimension(
     attributes=['mobile_type'],
         prefill=True,
     cacheoninsert=True,
+    size=0
 )
 
 destination_dimension = CachedDimension(
@@ -135,6 +143,7 @@ destination_dimension = CachedDimension(
     attributes=['user_defined_destination', 'mapped_destination'],
         prefill=True,
     cacheoninsert=True,
+    size=0
 )
 
 data_source_type_dimension = CachedDimension(
@@ -143,6 +152,7 @@ data_source_type_dimension = CachedDimension(
     attributes=['data_source_type'],
         prefill=True,
     cacheoninsert=True,
+    size=0
 )
 
 fact_table = BulkFactTable(
