@@ -85,6 +85,9 @@ i = 0
 isCreatingRoute = False
 
 for row in ais_source:
+    if(i % 100000):
+        print("Reached checkpoint")
+        print(i)    
     sog = row["sog"]
     if(sog != 0 and sog != None):
         if(not isCreatingRoute):
