@@ -196,7 +196,34 @@ INSERT INTO public.date(
         GROUP BY sequence.day
         ) DQ
     order by 1;
+        """,
         """
+        CREATE TABLE IF NOT EXISTS trajectory (
+            trajectory_id SERIAL PRIMARY KEY,
+            ship_id INTEGER NOT NULL,
+            time_start_id INTEGER NOT NULL,
+            date_start_id INTEGER NOT NULL,
+            time_end_id INTEGER NOT NULL,
+            date_end_id INTEGER NOT NULL,
+            coordinates geometry(linestring) NOT NULL,
+
+            FOREIGN KEY (ship_id)
+                REFERENCES ship (ship_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (time_start_id)
+                REFERENCES time (time_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (date_start_id)
+                REFERENCES date (date_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (time_end_id )
+                REFERENCES time (time_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (date_end_id)
+                REFERENCES date (date_id)
+                ON UPDATE CASCADE
+        )
+        """,
         )
 
     
