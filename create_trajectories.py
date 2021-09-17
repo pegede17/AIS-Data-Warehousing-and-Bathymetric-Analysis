@@ -125,10 +125,10 @@ dw_conn_wrapper.close()
 #     print(row["mmsi"])
 
 # Close connections
-conn.close()
+connection.close()
 
 # Stop the tunnel
-tunnel.stop()
+# tunnel.stop()
 
 
 # SELECT fact_id, ts_date_id, ship_id, ts_time_id, ST_AsText(coordinate) as coordinate, sog from fact_table 
