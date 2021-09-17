@@ -1,3 +1,4 @@
+import datetime
 from helper_functions import create_tables
 import psycopg2
 from pygrametl.datasources import SQLSource
@@ -84,10 +85,10 @@ i = 0
 isCreatingRoute = False
 
 for row in ais_source:
-    i = 1 + 1
-    if(i % 100000 == 0):
-        print("Reached checkpoint")
-        print(i)    
+    i = i + 1
+    if (i % 100000 == 0):
+        print("Reached milestone: " + str(i)) 
+        print(datetime.now())
     sog = row["sog"]
     if(sog != 0 and sog != None):
         if(not isCreatingRoute):
