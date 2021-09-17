@@ -1,4 +1,4 @@
-import datetime
+import time
 from helper_functions import create_tables
 import psycopg2
 from pygrametl.datasources import SQLSource
