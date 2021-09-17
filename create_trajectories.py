@@ -69,8 +69,7 @@ dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
 
 query = """
 SELECT fact_id, ts_date_id, ship_id, ts_time_id, ST_AsText(coordinate) as coordinate, sog from fact_table 
-	ORDER BY ship_id, ts_time_id ASC
-    LIMIT 1000000;
+	ORDER BY ship_id, ts_time_id ASC;
 """;
 
 ais_source = SQLSource(connection=connection, query=query)
@@ -85,6 +84,7 @@ i = 0
 isCreatingRoute = False
 
 for row in ais_source:
+    i = 1 + 1
     if(i % 100000):
         print("Reached checkpoint")
         print(i)    
