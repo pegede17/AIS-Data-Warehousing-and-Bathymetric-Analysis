@@ -1,7 +1,9 @@
+from database_connection import connect, disconnect
 import psycopg2
 import pygrametl
 from pygrametl.datasources import SQLSource, CSVSource
 from pygrametl.tables import BulkFactTable, Dimension, CachedDimension, FactTable, SlowlyChangingDimension
+from sshtunnel import SSHTunnelForwarder
 from helper_functions import create_tables
 from datetime import datetime
 import configparser
@@ -11,17 +13,10 @@ import time
 config = configparser.ConfigParser()
 config.read('application.properties')
 
-connection = None
-
-dw_string = "host='{}' dbname='{}' user='{}' password='{}'".format(
-    config["Database"]["hostname"],
-    config["Database"]["dbname"],
-    config["Database"]["dbuser"],
-    config["Database"]["dbpass"],
-)
-connection = psycopg2.connect(dw_string)
+tunnel = None
+connection = connect(tunnel)
 dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
-ais_file_handle = open('home/ubuntu/data/aisdk-2021-09-05.csv', 'r')
+ais_file_handle = open('aisdk-2021-09-05.csv', 'r')
 ais_source = CSVSource(f=ais_file_handle, delimiter=',')
 
 # psycopg initialization
@@ -33,16 +28,18 @@ commands = create_tables()
 #     for command in commands:
 #         cur.execute(command)
 #         # close communication with the PostgreSQL database server
-#     # cur.close()
-#         # commit the changes
+#     cur.close()
+#     # commit the changes
 #     connection.commit()
 # except (Exception, psycopg2.DatabaseError) as error:
-#         print(error)
+#     print(error)
 # finally:
 #     if connection is not None:
 #         connection.close()
 
 # Function to extract proper id from a timestamp
+
+
 def convertTimestampToTimeId(timestamp):
     if(timestamp != ""):
         date = datetime.strptime(timestamp, "%d/%m/%Y %H:%M:%S")
@@ -50,32 +47,36 @@ def convertTimestampToTimeId(timestamp):
     else:
         return 0
 
+
 def convertTimestampToDateId(timestamp):
     if(timestamp != ""):
         date = datetime.strptime(timestamp, "%d/%m/%Y %H:%M:%S")
         return int(date.strftime("%Y%m%d"))
     else:
-        return 0    
+        return 0
+
 
 def pgbulkloader(name, attributes, fieldsep, rowsep, nullval, filehandle):
     global connection
     cursor = connection.cursor()
     cursor.copy_from(file=filehandle, table=name, sep=fieldsep, null=str(nullval),
-                         columns=attributes)
+                     columns=attributes)
+
 
 # Creation of dimension and fact table abstractions for use in the ETL flow
 date_dimension = CachedDimension(
     name='date',
-    key='date_id', #Lav den til en smartkey.
-    attributes=['millennium', 'century', 'decade', 'iso_year', 'year', 'month', 'day', 'day_of_week', 'iso_day_of_week', 'day_of_year', 'quarter', 'epoch', 'week'],
+    key='date_id',  # Lav den til en smartkey.
+    attributes=['millennium', 'century', 'decade', 'iso_year', 'year', 'month', 'day',
+                'day_of_week', 'iso_day_of_week', 'day_of_year', 'quarter', 'epoch', 'week'],
     prefill=True,
     cacheoninsert=True,
     size=0
-    )
+)
 
 time_dimension = CachedDimension(
     name='time',
-    key='time_id', #Lav den til en smartkey.
+    key='time_id',  # Lav den til en smartkey.
     attributes=['hour', 'minute', 'second'],
         prefill=True,
     cacheoninsert=True,
@@ -85,7 +86,8 @@ time_dimension = CachedDimension(
 ship_dimension = CachedDimension(
     name='ship',
     key='ship_id',
-    attributes=['mmsi', 'imo', 'name', 'width', 'length', 'callsign', 'draught', 'size_a', 'size_b', 'size_c', 'size_d'],
+    attributes=['mmsi', 'imo', 'name', 'width', 'length',
+                'callsign', 'draught', 'size_a', 'size_b', 'size_c', 'size_d'],
     cachefullrows=True,
     prefill=True,
     cacheoninsert=True,
@@ -155,45 +157,62 @@ data_source_type_dimension = CachedDimension(
     size=0
 )
 
+audit_dimension = Dimension(
+    name='audit',
+    key='audit_id',
+    attributes=['timestamp', 'processed_records', 'source_system',
+                'etl_version', 'table_name', 'comment', ]
+)
+
 fact_table = BulkFactTable(
     name='fact_table',
-    keyrefs=['eta_date_id', 'eta_time_id', 'ship_id', 'ts_date_id', 'ts_time_id','data_source_type_id', 'destination_id', 'type_of_mobile_id', 'navigational_status_id', 'cargo_type_id', 'type_of_position_fixing_device_id', 'ship_type_id'],
-    measures=['coordinate', 'rot', 'sog', 'cog', 'heading', ],
+    keyrefs=['eta_date_id', 'eta_time_id', 'ship_id', 'ts_date_id', 'ts_time_id', 'data_source_type_id', 'destination_id',
+             'type_of_mobile_id', 'navigational_status_id', 'cargo_type_id', 'type_of_position_fixing_device_id', 'ship_type_id', 'audit_id'],
+    measures=['coordinate', 'rot', 'sog', 'cog', 'heading'],
     bulkloader=pgbulkloader,
-    fieldsep=',', 
-    rowsep='\\r\n', 
-    nullsubst=str(None), 
-    tempdest=None, 
-    bulksize=500000, 
-    usefilename=False, 
-    strconverter=pygrametl.getdbfriendlystr, 
-    encoding=None, 
+    fieldsep=',',
+    rowsep='\\r\n',
+    nullsubst=str(None),
+    tempdest=None,
+    bulksize=500000,
+    usefilename=False,
+    strconverter=pygrametl.getdbfriendlystr,
+    encoding=None,
     dependson=()
 )
 
+audit_obj = {'timestamp': datetime.now(),
+             'processed_records': 0,
+             'source_system': config["Audit"]["source_system"],
+             'etl_version': config["Audit"]["elt_version"],
+             'table_name': fact_table.name,
+             'comment': config["Audit"]["comment"]}
+
+audit_id = audit_dimension.insert(audit_obj)
+
 print(datetime.now())
 
-i = 0
+i = 1
 for row in ais_source:
-    i = i + 1
     if (i % 100000 == 0):
-        print("Reached milestone: " + str(i)) 
+        print("Reached milestone: " + str(i))
         print(datetime.now())
+        break
 
     t0 = time.time()
-    
+
     imo = row["IMO"] if row["IMO"] != "Unknown" else None
     name = row["Name"] if row["Name"] != "" else None
     width = row["Width"] if row["Width"] != "" else None
     length = row["Length"] if row["Length"] != "" else None
-    callsign =  row["Callsign"] if row["Callsign"] != "" else None
+    callsign = row["Callsign"] if row["Callsign"] != "" else None
     draught = row["Draught"] if row["Draught"] != "" else None
 
     size_a = row["A"] if row["A"] != "" else None
     size_b = row["B"] if row["B"] != "" else None
     size_c = row["C"] if row["C"] != "" else None
     size_d = row["D"] if row["D"] != "" else None
-    ship_dimension_id = ship_dimension.ensure(        
+    ship_dimension_id = ship_dimension.ensure(
         {
             'mmsi': row["MMSI"],
             'imo':  imo,
@@ -234,7 +253,7 @@ for row in ais_source:
 
     destination_dimension_id = destination_dimension.ensure(
         {'user_defined_destination': row['Destination'],
-        'mapped_destination': row['Destination']}
+         'mapped_destination': row['Destination']}
     )
 
     data_source_type_dimension_id = data_source_type_dimension.ensure(
@@ -249,33 +268,38 @@ for row in ais_source:
     sog = row["SOG"] if row["SOG"] != "" else None
     cog = row["COG"] if row["COG"] != "" else None
     heading = row["Heading"] if row["Heading"] != "" else 0
-    coordinateString = ("POINT(" + row["Longitude"] + " " + row["Latitude"] + ")")
+    coordinateString = (
+        "POINT(" + row["Longitude"] + " " + row["Latitude"] + ")")
 
     fact_table.insert(
         {'eta_date_id': convertTimestampToDateId(row["ETA"]),
-        'eta_time_id': convertTimestampToTimeId(row["ETA"]),
-        'ship_id': ship_dimension_id,
-        'ts_date_id': convertTimestampToDateId(row["# Timestamp"]),
-        'ts_time_id': convertTimestampToTimeId(row["# Timestamp"]),
-        'data_source_type_id': data_source_type_dimension_id,
-        'destination_id': destination_dimension_id,
-        'type_of_mobile_id': type_of_mobile_dimension_id,
-        'navigational_status_id': navigational_status_dimension_id,
-        'cargo_type_id': cargo_type_dimension_id,
-        'type_of_position_fixing_device_id': type_of_position_fixing_device_dimension_id,
-        'ship_type_id': ship_type_dimension_id,
-        'coordinate': coordinateString,
-        'rot': rot,
-        'sog': sog,
-        'cog': sog,
-        'heading': heading}
+         'eta_time_id': convertTimestampToTimeId(row["ETA"]),
+         'ship_id': ship_dimension_id,
+         'ts_date_id': convertTimestampToDateId(row["# Timestamp"]),
+         'ts_time_id': convertTimestampToTimeId(row["# Timestamp"]),
+         'data_source_type_id': data_source_type_dimension_id,
+         'destination_id': destination_dimension_id,
+         'type_of_mobile_id': type_of_mobile_dimension_id,
+         'navigational_status_id': navigational_status_dimension_id,
+         'cargo_type_id': cargo_type_dimension_id,
+         'type_of_position_fixing_device_id': type_of_position_fixing_device_dimension_id,
+         'ship_type_id': ship_type_dimension_id,
+         'coordinate': coordinateString,
+         'rot': rot,
+         'sog': sog,
+         'cog': sog,
+         'heading': heading,
+         'audit_id': audit_id}
     )
 
     t3 = time.time()
+    i = i + 1
 
-    
+audit_obj['processed_records'] = i
+audit_obj['audit_id'] = audit_id
+audit_dimension.update(audit_obj)
 
-    # fact_table.insert({'cargo_type_id':cargoid})
+# fact_table.insert({'cargo_type_id':cargoid})
 
 # Python function needed to split the timestamp into its three parts
 # def split_timestamp(row):
