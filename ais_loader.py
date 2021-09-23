@@ -19,21 +19,28 @@ import configparser
 config = configparser.ConfigParser()
 config.read('application.properties')
 
+# Initialize variables
+connection = None
+dw_conn_wrapper = None
+
 # Initialize database
-if (config["Database"]["initialize"] == "True"):
 
-    if(config["Environment"]["development"] == "True"):
-        connection = connect_via_ssh()
-    else:
-        connection = connect_to_local()
 
-    # Create Database
-    create_database()
 
-    # Create Tables
-    commands = create_tables()
+try:
+    if (config["Database"]["initialize"] == "True"):
+
+        if(config["Environment"]["development"] == "True"):
+            connection = connect_via_ssh()
+        else:
+            connection = connect_to_local()
+
+        # Create Database
+        create_database()
+
+        # Create Tables
+        commands = create_tables()
     
-    try:
         cur = connection.cursor()
         for command in commands:
             cur.execute(command)
@@ -41,22 +48,18 @@ if (config["Database"]["initialize"] == "True"):
         cur.close()
         # commit the changes
         connection.commit()
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(error)
-    finally:
-        if connection is not None:
-            connection.close()
-
-if(config["Environment"]["development"] == "True"):
-    connection = connect_via_ssh()
-else:
-    connection = connect_to_local()
-
-dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
-
-# psycopg initialization
-
-
+except (Exception, psycopg2.DatabaseError) as error:
+    print(error)
+finally:
+    if connection is not None:
+        connection.close()
+        dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
+    else:
+        if(config["Environment"]["development"] == "True"):
+            connection = connect_via_ssh()
+        else:
+            connection = connect_to_local()
+        dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
 
 def convertTimestampToTimeId(timestamp):
     if(timestamp):
