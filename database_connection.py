@@ -1,10 +1,9 @@
 from sshtunnel import SSHTunnelForwarder
-import pygrametl
 import psycopg2
 import configparser
 
 
-def connect(tunnel):
+def connect():
 
     config = configparser.ConfigParser()
     config.read('application.properties')
@@ -14,7 +13,7 @@ def connect(tunnel):
     tunnel = SSHTunnelForwarder(
         ('10.92.0.187', 22),
         ssh_username='ubuntu',
-        ssh_private_key='C:\\Users\\Peter\\Desktop\\secret.pem',
+        ssh_private_key=config["Database"]["SSH_PATH"],
         remote_bind_address=('localhost', 5432),
         local_bind_address=('localhost', 6543),  # could be any available port
     )
@@ -32,5 +31,28 @@ def connect(tunnel):
     return connection
 
 
-def disconnect(tunnel):
-    tunnel.stop()
+def connect_to_postgres_db():
+    config = configparser.ConfigParser()
+    config.read('application.properties')
+
+    connection = None
+
+    tunnel = SSHTunnelForwarder(
+        ('10.92.0.187', 22),
+        ssh_username='ubuntu',
+        ssh_private_key=config["Database"]["SSH_PATH"],
+        remote_bind_address=('localhost', 5432),
+        local_bind_address=('localhost', 6543),  # could be any available port
+    )
+
+    # Start the tunnel
+    tunnel.start()
+
+    connection = psycopg2.connect(
+        database="postgres",
+        user=config["Database"]["dbuser"],
+        password=config["Database"]["dbpass"],
+        host=tunnel.local_bind_host,
+        port=tunnel.local_bind_port,
+    )
+    return connection

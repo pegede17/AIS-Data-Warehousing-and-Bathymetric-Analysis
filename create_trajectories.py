@@ -60,8 +60,7 @@ def end_trajectory():
 config = configparser.ConfigParser()
 config.read('application.properties')
 
-tunnel = None
-connection = connect(tunnel)
+connection = connect()
 dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
 
 query = """

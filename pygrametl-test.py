@@ -14,7 +14,7 @@ config = configparser.ConfigParser()
 config.read('application.properties')
 
 tunnel = None
-connection = connect(tunnel)
+connection = connect()
 dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
 ais_file_handle = open('aisdk-2021-09-05.csv', 'r')
 ais_source = CSVSource(f=ais_file_handle, delimiter=',')
