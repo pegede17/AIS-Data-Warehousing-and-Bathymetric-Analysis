@@ -1,11 +1,15 @@
-from database_connection import connect_to_postgres_db, connect
+from database_connection import connect_to_local, connect_via_ssh, connect_to_postgres_db_local, connect_to_postgres_db_via_ssh
 import configparser
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 config = configparser.ConfigParser()
 config.read('application.properties')
 
-connection = connect_to_postgres_db()
+
+if(config["Environment"]["development"] == "True"):
+    connection = connect_to_postgres_db_via_ssh()
+else:
+    connection = connect_to_postgres_db_local()
 
 connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
 
@@ -16,7 +20,10 @@ cur.execute("CREATE DATABASE {};".format(
 cur.close()
 connection.close()
 
-connection = connect()
+if(config["Environment"]["development"] == "True"):
+    connection = connect_via_ssh()
+else:
+    connection = connect_to_local()
 
 connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
 cur = connection.cursor()

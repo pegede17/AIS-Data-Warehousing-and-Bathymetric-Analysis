@@ -46,7 +46,7 @@ def connect_to_local():
     return connection
 
 
-def connect_to_postgres_db():
+def connect_to_postgres_db_via_ssh():
     config = configparser.ConfigParser()
     config.read('application.properties')
 
@@ -70,4 +70,18 @@ def connect_to_postgres_db():
         host=tunnel.local_bind_host,
         port=tunnel.local_bind_port,
     )
+    return connection
+
+
+def connect_to_postgres_db_local():
+    config = configparser.ConfigParser()
+    config.read('application.properties')
+
+    connection_string = "host='localhost' dbname='postgres' user='{}' password='{}'".format(
+        config["Database"]["dbuser"],
+        config["Database"]["dbpass"]
+    )
+
+    connection = psycopg2.connect(connection_string)
+
     return connection
