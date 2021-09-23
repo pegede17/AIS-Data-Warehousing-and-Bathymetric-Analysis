@@ -1,32 +1,37 @@
 import psycopg2
 import pygrametl
-from pygrametl.datasources import SQLSource, CSVSource
-from pygrametl.tables import BulkFactTable, Dimension, CachedDimension, FactTable, SlowlyChangingDimension
-from helper_functions import create_tables
+from pygrametl.datasources import SQLSource, CSVSource, ProcessSource, TransformingSource
+from pygrametl.tables import BulkFactTable, DecoupledFactTable, DimensionPartitioner, DecoupledDimension, Dimension, CachedDimension, FactTable, SlowlyChangingDimension
 from datetime import datetime
 import configparser
-import time
+from pygrametl.parallel import shareconnectionwrapper, getsharedsequencefactory
+from pygrametl import ConnectionWrapper
+from datetime import datetime
+import configparser
+# from helper_functions import create_tables
 
-# Parse configuration file
-config = configparser.ConfigParser()
-config.read('application.properties')
-
+BATCHSIZE = 500
 connection = None
+FILE_PATH = "/home/ubuntu/data/aisdk-2021-09-05.csv"
 
-dw_string = "host='{}' dbname='{}' user='{}' password='{}'".format(
-    config["Database"]["hostname"],
-    config["Database"]["dbname"],
-    config["Database"]["dbuser"],
-    config["Database"]["dbpass"],
-)
+fileObj = open(FILE_PATH, 'r')
+
+def pgbulkloader(name, attributes, fieldsep, rowsep, nullval, filename):
+    filehandle = open(filename, 'r')
+    global connection
+    cursor = connection.cursor()
+    cursor.copy_from(file=filehandle, table=name, sep=fieldsep, null=str(nullval),
+                     columns=attributes)
+
+dw_string = "host='localhost' dbname='p9-test-3' user='postgres' password='admin'"
+
 connection = psycopg2.connect(dw_string)
-dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
-ais_file_handle = open('home/ubuntu/data/aisdk-2021-09-05.csv', 'r')
-ais_source = CSVSource(f=ais_file_handle, delimiter=',')
+dw_conn_wrapper = ConnectionWrapper(connection=connection)
+scw = shareconnectionwrapper(dw_conn_wrapper, 15, (pgbulkloader,))
 
 # psycopg initialization
 
-commands = create_tables()
+# commands = create_tables()
 
 # try:
 #     cur = connection.cursor()
@@ -43,279 +48,226 @@ commands = create_tables()
 #         connection.close()
 
 # Function to extract proper id from a timestamp
+
+
 def convertTimestampToTimeId(timestamp):
-    if(timestamp != ""):
+    if(timestamp):
         date = datetime.strptime(timestamp, "%d/%m/%Y %H:%M:%S")
-        return int(date.strftime("%H%M%S"))
+        formatted = int(date.strftime("%H%M%S"))
+        return formatted
     else:
         return 0
 
+
 def convertTimestampToDateId(timestamp):
-    if(timestamp != ""):
+    if(timestamp):
         date = datetime.strptime(timestamp, "%d/%m/%Y %H:%M:%S")
         return int(date.strftime("%Y%m%d"))
     else:
-        return 0    
+        return 0
 
-def pgbulkloader(name, attributes, fieldsep, rowsep, nullval, filehandle):
-    global connection
-    cursor = connection.cursor()
-    cursor.copy_from(file=filehandle, table=name, sep=fieldsep, null=str(nullval),
-                         columns=attributes)
 
 # Creation of dimension and fact table abstractions for use in the ETL flow
 date_dimension = CachedDimension(
     name='date',
-    key='date_id', #Lav den til en smartkey.
-    attributes=['millennium', 'century', 'decade', 'iso_year', 'year', 'month', 'day', 'day_of_week', 'iso_day_of_week', 'day_of_year', 'quarter', 'epoch', 'week'],
+    key='date_id',  # Lav den til en smartkey.
+    attributes=['millennium', 'century', 'decade', 'iso_year', 'year', 'month', 'day',
+                'day_of_week', 'iso_day_of_week', 'day_of_year', 'quarter', 'epoch', 'week'],
     prefill=True,
     cacheoninsert=True,
-    size=0
-    )
+    targetconnection=scw.copy()
+)
 
 time_dimension = CachedDimension(
     name='time',
-    key='time_id', #Lav den til en smartkey.
+    key='time_id',  # Lav den til en smartkey.
     attributes=['hour', 'minute', 'second'],
-        prefill=True,
-    cacheoninsert=True,
-    size=0
-)
-
-ship_dimension = CachedDimension(
-    name='ship',
-    key='ship_id',
-    attributes=['mmsi', 'imo', 'name', 'width', 'length', 'callsign', 'draught', 'size_a', 'size_b', 'size_c', 'size_d'],
-    cachefullrows=True,
     prefill=True,
     cacheoninsert=True,
-    size=0
+    targetconnection=scw.copy()
 )
 
 ship_type_dimension = CachedDimension(
     name='ship_type',
     key="ship_type_id",
     attributes=['ship_type'],
-        prefill=True,
+    prefill=True,
     cacheoninsert=True,
-    size=0
+    targetconnection=scw.copy()
 )
 
 type_of_position_fixing_device_dimension = CachedDimension(
     name='type_of_position_fixing_device',
     key='type_of_position_fixing_device_id',
     attributes=['device_type'],
-        prefill=True,
+    prefill=True,
     cacheoninsert=True,
-    size=0
+    targetconnection=scw.copy()
 )
 
 cargo_type_dimension = CachedDimension(
     name='cargo_type',
     key='cargo_type_id',
     attributes=['cargo_type'],
-        prefill=True,
+    prefill=True,
     cacheoninsert=True,
-    size=0
+    targetconnection=scw.copy()
 )
 
 navigational_status_dimension = CachedDimension(
     name='navigational_status',
     key='navigational_status_id',
     attributes=['navigational_status'],
-        prefill=True,
+    prefill=True,
     cacheoninsert=True,
-    size=0
+    targetconnection=scw.copy()
 )
 
 type_of_mobile_dimension = CachedDimension(
     name='type_of_mobile',
     key='type_of_mobile_id',
     attributes=['mobile_type'],
-        prefill=True,
+    prefill=True,
     cacheoninsert=True,
-    size=0
+    targetconnection=scw.copy()
 )
+
 
 destination_dimension = CachedDimension(
     name='destination',
     key='destination_id',
     attributes=['user_defined_destination', 'mapped_destination'],
-        prefill=True,
+    prefill=True,
     cacheoninsert=True,
-    size=0
+    targetconnection=scw.copy()
 )
 
 data_source_type_dimension = CachedDimension(
     name='data_source_type',
     key='data_source_type_id',
     attributes=['data_source_type'],
-        prefill=True,
+    prefill=True,
     cacheoninsert=True,
-    size=0
+    targetconnection=scw.copy()
 )
 
-fact_table = BulkFactTable(
-    name='fact_table',
-    keyrefs=['eta_date_id', 'eta_time_id', 'ship_id', 'ts_date_id', 'ts_time_id','data_source_type_id', 'destination_id', 'type_of_mobile_id', 'navigational_status_id', 'cargo_type_id', 'type_of_position_fixing_device_id', 'ship_type_id'],
-    measures=['coordinate', 'rot', 'sog', 'cog', 'heading', ],
-    bulkloader=pgbulkloader,
-    fieldsep=',', 
-    rowsep='\\r\n', 
-    nullsubst=str(None), 
-    tempdest=None, 
-    bulksize=500000, 
-    usefilename=False, 
-    strconverter=pygrametl.getdbfriendlystr, 
-    encoding=None, 
-    dependson=()
+
+def getshipdiminstances():
+    global scw
+    idfactory = getsharedsequencefactory(0)
+    for i in range(2):
+        yield DecoupledDimension(
+            CachedDimension(
+                name='ship',
+                key='ship_id',
+                attributes=['MMSI', 'IMO', 'Name', 'Width', 'Length', 'Callsign',
+                            'Draught', 'size_a', 'size_b', 'size_c', 'size_d'],
+                size=0,
+                cachefullrows=True,
+                idfinder=idfactory(),
+                targetconnection=scw.copy(),
+            ),
+            batchsize=BATCHSIZE,
+            returnvalues=True,
+        )
+
+shipdim = DimensionPartitioner([sd for sd in getshipdiminstances()])
+
+fact_table = DecoupledFactTable(
+    BulkFactTable(
+        name='fact_table',
+        keyrefs=['eta_date_id', 'eta_time_id', 'ship_id', 'ts_date_id', 'ts_time_id', 'data_source_type_id', 'destination_id',
+                 'type_of_mobile_id', 'navigational_status_id', 'cargo_type_id', 'type_of_position_fixing_device_id', 'ship_type_id'],
+        measures=['coordinate', 'rot', 'sog', 'cog', 'heading', ],
+        fieldsep=',',
+        rowsep='\\r\n',
+        nullsubst=str(None),
+        bulkloader=scw.copy().pgbulkloader,
+        usefilename=True,
+    ),
+    batchsize=BATCHSIZE,
+    consumes=shipdim.parts,
 )
 
 print(datetime.now())
 
+def validateToNull(val): return None if (val == "" or val == "Unknown") else val
+def validateToZero(val): return 0 if (val is None or val == "" or val == "Unknown") else val
+
+def transformNulls(row):
+    for value in row:
+        val = row[value]
+        row[value] = validateToNull(val)
+
+ais_source = CSVSource(f=fileObj, delimiter=',')
+
+transformeddata = TransformingSource(ais_source, transformNulls)
+
+inputdata = ProcessSource(transformeddata, batchsize=BATCHSIZE, queuesize=10)
+
 i = 0
-for row in ais_source:
+for row in inputdata:
     i = i + 1
-    if (i % 100000 == 0):
-        print("Reached milestone: " + str(i)) 
-        print(datetime.now())
+    if (i % 10000 == 0):
+        print(str(datetime.now()) + " Reached milestone: " + str(i))
 
-    t0 = time.time()
-    
-    imo = row["IMO"] if row["IMO"] != "Unknown" else None
-    name = row["Name"] if row["Name"] != "" else None
-    width = row["Width"] if row["Width"] != "" else None
-    length = row["Length"] if row["Length"] != "" else None
-    callsign =  row["Callsign"] if row["Callsign"] != "" else None
-    draught = row["Draught"] if row["Draught"] != "" else None
+    fact = {}
 
-    size_a = row["A"] if row["A"] != "" else None
-    size_b = row["B"] if row["B"] != "" else None
-    size_c = row["C"] if row["C"] != "" else None
-    size_d = row["D"] if row["D"] != "" else None
-    ship_dimension_id = ship_dimension.ensure(        
-        {
-            'mmsi': row["MMSI"],
-            'imo':  imo,
-            'name': name,
-            'width': width,
-            'length': length,
-            'callsign': callsign,
-            'draught': draught,
-            'size_a': size_a,
-            'size_b': size_b,
-            'size_c': size_c,
-            'size_d': size_d
-        }
-    )
-    t1 = time.time()
+    fact["ship_id"] = shipdim.ensure(row, {
+        'size_a': 'A',
+        'size_b': 'B',
+        'size_c': 'C',
+        'size_d': 'D',
+    })
 
-    shiptype = row["Ship type"] if row["Ship type"] else [None]
+    fact["ship_type_id"] = ship_type_dimension.ensure(row, {
+        'ship_type': 'Ship type'
+    })
 
-    ship_type_dimension_id = ship_type_dimension.ensure(
-        {'ship_type': shiptype}
-    )
+    fact["type_of_position_fixing_device_id"] = type_of_position_fixing_device_dimension.ensure(row, {
+        'device_type': 'Type of position fixing device'
+    })
 
-    type_of_position_fixing_device_dimension_id = type_of_position_fixing_device_dimension.ensure(
-        {'device_type': row["Type of position fixing device"]}
-    )
+    fact["cargo_type_id"] = cargo_type_dimension.ensure(row, {
+        'cargo_type': 'Cargo type'
+    })
 
-    cargo_type_dimension_id = cargo_type_dimension.ensure(
-        {'cargo_type': row["Cargo type"]}
-    )
+    fact["navigational_status_id"] = navigational_status_dimension.ensure(row, {
+        'navigational_status': 'Navigational status'
+    })
 
-    navigational_status_dimension_id = navigational_status_dimension.ensure(
-        {'navigational_status': row["Navigational status"]}
-    )
+    fact["type_of_mobile_id"] = type_of_mobile_dimension.ensure(row, {
+        'mobile_type': 'Type of mobile'
+    })
 
-    type_of_mobile_dimension_id = type_of_mobile_dimension.ensure(
-        {'mobile_type': row["Type of mobile"]}
-    )
+    fact["destination_id"] = destination_dimension.ensure(row, {
+        'user_defined_destination': 'Destination',
+        'mapped_destination': 'Destination'
+    })
 
-    destination_dimension_id = destination_dimension.ensure(
-        {'user_defined_destination': row['Destination'],
-        'mapped_destination': row['Destination']}
-    )
+    fact["data_source_type_id"] = data_source_type_dimension.ensure(row, {
+        'data_source_type': 'Data source type'
+    })
 
-    data_source_type_dimension_id = data_source_type_dimension.ensure(
-        {'data_source_type': row["Data source type"]}
-    )
+    # Retrieve attributes that are obtained either by formula or as a measure from dataset
 
-    t2 = time.time()
-
-    rot = row["ROT"]
-    if(rot == ""):
-        rot = None
-    sog = row["SOG"] if row["SOG"] != "" else None
-    cog = row["COG"] if row["COG"] != "" else None
-    heading = row["Heading"] if row["Heading"] != "" else 0
-    coordinateString = ("POINT(" + row["Longitude"] + " " + row["Latitude"] + ")")
-
-    fact_table.insert(
-        {'eta_date_id': convertTimestampToDateId(row["ETA"]),
+    fact_extra = {
+        'eta_date_id': convertTimestampToDateId(row["ETA"]),
         'eta_time_id': convertTimestampToTimeId(row["ETA"]),
-        'ship_id': ship_dimension_id,
         'ts_date_id': convertTimestampToDateId(row["# Timestamp"]),
         'ts_time_id': convertTimestampToTimeId(row["# Timestamp"]),
-        'data_source_type_id': data_source_type_dimension_id,
-        'destination_id': destination_dimension_id,
-        'type_of_mobile_id': type_of_mobile_dimension_id,
-        'navigational_status_id': navigational_status_dimension_id,
-        'cargo_type_id': cargo_type_dimension_id,
-        'type_of_position_fixing_device_id': type_of_position_fixing_device_dimension_id,
-        'ship_type_id': ship_type_dimension_id,
-        'coordinate': coordinateString,
-        'rot': rot,
-        'sog': sog,
-        'cog': sog,
-        'heading': heading}
-    )
+        'coordinate': ("POINT(" + row["Longitude"] + " " + row["Latitude"] + ")"),
+        'rot': row["ROT"],
+        'sog': row["SOG"],
+        'cog': row["COG"],
+        'heading': validateToZero(row["Heading"])
+    }
 
-    t3 = time.time()
+    fact.update(fact_extra)  # Adds the extra attributes to the fact object
 
-    
+    fact_table.insert(fact)
 
-    # fact_table.insert({'cargo_type_id':cargoid})
 
-# Python function needed to split the timestamp into its three parts
-# def split_timestamp(row):
-#     """Splits a timestamp containing a date into its three parts"""
-
-#     # Splitting of the timestamp into parts
-#     timestamp = row['timestamp']
-#     row['year'] = timestamp.year
-#     row['month'] = timestamp.month
-#     row['day'] = timestamp.day
-
-# # The location dimension is loaded from the CSV file, and in order for
-# # the data to be present in the database, the shared connection is asked
-# # to commit
-# [location_dimension.insert(row) for row in ais_source]
-
-# # The file handle for the CSV file can then be closed
-
-# ais_file_handle.close()
-
-# # Each row in the sales database is iterated through and inserted
-# for row in sales_source:
-
-#     # Each row is passed to the timestamp split function for splitting
-#     split_timestamp(row)
-
-#     # Lookups are performed to find the key in each dimension for the fact
-#     # and if the data is not there, it is inserted from the sales row
-#     row['bookid'] = book_dimension.ensure(row)
-#     row['timeid'] = time_dimension.ensure(row)
-
-#     # The location dimension is pre-filled, so a missing row is an error
-#     row['locationid'] = location_dimension.lookup(row)
-#     if not row['locationid']:
-#         raise ValueError("city was not present in the location dimension")
-
-#     # The row can then be inserted into the fact table
-#     fact_table.insert(row)
-
-# # The data warehouse connection is then ordered to commit and close
 dw_conn_wrapper.commit()
 dw_conn_wrapper.close()
 
