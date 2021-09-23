@@ -1,7 +1,7 @@
 
 def create_tables():
     """ create tables in the PostgreSQL database"""
-    return (    
+    return (
         """
         CREATE TABLE IF NOT EXISTS data_source_type (
             data_source_type_id SERIAL NOT NULL,
@@ -93,7 +93,19 @@ def create_tables():
             minute SMALLINT NOT NULL,
             second SMALLINT NOT NULL
         )
-        """,    
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS audit (
+            audit_id SERIAL NOT NULL,
+            timestamp timestamp with time zone NOT NULL,
+            processed_records BIGINT NOT NULL,
+            source_system VARCHAR(100),
+            etl_version VARCHAR(10),
+            table_name VARCHAR(25),
+            comment VARCHAR(200),
+            PRIMARY KEY(audit_id)
+        )
+        """,
         """
         CREATE TABLE IF NOT EXISTS fact_table (
             fact_id SERIAL NOT NULL PRIMARY KEY,
@@ -114,7 +126,12 @@ def create_tables():
             sog DOUBLE PRECISION,
             cog DOUBLE PRECISION,
             heading SMALLINT,
+            audit_id INTEGER NOT NULL,
 
+            FOREIGN KEY (audit_id)
+                REFERENCES audit (audit_id)
+                ON UPDATE CASCADE
+                ON DELETE CASCADE,
             FOREIGN KEY (eta_date_id)
                 REFERENCES date (date_id)
                 ON UPDATE CASCADE,
@@ -165,12 +182,12 @@ def create_tables():
         ) DQ
         order by 1;
 """,
-"""
+        """
 INSERT INTO public.date(
 	date_id, millennium, century, decade, iso_year, year, month, day, day_of_week, iso_day_of_week, day_of_year, quarter, epoch, week)
 	VALUES (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 """,
-"""
+        """
     INSERT INTO public.date(
         date_id, millennium, century, decade, iso_year, year, month, day, day_of_week, iso_day_of_week, day_of_year, quarter, epoch, week)
         SELECT
@@ -196,7 +213,37 @@ INSERT INTO public.date(
         GROUP BY sequence.day
         ) DQ
     order by 1;
+        """,
         """
-        )
+        CREATE TABLE IF NOT EXISTS trajectory (
+            trajectory_id SERIAL PRIMARY KEY,
+            ship_id INTEGER NOT NULL,
+            time_start_id INTEGER NOT NULL,
+            date_start_id INTEGER NOT NULL,
+            time_end_id INTEGER NOT NULL,
+            date_end_id INTEGER NOT NULL,
+            coordinates geometry(linestring) NOT NULL,
+            audit_id INTEGER NOT NULL,
 
-    
+            FOREIGN KEY (audit_id)
+                REFERENCES audit (audit_id)
+                ON UPDATE CASCADE
+                ON DELETE CASCADE,
+            FOREIGN KEY (ship_id)
+                REFERENCES ship (ship_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (time_start_id)
+                REFERENCES time (time_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (date_start_id)
+                REFERENCES date (date_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (time_end_id )
+                REFERENCES time (time_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (date_end_id)
+                REFERENCES date (date_id)
+                ON UPDATE CASCADE
+        )
+        """,
+    )
