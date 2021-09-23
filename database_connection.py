@@ -3,7 +3,7 @@ import psycopg2
 import configparser
 
 
-def connect():
+def connect_via_ssh():
 
     config = configparser.ConfigParser()
     config.read('application.properties')
@@ -13,7 +13,7 @@ def connect():
     tunnel = SSHTunnelForwarder(
         ('10.92.0.187', 22),
         ssh_username='ubuntu',
-        ssh_private_key=config["Database"]["SSH_PATH"],
+        ssh_private_key=config["Envirionment"]["SSH_PATH"],
         remote_bind_address=('localhost', 5432),
         local_bind_address=('localhost', 6543),  # could be any available port
     )
@@ -31,6 +31,21 @@ def connect():
     return connection
 
 
+def connect_to_local():
+    config = configparser.ConfigParser()
+    config.read('application.properties')
+
+    connection_string = "host='localhost' dbname='{}' user='{}' password='{}'".format(
+        config["Database"]["dbname"],
+        config["Database"]["dbuser"],
+        config["Database"]["dbpass"]
+    )
+
+    connection = psycopg2.connect(connection_string)
+
+    return connection
+
+
 def connect_to_postgres_db():
     config = configparser.ConfigParser()
     config.read('application.properties')
@@ -40,7 +55,7 @@ def connect_to_postgres_db():
     tunnel = SSHTunnelForwarder(
         ('10.92.0.187', 22),
         ssh_username='ubuntu',
-        ssh_private_key=config["Database"]["SSH_PATH"],
+        ssh_private_key=config["Environment"]["SSH_PATH"],
         remote_bind_address=('localhost', 5432),
         local_bind_address=('localhost', 6543),  # could be any available port
     )
