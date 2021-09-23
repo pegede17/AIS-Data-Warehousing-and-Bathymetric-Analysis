@@ -1,11 +1,9 @@
-from datetime import date, datetime
+from datetime import datetime
 from helper_functions import create_tables
-import psycopg2
 from pygrametl.datasources import SQLSource
 from pygrametl.tables import FactTable
 from pygrametl.datasources import SQLSource, CSVSource
-from pygrametl.tables import BulkFactTable, Dimension, CachedDimension, FactTable, SlowlyChangingDimension
-from sshtunnel import SSHTunnelForwarder
+from pygrametl.tables import Dimension, FactTable
 import pygrametl
 import configparser
 from database_connection import connect
