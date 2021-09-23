@@ -7,7 +7,6 @@ def create_database():
     config = configparser.ConfigParser()
     config.read('application.properties')
 
-
     if(config["Environment"]["development"] == "True"):
         connection = connect_to_postgres_db_via_ssh()
     else:

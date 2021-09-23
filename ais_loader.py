@@ -19,17 +19,13 @@ import configparser
 config = configparser.ConfigParser()
 config.read('application.properties')
 
-if(config["Environment"]["development"] == "True"):
-    connection = connect_via_ssh()
-else:
-    connection = connect_to_local()
-
-dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
-
-# psycopg initialization
-
-
+# Initialize database
 if (config["Database"]["initialize"] == "True"):
+
+    if(config["Environment"]["development"] == "True"):
+        connection = connect_via_ssh()
+    else:
+        connection = connect_to_local()
 
     # Create Database
     create_database()
@@ -50,6 +46,16 @@ if (config["Database"]["initialize"] == "True"):
     finally:
         if connection is not None:
             connection.close()
+
+if(config["Environment"]["development"] == "True"):
+    connection = connect_via_ssh()
+else:
+    connection = connect_to_local()
+
+dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
+
+# psycopg initialization
+
 
 
 def convertTimestampToTimeId(timestamp):
