@@ -46,7 +46,6 @@ except (Exception, psycopg2.DatabaseError) as error:
     print(error)
 finally:
     if connection is not None:
-        connection.close()
         dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
     else:
         if(config["Environment"]["development"] == "True"):
