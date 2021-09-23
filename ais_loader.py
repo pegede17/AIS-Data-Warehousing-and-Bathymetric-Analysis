@@ -217,7 +217,7 @@ def transformNulls(row):
 
 
 ais_file_handle = open(
-    config["Environment"], 'r')
+    config["Environment"]["FILE_PATH"], 'r')
 ais_source = CSVSource(f=ais_file_handle, delimiter=',')
 
 transformeddata = TransformingSource(ais_source, transformNulls)
