@@ -1,3 +1,4 @@
+from create_database import create_database
 from database_connection import connect_to_local, connect_via_ssh
 import psycopg2
 import pygrametl
@@ -18,7 +19,6 @@ import configparser
 config = configparser.ConfigParser()
 config.read('application.properties')
 
-
 if(config["Environment"]["development"] == "True"):
     connection = connect_via_ssh()
 else:
@@ -26,26 +26,30 @@ else:
 
 dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
 
-
 # psycopg initialization
 
-# commands = create_tables()
 
-# try:
-#     cur = connection.cursor()
-#     for command in commands:
-#         cur.execute(command)
-#         # close communication with the PostgreSQL database server
-#     cur.close()
-#     # commit the changes
-#     connection.commit()
-# except (Exception, psycopg2.DatabaseError) as error:
-#     print(error)
-# finally:
-#     if connection is not None:
-#         connection.close()
+if (config["Database"]["initialize"] == "True"):
 
-# Function to extract proper id from a timestamp
+    # Create Database
+    create_database()
+
+    # Create Tables
+    commands = create_tables()
+    
+    try:
+        cur = connection.cursor()
+        for command in commands:
+            cur.execute(command)
+            # close communication with the PostgreSQL database server
+        cur.close()
+        # commit the changes
+        connection.commit()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if connection is not None:
+            connection.close()
 
 
 def convertTimestampToTimeId(timestamp):
