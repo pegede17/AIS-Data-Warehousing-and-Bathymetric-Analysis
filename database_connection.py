@@ -13,7 +13,7 @@ def connect_via_ssh():
     tunnel = SSHTunnelForwarder(
         ('10.92.0.187', 22),
         ssh_username='ubuntu',
-        ssh_private_key=config["Envirionment"]["SSH_PATH"],
+        ssh_private_key=config["Environment"]["SSH_PATH"],
         remote_bind_address=('localhost', 5432),
         local_bind_address=('localhost', 6543),  # could be any available port
     )

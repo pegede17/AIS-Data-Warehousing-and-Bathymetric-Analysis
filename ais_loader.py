@@ -24,9 +24,6 @@ connection = None
 dw_conn_wrapper = None
 
 # Initialize database
-
-
-
 try:
     if (config["Database"]["initialize"] == "True"):
         # Create Database
