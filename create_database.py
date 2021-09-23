@@ -31,3 +31,5 @@ def create_database():
     cur.execute("CREATE EXTENSION postgis;")
     cur.close()
     connection.close()
+
+    return connection

@@ -29,14 +29,8 @@ dw_conn_wrapper = None
 
 try:
     if (config["Database"]["initialize"] == "True"):
-
-        if(config["Environment"]["development"] == "True"):
-            connection = connect_via_ssh()
-        else:
-            connection = connect_to_local()
-
         # Create Database
-        create_database()
+        connection = create_database()
 
         # Create Tables
         commands = create_tables()
