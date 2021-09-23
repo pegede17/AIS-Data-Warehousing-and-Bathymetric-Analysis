@@ -17,8 +17,7 @@ import configparser
 
 connection = connect()
 dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
-ais_file_handle = open('aisdk-2021-09-05.csv', 'r')
-ais_source = CSVSource(f=ais_file_handle, delimiter=',')
+
 
 config = configparser.ConfigParser()
 config.read('application.properties')
@@ -91,8 +90,8 @@ time_dimension = CachedDimension(
 ship_dimension = CachedDimension(
     name='ship',
     key='ship_id',
-    attributes=['mmsi', 'imo', 'name', 'width', 'length',
-                'callsign', 'draught', 'size_a', 'size_b', 'size_c', 'size_d'],
+    attributes=['MMSI', 'IMO', 'Name', 'Width', 'Length', 'Callsign',
+                'Draught', 'size_a', 'size_b', 'size_c', 'size_d'],
     cachefullrows=True,
     prefill=True,
     cacheoninsert=True
@@ -208,20 +207,23 @@ def transformNulls(row):
         row[value] = validateToNull(val)
 
 
+ais_file_handle = open(
+    'C:/Users/Peter/Documents/GitHub/P9/aisdk-2021-09-05.csv', 'r')
 ais_source = CSVSource(f=ais_file_handle, delimiter=',')
 
 transformeddata = TransformingSource(ais_source, transformNulls)
 
-inputdata = ProcessSource(transformeddata)
+# inputdata = ProcessSource(transformeddata, batchsize=500, queuesize=10)
 
 i = 0
-for row in inputdata:
+for row in transformeddata:
     i = i + 1
     if (i % 10000 == 0):
         print(str(datetime.now()) + " Reached milestone: " + str(i))
+        break
 
     fact = {}
-
+    fact["audit_id"] = audit_id
     fact["ship_id"] = ship_dimension.ensure(row, {
         'size_a': 'A',
         'size_b': 'B',

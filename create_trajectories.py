@@ -8,7 +8,7 @@ from pygrametl.tables import BulkFactTable, Dimension, CachedDimension, FactTabl
 from sshtunnel import SSHTunnelForwarder
 import pygrametl
 import configparser
-from database_connection import connect, disconnect
+from database_connection import connect
 
 # For interactive work (on ipython) it's easier to work with explicit objects
 # instead of contexts.
