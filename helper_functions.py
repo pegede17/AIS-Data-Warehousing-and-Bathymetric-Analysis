@@ -3,20 +3,20 @@ def create_tables():
     """ create tables in the PostgreSQL database"""
     return (
         """
-        CREATE TABLE IF NOT EXISTS data_source_type (
+        CREATE TABLE IF NOT EXISTS dim_data_source_type (
             data_source_type_id SERIAL NOT NULL,
             data_source_type VARCHAR(10),
             PRIMARY KEY (data_source_type_id)
         )
         """,
         """
-        CREATE TABLE IF NOT EXISTS ship_type (
+        CREATE TABLE IF NOT EXISTS dim_ship_type (
             ship_type_id SERIAL NOT NULL PRIMARY KEY,
             ship_type VARCHAR(25)
         )
         """,
         """ 
-        CREATE TABLE IF NOT EXISTS destination(
+        CREATE TABLE IF NOT EXISTS dim_destination(
             destination_id SERIAL NOT NULL,
             user_defined_destination VARCHAR(100),
             mapped_destination VARCHAR(100),
@@ -24,35 +24,35 @@ def create_tables():
         )
         """,
         """
-        CREATE TABLE IF NOT EXISTS type_of_mobile (
+        CREATE TABLE IF NOT EXISTS dim_type_of_mobile (
             type_of_mobile_id SERIAL NOT NULL,
             mobile_type VARCHAR(256),
             PRIMARY KEY (type_of_mobile_id)
         )
         """,
         """
-        CREATE TABLE IF NOT EXISTS cargo_type (
+        CREATE TABLE IF NOT EXISTS dim_cargo_type (
             cargo_type_id SERIAL NOT NULL,
             cargo_type VARCHAR(256),
             PRIMARY KEY (cargo_type_id)
         )
         """,
         """
-        CREATE TABLE IF NOT EXISTS navigational_status (
+        CREATE TABLE IF NOT EXISTS dim_navigational_status (
             navigational_status_id SERIAL NOT NULL,
             navigational_status VARCHAR(256),
             PRIMARY KEY (navigational_status_id)
         )
         """,
         """
-        CREATE TABLE IF NOT EXISTS type_of_position_fixing_device (
+        CREATE TABLE IF NOT EXISTS dim_type_of_position_fixing_device (
             type_of_position_fixing_device_id SERIAL NOT NULL,
             device_type VARCHAR(256),
             PRIMARY KEY (type_of_position_fixing_device_id)
         )
         """,
         """
-        CREATE TABLE IF NOT EXISTS ship (
+        CREATE TABLE IF NOT EXISTS dim_ship (
             ship_id INTEGER NOT NULL,
             mmsi BIGINT NOT NULL,
             imo BIGINT,
@@ -69,7 +69,7 @@ def create_tables():
         )
         """,
         """
-        CREATE TABLE IF NOT EXISTS date (
+        CREATE TABLE IF NOT EXISTS dim_date (
             date_id SERIAL PRIMARY KEY,
             millennium DOUBLE PRECISION NOT NULL,
             century DOUBLE PRECISION NOT NULL,
@@ -87,7 +87,7 @@ def create_tables():
         )
         """,
         """
-        CREATE TABLE IF NOT EXISTS time (
+        CREATE TABLE IF NOT EXISTS dim_time (
             time_id SERIAL PRIMARY KEY,
             hour SMALLINT NOT NULL,
             minute SMALLINT NOT NULL,
@@ -95,7 +95,7 @@ def create_tables():
         )
         """,
         """
-        CREATE TABLE IF NOT EXISTS audit (
+        CREATE TABLE IF NOT EXISTS dim_audit (
             audit_id SERIAL NOT NULL,
             timestamp timestamp with time zone NOT NULL,
             processed_records BIGINT NOT NULL,
@@ -107,7 +107,7 @@ def create_tables():
         )
         """,
         """
-        CREATE TABLE IF NOT EXISTS fact_table (
+        CREATE TABLE IF NOT EXISTS fact_ais (
             fact_id SERIAL NOT NULL PRIMARY KEY,
             eta_date_id INTEGER NOT NULL DEFAULT 0,
             eta_time_id INTEGER NOT NULL DEFAULT 0,
@@ -215,7 +215,7 @@ INSERT INTO public.date(
     order by 1;
         """,
         """
-        CREATE TABLE IF NOT EXISTS trajectory (
+        CREATE TABLE IF NOT EXISTS fact_trajectory (
             trajectory_id SERIAL PRIMARY KEY,
             ship_id INTEGER NOT NULL,
             time_start_id INTEGER NOT NULL,
