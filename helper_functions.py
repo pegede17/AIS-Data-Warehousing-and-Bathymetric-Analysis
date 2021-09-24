@@ -171,7 +171,7 @@ def create_tables():
         )
         """,
         """
-        INSERT INTO public."time"(time_id, hour, minute, second)
+        INSERT INTO public.dim_time(time_id, hour, minute, second)
         select to_char(second, 'hh24miss')::integer AS time_id,
         extract(hour from second) as Hour, 
         extract(minute from second) as Minute,
@@ -183,12 +183,12 @@ def create_tables():
         order by 1;
 """,
         """
-INSERT INTO public.date(
+INSERT INTO public.dim_date(
 	date_id, millennium, century, decade, iso_year, year, month, day, day_of_week, iso_day_of_week, day_of_year, quarter, epoch, week)
 	VALUES (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 """,
         """
-    INSERT INTO public.date(
+    INSERT INTO public.dim_date(
         date_id, millennium, century, decade, iso_year, year, month, day, day_of_week, iso_day_of_week, day_of_year, quarter, epoch, week)
         SELECT
     -- 	datum as Date,
