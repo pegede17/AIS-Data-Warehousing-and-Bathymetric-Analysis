@@ -62,7 +62,7 @@ def create_trajectories():
     dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
 
     query = """
-    SELECT fact_id, ts_date_id, ship_id, ts_time_id, ST_AsText(coordinate) as coordinate, sog from fact_table 
+    SELECT fact_id, ts_date_id, ship_id, ts_time_id, ST_AsText(coordinate) as coordinate, sog from fact_ais 
         ORDER BY ship_id, ts_time_id ASC;
     """
 
