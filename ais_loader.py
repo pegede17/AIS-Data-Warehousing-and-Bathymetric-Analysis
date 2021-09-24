@@ -79,7 +79,7 @@ def load_data_into_db():
 
     # Creation of dimension and fact table abstractions for use in the ETL flow
     date_dimension = CachedDimension(
-        name='date',
+        name='dim_date',
         key='date_id',  # Lav den til en smartkey.
         attributes=['millennium', 'century', 'decade', 'iso_year', 'year', 'month', 'day',
                     'day_of_week', 'iso_day_of_week', 'day_of_year', 'quarter', 'epoch', 'week'],
@@ -89,7 +89,7 @@ def load_data_into_db():
     )
 
     time_dimension = CachedDimension(
-        name='time',
+        name='dim_time',
         key='time_id',  # Lav den til en smartkey.
         attributes=['hour', 'minute', 'second'],
             prefill=True,
@@ -98,7 +98,7 @@ def load_data_into_db():
     )
 
     ship_dimension = CachedDimension(
-        name='ship',
+        name='dim_ship',
         key='ship_id',
         attributes=['MMSI', 'IMO', 'Name', 'Width', 'Length', 'Callsign',
                     'Draught', 'size_a', 'size_b', 'size_c', 'size_d'],
@@ -108,7 +108,7 @@ def load_data_into_db():
     )
 
     ship_type_dimension = CachedDimension(
-        name='ship_type',
+        name='dim_ship_type',
         key="ship_type_id",
         attributes=['ship_type'],
         prefill=True,
@@ -117,7 +117,7 @@ def load_data_into_db():
     )
 
     type_of_position_fixing_device_dimension = CachedDimension(
-        name='type_of_position_fixing_device',
+        name='dim_type_of_position_fixing_device',
         key='type_of_position_fixing_device_id',
         attributes=['device_type'],
         prefill=True,
@@ -126,7 +126,7 @@ def load_data_into_db():
     )
 
     cargo_type_dimension = CachedDimension(
-        name='cargo_type',
+        name='dim_cargo_type',
         key='cargo_type_id',
         attributes=['cargo_type'],
         prefill=True,
@@ -135,7 +135,7 @@ def load_data_into_db():
     )
 
     navigational_status_dimension = CachedDimension(
-        name='navigational_status',
+        name='dim_navigational_status',
         key='navigational_status_id',
         attributes=['navigational_status'],
         prefill=True,
@@ -144,7 +144,7 @@ def load_data_into_db():
     )
 
     type_of_mobile_dimension = CachedDimension(
-        name='type_of_mobile',
+        name='dim_type_of_mobile',
         key='type_of_mobile_id',
         attributes=['mobile_type'],
         prefill=True,
@@ -153,7 +153,7 @@ def load_data_into_db():
     )
 
     destination_dimension = CachedDimension(
-        name='destination',
+        name='dim_destination',
         key='destination_id',
         attributes=['user_defined_destination', 'mapped_destination'],
         prefill=True,
@@ -162,7 +162,7 @@ def load_data_into_db():
     )
 
     data_source_type_dimension = CachedDimension(
-        name='data_source_type',
+        name='dim_data_source_type',
         key='data_source_type_id',
         attributes=['data_source_type'],
         prefill=True,
@@ -171,14 +171,14 @@ def load_data_into_db():
     )
 
     audit_dimension = Dimension(
-        name='audit',
+        name='dim_audit',
         key='audit_id',
         attributes=['timestamp', 'processed_records', 'source_system',
                     'etl_version', 'table_name', 'comment', ]
     )
 
     fact_table = BulkFactTable(
-        name='fact_table',
+        name='fact_ais',
         keyrefs=['eta_date_id', 'eta_time_id', 'ship_id', 'ts_date_id', 'ts_time_id', 'data_source_type_id', 'destination_id',
                  'type_of_mobile_id', 'navigational_status_id', 'cargo_type_id', 'type_of_position_fixing_device_id', 'ship_type_id', 'audit_id'],
         measures=['coordinate', 'rot', 'sog', 'cog', 'heading'],

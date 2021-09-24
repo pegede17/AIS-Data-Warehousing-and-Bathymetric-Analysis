@@ -69,14 +69,14 @@ def create_trajectories():
     ais_source = SQLSource(connection=connection, query=query)
 
     trajectory_fact_table = FactTable(
-        name='trajectory',
+        name='fact_trajectory',
         keyrefs=['ship_id', 'time_start_id', 'date_start_id',
                  'time_end_id', 'date_end_id', 'audit_id'],
         measures=['coordinates']
     )
 
     audit_dimension = Dimension(
-        name='audit',
+        name='dim_audit',
         key='audit_id',
         attributes=['timestamp', 'processed_records', 'source_system',
                     'etl_version', 'table_name', 'comment', ]
