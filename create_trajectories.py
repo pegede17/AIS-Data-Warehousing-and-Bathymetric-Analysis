@@ -6,15 +6,14 @@ from pygrametl.datasources import SQLSource, CSVSource
 from pygrametl.tables import Dimension, FactTable
 import pygrametl
 import configparser
-from database_connection import connect
+from database_connection import connect_to_local, connect_via_ssh
 
 # For interactive work (on ipython) it's easier to work with explicit objects
 # instead of contexts.
 
+
 def create_trajectories():
     trajectories = []
-
-    coordinates = ""
 
     temp_trajectory = {
         'ship_id': 0,
@@ -29,7 +28,6 @@ def create_trajectories():
 
     current_ship_id = 0
 
-
     def add_to_trajectory(row):
         global trajectory_length
         trajectory_length = trajectory_length + 1
@@ -38,15 +36,14 @@ def create_trajectories():
         temp_trajectory['coordinates'] = temp_trajectory['coordinates'] + \
             "," + ((row["coordinate"][6:-1]))
 
-
     def create_new_trajectory(row):
         global trajectory_length
         trajectory_length = 0
         temp_trajectory["ship_id"] = row["ship_id"]
         temp_trajectory["time_start_id"] = row["ts_time_id"]
         temp_trajectory["date_start_id"] = row["ts_date_id"]
-        temp_trajectory["coordinates"] = "LineString(" + row["coordinate"][6:-1]
-
+        temp_trajectory["coordinates"] = "LineString(" + \
+            row["coordinate"][6:-1]
 
     def end_trajectory():
         global trajectory_length
@@ -55,11 +52,13 @@ def create_trajectories():
             trajectories.append(temp_trajectory.copy())
         temp_trajectory.clear()
 
-
     config = configparser.ConfigParser()
     config.read('application.properties')
 
-    connection = connect()
+    if(config["Environment"]["development"] == "True"):
+        connection = connect_via_ssh()
+    else:
+        connection = connect_to_local()
     dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
 
     query = """
@@ -72,7 +71,7 @@ def create_trajectories():
     trajectory_fact_table = FactTable(
         name='trajectory',
         keyrefs=['ship_id', 'time_start_id', 'date_start_id',
-                'time_end_id', 'date_end_id', 'audit_id'],
+                 'time_end_id', 'date_end_id', 'audit_id'],
         measures=['coordinates']
     )
 
@@ -84,11 +83,11 @@ def create_trajectories():
     )
 
     audit_obj = {'timestamp': datetime.now(),
-                'source_system': config["Audit"]["source_system"],
-                'etl_version': config["Audit"]["elt_version"],
-                'comment': config["Audit"]["comment"],
-                'table_name': trajectory_fact_table.name,
-                'processed_records': 0}
+                 'source_system': config["Audit"]["source_system"],
+                 'etl_version': config["Audit"]["elt_version"],
+                 'comment': config["Audit"]["comment"],
+                 'table_name': trajectory_fact_table.name,
+                 'processed_records': 0}
 
     audit_id = audit_dimension.insert(audit_obj)
 
@@ -127,7 +126,6 @@ def create_trajectories():
 
     dw_conn_wrapper.commit()
     dw_conn_wrapper.close()
-
 
     # Close connections
     connection.close()
