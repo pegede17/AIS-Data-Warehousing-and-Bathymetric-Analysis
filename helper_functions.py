@@ -226,7 +226,7 @@ INSERT INTO public.dim_date(
             audit_id INTEGER NOT NULL,
 
             FOREIGN KEY (audit_id)
-                REFERENCES dim_udit (audit_id)
+                REFERENCES dim_audit (audit_id)
                 ON UPDATE CASCADE
                 ON DELETE CASCADE,
             FOREIGN KEY (ship_id)
