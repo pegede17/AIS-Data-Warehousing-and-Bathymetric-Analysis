@@ -129,44 +129,44 @@ def create_tables():
             audit_id INTEGER NOT NULL,
 
             FOREIGN KEY (audit_id)
-                REFERENCES audit (audit_id)
+                REFERENCES dim_audit (audit_id)
                 ON UPDATE CASCADE
                 ON DELETE CASCADE,
             FOREIGN KEY (eta_date_id)
-                REFERENCES date (date_id)
+                REFERENCES dim_date (date_id)
                 ON UPDATE CASCADE,
             FOREIGN KEY (eta_time_id)
-                REFERENCES time (time_id)
+                REFERENCES dim_time (time_id)
                 ON UPDATE CASCADE,
             FOREIGN KEY (ship_id)
-                REFERENCES ship (ship_id)
+                REFERENCES dim_ship (ship_id)
                 ON UPDATE CASCADE,
             FOREIGN KEY (ts_date_id)
-                REFERENCES date (date_id)
+                REFERENCES dim_date (date_id)
                 ON UPDATE CASCADE,
             FOREIGN KEY (ts_time_id)
-                REFERENCES time (time_id)
+                REFERENCES dim_time (time_id)
                 ON UPDATE CASCADE,
             FOREIGN KEY (data_source_type_id)
-                REFERENCES data_source_type (data_source_type_id)
+                REFERENCES dim_data_source_type (data_source_type_id)
                 ON UPDATE CASCADE,
             FOREIGN KEY (destination_id)
-                REFERENCES destination (destination_id)
+                REFERENCES dim_destination (destination_id)
                 ON UPDATE CASCADE,
             FOREIGN KEY (type_of_mobile_id)
-                REFERENCES type_of_mobile (type_of_mobile_id)
+                REFERENCES dim_type_of_mobile (type_of_mobile_id)
                 ON UPDATE CASCADE,
             FOREIGN KEY (navigational_status_id)
-                REFERENCES navigational_status (navigational_status_id)
+                REFERENCES dim_navigational_status (navigational_status_id)
                 ON UPDATE CASCADE,
             FOREIGN KEY (cargo_type_id)
-                REFERENCES cargo_type (cargo_type_id)
+                REFERENCES dim_cargo_type (cargo_type_id)
                 ON UPDATE CASCADE,
             FOREIGN KEY (type_of_position_fixing_device_id)
-                REFERENCES type_of_position_fixing_device (type_of_position_fixing_device_id)
+                REFERENCES dim_type_of_position_fixing_device (type_of_position_fixing_device_id)
                 ON UPDATE CASCADE,
             FOREIGN KEY (ship_type_id)
-                REFERENCES ship_type (ship_type_id)
+                REFERENCES dim_ship_type (ship_type_id)
                 ON UPDATE CASCADE
         )
         """,
@@ -226,23 +226,23 @@ INSERT INTO public.date(
             audit_id INTEGER NOT NULL,
 
             FOREIGN KEY (audit_id)
-                REFERENCES audit (audit_id)
+                REFERENCES dim_udit (audit_id)
                 ON UPDATE CASCADE
                 ON DELETE CASCADE,
             FOREIGN KEY (ship_id)
-                REFERENCES ship (ship_id)
+                REFERENCES dim_ship (ship_id)
                 ON UPDATE CASCADE,
             FOREIGN KEY (time_start_id)
-                REFERENCES time (time_id)
+                REFERENCES dim_time (time_id)
                 ON UPDATE CASCADE,
             FOREIGN KEY (date_start_id)
-                REFERENCES date (date_id)
+                REFERENCES dim_date (date_id)
                 ON UPDATE CASCADE,
             FOREIGN KEY (time_end_id )
-                REFERENCES time (time_id)
+                REFERENCES dim_time (time_id)
                 ON UPDATE CASCADE,
             FOREIGN KEY (date_end_id)
-                REFERENCES date (date_id)
+                REFERENCES dim_date (date_id)
                 ON UPDATE CASCADE
         )
         """,
