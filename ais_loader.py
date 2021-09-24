@@ -18,7 +18,6 @@ import configparser
 
 
 def load_data_into_db():
-
     config = configparser.ConfigParser()
     config.read('application.properties')
 
@@ -72,7 +71,6 @@ def load_data_into_db():
             return 0
 
     def pgbulkloader(name, attributes, fieldsep, rowsep, nullval, filehandle):
-        global connection
         cursor = connection.cursor()
         cursor.copy_from(file=filehandle, table=name, sep=fieldsep, null=str(nullval),
                          columns=attributes)
