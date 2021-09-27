@@ -45,8 +45,7 @@ def clean_data():
 
     ship_dimension = create_ship_dimension()
     audit_dimension = create_audit_dimension()
-    fact_table = create_fact_table(pgbulkloader=pgbulkloader)
-    fact_table.name = "fact_ais_clean_v{}".format(version)
+    fact_table = create_fact_table(pgbulkloader=pgbulkloader, tb_name="fact_ais_clean_v{}".format(version))
 
     cur = connection.cursor()
     cur.execute(create_query)

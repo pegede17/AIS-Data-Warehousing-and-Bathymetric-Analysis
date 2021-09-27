@@ -263,9 +263,9 @@ def create_ship_type_dimension():
     )
 
 
-def create_fact_table(pgbulkloader):
+def create_fact_table(pgbulkloader, tb_name):
     return BulkFactTable(
-        name='fact_ais',
+        name=tb_name,
         keyrefs=['eta_date_id', 'eta_time_id', 'ship_id', 'ts_date_id', 'ts_time_id', 'data_source_type_id', 'destination_id',
                  'type_of_mobile_id', 'navigational_status_id', 'cargo_type_id', 'type_of_position_fixing_device_id', 'ship_type_id', 'audit_id'],
         measures=['coordinate', 'rot', 'sog', 'cog', 'heading'],
