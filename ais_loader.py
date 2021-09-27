@@ -5,14 +5,13 @@ import pygrametl
 from pygrametl.datasources import SQLSource, CSVSource
 from pygrametl.tables import BulkFactTable, Dimension, CachedDimension, FactTable, SlowlyChangingDimension
 from sshtunnel import SSHTunnelForwarder
-from helper_functions import create_tables
+from helper_functions import create_audit_dimension, create_cargo_type_dimension, create_data_source_type_dimension, create_date_dimension, create_destination_dimension, create_fact_table, create_navigational_status_dimension, create_ship_dimension, create_ship_type_dimension, create_tables, create_time_dimension, create_type_of_mobile_dimension, create_type_of_position_fixing_device_dimension
 from pygrametl.datasources import SQLSource, CSVSource, ProcessSource, TransformingSource
 from pygrametl.tables import BulkFactTable, DecoupledFactTable, DimensionPartitioner, DecoupledDimension, Dimension, CachedDimension, FactTable, SlowlyChangingDimension
 from datetime import datetime
 import configparser
 from pygrametl.parallel import shareconnectionwrapper, getsharedsequencefactory
 from pygrametl import ConnectionWrapper
-from datetime import datetime
 import configparser
 # from helper_functions import create_tables
 
@@ -76,117 +75,25 @@ def load_data_into_db():
                          columns=attributes)
 
     # Creation of dimension and fact table abstractions for use in the ETL flow
-    date_dimension = CachedDimension(
-        name='dim_date',
-        key='date_id',  # Lav den til en smartkey.
-        attributes=['millennium', 'century', 'decade', 'iso_year', 'year', 'month', 'day',
-                    'day_of_week', 'iso_day_of_week', 'day_of_year', 'quarter', 'epoch', 'week'],
-        prefill=True,
-        cacheoninsert=True,
-        size=0
-    )
+    ship_dimension = create_ship_dimension()
 
-    time_dimension = CachedDimension(
-        name='dim_time',
-        key='time_id',  # Lav den til en smartkey.
-        attributes=['hour', 'minute', 'second'],
-            prefill=True,
-        cacheoninsert=True,
-        size=0
-    )
+    ship_type_dimension = create_ship_type_dimension()
 
-    ship_dimension = CachedDimension(
-        name='dim_ship',
-        key='ship_id',
-        attributes=['MMSI', 'IMO', 'Name', 'Width', 'Length', 'Callsign',
-                    'Draught', 'size_a', 'size_b', 'size_c', 'size_d'],
-        cachefullrows=True,
-        prefill=True,
-        cacheoninsert=True
-    )
+    type_of_position_fixing_device_dimension = create_type_of_position_fixing_device_dimension()
 
-    ship_type_dimension = CachedDimension(
-        name='dim_ship_type',
-        key="ship_type_id",
-        attributes=['ship_type'],
-        prefill=True,
-        cacheoninsert=True,
+    cargo_type_dimension = create_cargo_type_dimension()
 
-    )
+    navigational_status_dimension = create_navigational_status_dimension()
 
-    type_of_position_fixing_device_dimension = CachedDimension(
-        name='dim_type_of_position_fixing_device',
-        key='type_of_position_fixing_device_id',
-        attributes=['device_type'],
-        prefill=True,
-        cacheoninsert=True,
+    type_of_mobile_dimension = create_type_of_mobile_dimension()
 
-    )
+    destination_dimension = create_destination_dimension()
 
-    cargo_type_dimension = CachedDimension(
-        name='dim_cargo_type',
-        key='cargo_type_id',
-        attributes=['cargo_type'],
-        prefill=True,
-        cacheoninsert=True,
+    data_source_type_dimension = create_data_source_type_dimension()
 
-    )
+    audit_dimension = create_audit_dimension()
 
-    navigational_status_dimension = CachedDimension(
-        name='dim_navigational_status',
-        key='navigational_status_id',
-        attributes=['navigational_status'],
-        prefill=True,
-        cacheoninsert=True,
-
-    )
-
-    type_of_mobile_dimension = CachedDimension(
-        name='dim_type_of_mobile',
-        key='type_of_mobile_id',
-        attributes=['mobile_type'],
-        prefill=True,
-        cacheoninsert=True,
-
-    )
-
-    destination_dimension = CachedDimension(
-        name='dim_destination',
-        key='destination_id',
-        attributes=['user_defined_destination', 'mapped_destination'],
-        prefill=True,
-        cacheoninsert=True,
-
-    )
-
-    data_source_type_dimension = CachedDimension(
-        name='dim_data_source_type',
-        key='data_source_type_id',
-        attributes=['data_source_type'],
-        prefill=True,
-        cacheoninsert=True,
-
-    )
-
-    audit_dimension = Dimension(
-        name='dim_audit',
-        key='audit_id',
-        attributes=['timestamp', 'processed_records', 'source_system',
-                    'etl_version', 'table_name', 'comment', ]
-    )
-
-    fact_table = BulkFactTable(
-        name='fact_ais',
-        keyrefs=['eta_date_id', 'eta_time_id', 'ship_id', 'ts_date_id', 'ts_time_id', 'data_source_type_id', 'destination_id',
-                 'type_of_mobile_id', 'navigational_status_id', 'cargo_type_id', 'type_of_position_fixing_device_id', 'ship_type_id', 'audit_id'],
-        measures=['coordinate', 'rot', 'sog', 'cog', 'heading'],
-        bulkloader=pgbulkloader,
-        fieldsep=',',
-        rowsep='\\r\n',
-        nullsubst=str(None),
-        bulksize=500000,
-        usefilename=False,
-    )
+    fact_table = create_fact_table(pgbulkloader=pgbulkloader)
 
     audit_obj = {'timestamp': datetime.now(),
                  'processed_records': 0,

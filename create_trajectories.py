@@ -1,5 +1,5 @@
 from datetime import datetime
-from helper_functions import create_tables
+from helper_functions import create_audit_dimension, create_tables, create_trajectory_fact_table
 from pygrametl.datasources import SQLSource
 from pygrametl.tables import FactTable
 from pygrametl.datasources import SQLSource, CSVSource
@@ -13,6 +13,8 @@ from database_connection import connect_to_local, connect_via_ssh
 
 
 def create_trajectories():
+
+    version = 11
     trajectories = []
 
     temp_trajectory = {
@@ -62,25 +64,26 @@ def create_trajectories():
     dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
 
     query = """
-    SELECT fact_id, ts_date_id, ship_id, ts_time_id, ST_AsText(coordinate) as coordinate, sog from fact_ais 
-        ORDER BY ship_id, ts_time_id ASC;
+    SELECT fact_id, ts_date_id, ship_id, ts_time_id, ST_AsText(coordinate) as coordinate, sog from fact_ais_clean_v8 
+        ORDER BY ship_id, ts_time_id ASC
+        LIMIT 100000;
     """
+
+    create_query = """
+    CREATE TABLE fact_trajectory_clean_v{} AS 
+    TABLE fact_trajectory 
+    WITH NO DATA;
+    """.format(version)
+
+    cur = connection.cursor()
+    cur.execute(create_query)
 
     ais_source = SQLSource(connection=connection, query=query)
 
-    trajectory_fact_table = FactTable(
-        name='fact_trajectory',
-        keyrefs=['ship_id', 'time_start_id', 'date_start_id',
-                 'time_end_id', 'date_end_id', 'audit_id'],
-        measures=['coordinates']
-    )
+    trajectory_fact_table = create_trajectory_fact_table()
+    trajectory_fact_table.name = "fact_trajectory_clean_v{}".format(version)
 
-    audit_dimension = Dimension(
-        name='dim_audit',
-        key='audit_id',
-        attributes=['timestamp', 'processed_records', 'source_system',
-                    'etl_version', 'table_name', 'comment', ]
-    )
+    audit_dimension = create_audit_dimension()
 
     audit_obj = {'timestamp': datetime.now(),
                  'source_system': config["Audit"]["source_system"],
@@ -97,6 +100,7 @@ def create_trajectories():
     for row in ais_source:
         i = i + 1
         if (i % 100000 == 0):
+            break
             print("Reached milestone: " + str(i))
             print(datetime.now())
         sog = row["sog"]
