@@ -382,9 +382,9 @@ def create_date_dimension():
     )
 
 
-def create_trajectory_fact_table():
+def create_trajectory_fact_table(tb_name):
     return FactTable(
-        name='fact_trajectory',
+        name=tb_name,
         keyrefs=['ship_id', 'time_start_id', 'date_start_id',
                  'time_end_id', 'date_end_id', 'audit_id'],
         measures=['coordinates']

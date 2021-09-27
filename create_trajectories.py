@@ -14,7 +14,7 @@ from database_connection import connect_to_local, connect_via_ssh
 
 def create_trajectories():
 
-    version = 11
+    version = 12
     trajectories = []
 
     temp_trajectory = {
@@ -65,8 +65,7 @@ def create_trajectories():
 
     query = """
     SELECT fact_id, ts_date_id, ship_id, ts_time_id, ST_AsText(coordinate) as coordinate, sog from fact_ais_clean_v8 
-        ORDER BY ship_id, ts_time_id ASC
-        LIMIT 100000;
+        ORDER BY ship_id, ts_time_id ASC;
     """
 
     create_query = """
@@ -80,8 +79,7 @@ def create_trajectories():
 
     ais_source = SQLSource(connection=connection, query=query)
 
-    trajectory_fact_table = create_trajectory_fact_table()
-    trajectory_fact_table.name = "fact_trajectory_clean_v{}".format(version)
+    trajectory_fact_table = create_trajectory_fact_table("fact_trajectory_clean_v{}".format(version))
 
     audit_dimension = create_audit_dimension()
 
@@ -100,7 +98,7 @@ def create_trajectories():
     for row in ais_source:
         i = i + 1
         if (i % 100000 == 0):
-            break
+            #break
             print("Reached milestone: " + str(i))
             print(datetime.now())
         sog = row["sog"]
