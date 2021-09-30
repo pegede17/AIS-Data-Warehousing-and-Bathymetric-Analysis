@@ -5,14 +5,13 @@ from pygrametl.tables import FactTable
 from pygrametl.datasources import SQLSource, CSVSource
 from pygrametl.tables import Dimension, FactTable
 import pygrametl
-import configparser
 from database_connection import connect_to_local, connect_via_ssh
 
 # For interactive work (on ipython) it's easier to work with explicit objects
 # instead of contexts.
 
 
-def create_trajectories():
+def create_trajectories(config):
 
     version = 12
     trajectories = []
@@ -53,9 +52,6 @@ def create_trajectories():
         if(trajectory_length > 4):
             trajectories.append(temp_trajectory.copy())
         temp_trajectory.clear()
-
-    config = configparser.ConfigParser()
-    config.read('application.properties')
 
     if(config["Environment"]["development"] == "True"):
         connection = connect_via_ssh()

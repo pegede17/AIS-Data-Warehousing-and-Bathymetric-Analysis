@@ -22,8 +22,7 @@ def data_not_in_denmark(row):
         return False
 
 
-def clean_data():
-    config = configparser.ConfigParser()
+def clean_data(config):
     config.read('application.properties')
 
     if(config["Environment"]["development"] == "True"):
