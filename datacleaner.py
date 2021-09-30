@@ -23,7 +23,6 @@ def data_not_in_denmark(row):
 
 
 def clean_data(config):
-    config.read('application.properties')
 
     if(config["Environment"]["development"] == "True"):
         connection = connect_via_ssh()
