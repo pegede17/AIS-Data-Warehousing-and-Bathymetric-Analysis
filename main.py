@@ -7,7 +7,6 @@ import configparser
 config = configparser.ConfigParser()
 
 config.read('application.properties')
-config["Environment"]["development"] = "False"
 
 listOfFiles = ['aisdk-2021-07-29.csv', 'aisdk-2021-07-30.csv', 'aisdk-2021-07-31.csv']
 
