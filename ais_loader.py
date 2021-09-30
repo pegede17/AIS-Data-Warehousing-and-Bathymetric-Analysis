@@ -17,8 +17,6 @@ import configparser
 
 
 def load_data_into_db(config):
-    config = configparser.ConfigParser()
-    config.read('application.properties')
 
     # Initialize variables
     connection = None
