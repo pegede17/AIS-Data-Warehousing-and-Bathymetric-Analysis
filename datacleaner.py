@@ -7,7 +7,7 @@ from pygrametl import ConnectionWrapper
 from pygrametl.datasources import SQLSource
 from database_connection import connect_to_local, connect_via_ssh
 
-version = 8
+version = 1
 counter = 0
 
 
@@ -31,7 +31,7 @@ def clean_data(config):
     dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
 
     create_query = """
-    CREATE TABLE fact_ais_clean_v{} AS 
+    CREATE TABLE IF NOT EXISTS fact_ais_clean_v{} AS 
     TABLE fact_ais 
     WITH NO DATA;
     """.format(version)
@@ -50,7 +50,7 @@ def clean_data(config):
 
     query = """
     SELECT fact_id, eta_date_id, eta_time_id, ship_id, ts_date_id, ts_time_id, data_source_type_id, destination_id, type_of_mobile_id, navigational_status_id, cargo_type_id, type_of_position_fixing_device_id, ship_type_id, coordinate ,ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat, rot, sog, cog, heading, audit_id
-	FROM public.fact_ais;
+	FROM public.fact_ais WHERE "audit_id" = 15;
     """
 
     ais_source = SQLSource(connection=connection, query=query)

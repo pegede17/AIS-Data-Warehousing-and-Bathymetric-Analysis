@@ -13,7 +13,7 @@ from database_connection import connect_to_local, connect_via_ssh
 
 def create_trajectories(config):
 
-    version = 12
+    version = 1
     trajectories = []
 
     temp_trajectory = {
@@ -60,12 +60,12 @@ def create_trajectories(config):
     dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
 
     query = """
-    SELECT fact_id, ts_date_id, ship_id, ts_time_id, ST_AsText(coordinate) as coordinate, sog from fact_ais_clean_v8 
-        ORDER BY ship_id, ts_time_id ASC;
+    SELECT fact_id, ts_date_id, ship_id, ts_time_id, audit_id, ST_AsText(coordinate) as coordinate, sog from fact_ais_clean_v1 
+        WHERE "audit_id" = 18 ORDER BY ship_id, ts_date_id, ts_time_id ASC;
     """
 
     create_query = """
-    CREATE TABLE fact_trajectory_clean_v{} AS 
+    CREATE TABLE IF NOT EXISTS fact_trajectory_clean_v{} AS 
     TABLE fact_trajectory 
     WITH NO DATA;
     """.format(version)
