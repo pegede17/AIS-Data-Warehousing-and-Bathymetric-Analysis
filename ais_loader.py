@@ -16,9 +16,7 @@ import configparser
 # from helper_functions import create_tables
 
 
-def load_data_into_db():
-    config = configparser.ConfigParser()
-    config.read('application.properties')
+def load_data_into_db(config):
 
     # Initialize variables
     connection = None
@@ -93,7 +91,7 @@ def load_data_into_db():
 
     audit_dimension = create_audit_dimension()
 
-    fact_table = create_fact_table(pgbulkloader=pgbulkloader)
+    fact_table = create_fact_table(pgbulkloader=pgbulkloader, tb_name="fact_ais")
 
     audit_obj = {'timestamp': datetime.now(),
                  'processed_records': 0,
