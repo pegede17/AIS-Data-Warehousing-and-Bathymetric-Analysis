@@ -175,6 +175,7 @@ def load_data_into_db(config):
             'ts_date_id': convertTimestampToDateId(row["# Timestamp"]),
             'ts_time_id': convertTimestampToTimeId(row["# Timestamp"]),
             'coordinate': ("POINT(" + row["Longitude"] + " " + row["Latitude"] + ")"),
+            'draught': row["Draught"],
             'rot': row["ROT"],
             'sog': row["SOG"],
             'cog': row["COG"],
