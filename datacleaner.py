@@ -11,17 +11,6 @@ version = 1
 counter = 0
 
 
-def data_not_in_denmark(row):
-    lat = row["lat"]
-    long = row["long"]
-    if(long < 2 or long > 18 or lat < 53 or lat > 59):
-        global counter
-        counter = counter + 1
-        return True
-    else:
-        return False
-
-
 def clean_data(config):
 
     if(config["Environment"]["development"] == "True"):
@@ -43,14 +32,19 @@ def clean_data(config):
 
     ship_dimension = create_ship_dimension()
     audit_dimension = create_audit_dimension()
-    fact_table = create_fact_table(pgbulkloader=pgbulkloader, tb_name="fact_ais_clean_v{}".format(version))
+    fact_table = create_fact_table(
+        pgbulkloader=pgbulkloader, tb_name="fact_ais_clean_v{}".format(version))
 
     cur = connection.cursor()
     cur.execute(create_query)
 
     query = """
     SELECT fact_id, eta_date_id, eta_time_id, ship_id, ts_date_id, ts_time_id, data_source_type_id, destination_id, type_of_mobile_id, navigational_status_id, cargo_type_id, type_of_position_fixing_device_id, ship_type_id, coordinate ,ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat, rot, sog, cog, heading, audit_id
-	FROM public.fact_ais WHERE "audit_id" = 15;
+	FROM public.fact_ais 
+    WHERE "audit_id" = 15 AND 
+            ST_Contains((SELECT ST_SimplifyPreserveTopology(wkb_geometry,0.0001) from public.landdata),coordinate::geometry) OR 
+            ST_Contains(ST_GeomFromText('POLYGON((10.5908203 59.3466353,3.5551758 56.6199765,5.1635742 52.9248009,17.7978516 54.3062687,10.5908203 59.3466353),
+                                                (7.8442383 54.6356973, 11.7553711 54.4700376, 15.3259277 54.9081986, 15.2160645 55.3353936, 13.5461426 55.2822440, 11.5576172 57.3146574, 10.6787109 57.7891608, 8.0419922 57.2077101, 7.8442383 54.6356973))',4326),coordinate::geometry);
     """
 
     ais_source = SQLSource(connection=connection, query=query)
@@ -68,8 +62,6 @@ def clean_data(config):
     for row in ais_source:
         if (i % 10000 == 0):
             print(str(datetime.now()) + " Reached milestone: " + str(i))
-        if data_not_in_denmark(row):
-            continue
         row["audit_id"] = audit_id
         fact_table.insert(row)
         i = i + 1

@@ -7,12 +7,12 @@ import configparser
 config = configparser.ConfigParser()
 config.read('application.properties')
 
-listOfFiles = ['aisdk-2021-07-29.csv', 'aisdk-2021-07-30.csv', 'aisdk-2021-07-31.csv']
+listOfFiles = ['_reversedaisdk-2021-07-05.csv']
 
 for file in listOfFiles:
-   config["Environment"]["FILE_PATH"] = "/home/ubuntu/data/" + file
-   print(config["Environment"]["FILE_PATH"])
-   load_data_into_db(config)
+    config["Environment"]["FILE_PATH"] = file
+    print(config["Environment"]["FILE_PATH"])
+    load_data_into_db(config)
 
 # load_data_into_db(config)
 
