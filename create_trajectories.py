@@ -13,7 +13,7 @@ from database_connection import connect_to_local, connect_via_ssh
 
 def create_trajectories(config):
 
-    version = 1
+    version = 5
     trajectories = []
 
     temp_trajectory = {
@@ -49,7 +49,7 @@ def create_trajectories(config):
     def end_trajectory():
         global trajectory_length
         temp_trajectory['coordinates'] = temp_trajectory['coordinates'] + ")"
-        if(trajectory_length > 4):
+        if(trajectory_length > 1):
             trajectories.append(temp_trajectory.copy())
         temp_trajectory.clear()
 
@@ -60,8 +60,9 @@ def create_trajectories(config):
     dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
 
     query = """
-    SELECT fact_id, ts_date_id, ship_id, ts_time_id, audit_id, ST_AsText(coordinate) as coordinate, sog from fact_ais_clean_v1 
-        WHERE "audit_id" = 18 ORDER BY ship_id, ts_date_id, ts_time_id ASC;
+        SELECT fact_id, ts_date_id, ship_id, ts_time_id, audit_id, ST_AsText(coordinate) as coordinate, sog from fact_ais 
+        WHERE (ship_id = 578 OR ship_id = 7759 OR ship_id = 12839) AND (fact_id != 30262937) AND (fact_id != 9697469) AND (fact_id != 16495041) AND (fact_id != 30262937) AND  (fact_id != 26667092) AND (fact_id != 27573652) AND (fact_id != 2576838) AND (fact_id != 3579816) 
+		ORDER BY ship_id, ts_date_id, ts_time_id ASC
     """
 
     create_query = """
@@ -89,6 +90,8 @@ def create_trajectories(config):
     audit_id = audit_dimension.insert(audit_obj)
 
     i = 0
+    noSogLessThan = 0
+    noSogNone = 0
     isCreatingRoute = False
 
     for row in ais_source:
@@ -98,7 +101,13 @@ def create_trajectories(config):
             print("Reached milestone: " + str(i))
             print(datetime.now())
         sog = row["sog"]
-        if(sog != 0 and sog != None):
+
+        if(sog < 2.0 and sog != None):
+            noSogLessThan = noSogLessThan + 1
+        if (sog == None):
+            noSogNone = noSogNone + 1
+
+        if(noSogLessThan < 3 and noSogNone < 3):
             if(not isCreatingRoute):
                 current_ship_id = row["ship_id"]
                 create_new_trajectory(row)
@@ -108,10 +117,14 @@ def create_trajectories(config):
                     add_to_trajectory(row)
                 else:
                     end_trajectory()
+                    noSogLessThan = 0
+                    noSogNone = 0
                     create_new_trajectory(row)
         else:
             if(isCreatingRoute):
                 end_trajectory()
+                noSogLessThan = 0
+                noSogNone = 0
                 isCreatingRoute = False
 
     for traj in trajectories:

@@ -351,12 +351,12 @@ def create_ship_dimension():
     return CachedDimension(
         name='dim_ship',
         key='ship_id',
-        attributes=['MMSI', 'IMO', 'Name', 'Width', 'Length',
+        attributes=['mmsi', 'IMO', 'Name', 'Width', 'Length',
                     'Callsign', 'size_a', 'size_b', 'size_c', 'size_d'],
         cachefullrows=True,
         prefill=True,
         cacheoninsert=True,
-        lookupatts=['MMSI'],
+        lookupatts=['mmsi'],
         size=0
     )
 

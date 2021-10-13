@@ -130,15 +130,14 @@ def load_data_into_db(config):
 
         fact = {}
         fact["audit_id"] = audit_id
-
-        fact["ship_id"] = ship_dimension.lookup(row)
-        if(fact["ship_id"] == None):
-            fact["ship_id"] = ship_dimension.insert(row, {
-                'size_a': 'A',
-                'size_b': 'B',
-                'size_c': 'C',
-                'size_d': 'D',
-            })
+        
+        fact["ship_id"] = ship_dimension.ensure(row, {
+            'size_a': 'A',
+            'size_b': 'B',
+            'size_c': 'C',
+            'size_d': 'D',
+            'mmsi': 'MMSI'
+        })
 
         fact["ship_type_id"] = ship_type_dimension.ensure(row, {
             'ship_type': 'Ship type'

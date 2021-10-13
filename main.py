@@ -7,15 +7,15 @@ import configparser
 config = configparser.ConfigParser()
 config.read('application.properties')
 
-listOfFiles = ['_reversedaisdk-2021-07-05.csv']
+listOfFiles = ['aisdk_20211008.csv']
 
-for file in listOfFiles:
-    config["Environment"]["FILE_PATH"] = file
-    print(config["Environment"]["FILE_PATH"])
-    load_data_into_db(config)
+# for file in listOfFiles:
+#     config["Environment"]["FILE_PATH"] = file
+#     print(config["Environment"]["FILE_PATH"])
+#     load_data_into_db(config)
 
 # load_data_into_db(config)
 
 # clean_data(config)
 
-# create_trajectories(config)
+create_trajectories(config)
