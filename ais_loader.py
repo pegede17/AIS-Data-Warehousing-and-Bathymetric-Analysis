@@ -117,7 +117,7 @@ def load_data_into_db(config):
             row[value] = validateToNull(val)
 
     ais_file_handle = open(
-        config["Environment"]["FILE_PATH"], 'r')
+        config["Environment"]["FILE_PATH"] + config["Environment"]["FILE_NAME"], 'r')
     ais_source = CSVSource(f=ais_file_handle, delimiter=',')
 
     transformeddata = TransformingSource(ais_source, transformNulls)
@@ -130,7 +130,9 @@ def load_data_into_db(config):
 
         fact = {}
         fact["audit_id"] = audit_id
-        
+
+        row['MMSI'] = int(row['MMSI'])
+
         fact["ship_id"] = ship_dimension.ensure(row, {
             'size_a': 'A',
             'size_b': 'B',

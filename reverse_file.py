@@ -40,8 +40,8 @@ class Stack:
 def reverse_file(filename):
 
     S = Stack()
-    original = open(filename)
-    output = open("_reversed" + filename, 'w')
+    original = open("/home/ubuntu/data/" + filename)
+    output = open("/home/ubuntu/data/r_" + filename, 'w')
 
     firstLine = True
 
@@ -58,32 +58,3 @@ def reverse_file(filename):
 
     output.close()
 
-
-print("Start:")
-print(datetime.now())
-
-filename = "aisdk-2021-07-05.csv"
-reverse_file(filename)
-print("Done first:")
-print(datetime.now())
-# Driver Code
-filename = "aisdk-2021-07-06.csv"
-# Calling the reverse_file function
-reverse_file(filename)
-print("Done second:")
-print(datetime.now())
-
-
-filename = "aisdk-2021-07-07.csv"
-reverse_file(filename)
-print("Done third:")
-print(datetime.now())
-
-filename = "aisdk-2021-07-08.csv"
-reverse_file(filename)
-print("Done fourth:")
-print(datetime.now())
-# Now reading the content of the file
-# with open(filename) as file:
-#     for f in file.readlines():
-#         print(f, end="")
