@@ -225,7 +225,9 @@ INSERT INTO public.dim_date(
             date_start_id INTEGER NOT NULL,
             time_end_id INTEGER NOT NULL,
             date_end_id INTEGER NOT NULL,
-            coordinates geometry(linestring) NOT NULL,
+            linestring geometry(linestring) NOT NULL,
+            length_meters FLOAT NOT NULL,
+            duration INTEGER NOT NULL,
             audit_id INTEGER NOT NULL,
 
             FOREIGN KEY (audit_id)
@@ -389,5 +391,5 @@ def create_trajectory_fact_table(tb_name):
         name=tb_name,
         keyrefs=['ship_id', 'time_start_id', 'date_start_id',
                  'time_end_id', 'date_end_id', 'audit_id'],
-        measures=['coordinates']
+        measures=['linestring', 'duration', 'length_meters']
     )
