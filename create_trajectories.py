@@ -23,17 +23,10 @@ np.random.seed(0)
 ## TODO: How can we remove this?  Not required on my PC, only on laptop
 pyproj.datadir.set_data_dir("C:/Users/AliOz/miniconda3/Library/share/proj")
 
-
-# For interactive work (on ipython) it's easier to work with explicit objects
-# instead of contexts.
-
-
 config = configparser.ConfigParser()
 config.read('application.properties')
 
-version = 2
-
-
+version = 4
 
 if(config["Environment"]["development"] == "True"):
     connection = connect_via_ssh()
@@ -41,11 +34,11 @@ else:
     connection = connect_to_local()
 dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
 
-date_to_lookup = 20210729
+date_to_lookup = 20210727
 
 query = """
-SELECT fact_id, ts_date_id, ship_id, ts_time_id, audit_id, ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat, sog, hour, minute, second
-FROM fact_ais
+SELECT fact_id, ts_date_id, ship_id, ts_time_id, audit_id, ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat, sog, hour, minute, second, draught
+FROM fact_ais_clean_v2
 INNER JOIN dim_time ON dim_time.time_id = ts_time_id
 WHERE ts_date_id = {}
 """.format(date_to_lookup)
@@ -57,9 +50,7 @@ where date_id = {}
 """.format(date_to_lookup)
 
 create_query = """
-CREATE TABLE IF NOT EXISTS fact_trajectory_clean_v{} AS 
-TABLE fact_trajectory 
-WITH NO DATA;
+CREATE TABLE IF NOT EXISTS fact_trajectory_clean_v{} (LIKE fact_trajectory INCLUDING ALL);
 """.format(version)
 
 cur = connection.cursor()
@@ -96,6 +87,15 @@ gdf = gpd.GeoDataFrame(data_trajectories, crs='EPSG:4326', geometry=gpd.points_f
 gdf_grouped = gdf.groupby(by=['ship_id'])
 print("Finished grouping")
 
+# Generate draught for each ship
+draught_per_ship = {}
+for mmsi, data in gdf_grouped:
+    draughts = data.draught.value_counts().reset_index(name='Count').sort_values(['Count'], ascending=False)['index'].tolist()
+    if (len(draughts) > 0):
+        draught_per_ship[mmsi] = draughts
+    else:
+        draught_per_ship[mmsi] = None
+
 # Function that takes a trajectory collection and creates a filtered set of trajectories
 def apply_filter_on_trajectories(trajectory_list, filter_func, filter_length):
     trajectories = []
@@ -125,32 +125,23 @@ def apply_filter_on_trajectories(trajectory_list, filter_func, filter_length):
 
 ## Generate a trajectory for each ship
 trajectories_per_ship = {}
-filtered_points = 4
+filtered_points = 5
 hampel_filter = HampelFilter(window_length=filtered_points)
 
 i = 1
 total = len(gdf_grouped.groups)
-print(datetime.now())
+start_time = datetime.now()
 
 for mmsi, data in gdf_grouped:
-    # if (len(str(mmsi)) < 9):
-    #     i = i + 1
-    #     continue
     if (len(data) < 2):
         i = i + 1
         continue
-    if ((data.geometry.x > 180).any() or (data.geometry.x < -180).any()):
-        i = i + 1
-        continue
-    if ((data.geometry.y > 90).any() or (data.geometry.y < -90).any()):
-        i = i + 1
-        continue
     
-    print("--------")
     print("("+str(mmsi)+"):" + str(i) + ' ud af ' + str(total))
 
     time_now = datetime.now()
-    speed_limit = 0.5
+    # 0.5 knot => meter /sec
+    speed_limit = 0.971922246 
     data['speed'] = data['sog']
     trajectory = mpd.Trajectory(data, mmsi)
     time_next = (time_now - datetime.now()).total_seconds()
@@ -183,7 +174,7 @@ for mmsi, data in gdf_grouped:
     i = i + 1
     print("--------")
 
-print(datetime.now())
+print((start_time - datetime.now()).total_seconds())
 
 audit_id = audit_dimension.insert(audit_obj)
 
@@ -198,7 +189,8 @@ for ship in trajectories_per_ship:
             'date_end_id': int(traj.get_end_time().strftime("%Y%m%d")),
             'linestring': str(traj.to_linestring()),
             'length_meters': traj.get_length(),
-            'audit_id': audit_id
+            'audit_id': audit_id,
+            'draught': draught_per_ship[ship]
             }
 
         trajectory_fact_table.insert(trajectory_dto)
