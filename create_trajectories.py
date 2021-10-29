@@ -26,7 +26,6 @@ np.random.seed(0)
 filtered_points = 5
 hampel_filter = HampelFilter(window_length=filtered_points)
 version = 4
-date_to_lookup = 20211008
 
 def set_global(args):
     global trajectories_per_ship
@@ -100,11 +99,11 @@ def debug_apply(list):
     trajectories_per_ship[mmsi] = filtered_trajectories
     # print("--------")
 
-if __name__ == '__main__':
+def create_trajectories(date_to_lookup):
     # Config settings
     config = configparser.ConfigParser()
     config.read('application.properties')
-        
+    
     if(config["Environment"]["development"] == "True"):
         connection = connect_via_ssh()
     else:
@@ -114,7 +113,7 @@ if __name__ == '__main__':
     # Queries defined
     query = """
     SELECT fact_id, ts_date_id, ship_id, ts_time_id, audit_id, ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat, sog, hour, minute, second, draught
-    FROM fact_ais
+    FROM fact_ais_clean_v2
     INNER JOIN dim_time ON dim_time.time_id = ts_time_id
     WHERE ts_date_id = {}
     """.format(date_to_lookup)

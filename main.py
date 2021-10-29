@@ -9,6 +9,7 @@ config = configparser.ConfigParser()
 config.read('application.properties')
 
 listOfFiles = ['aisdk-2021-07-27.csv', 'aisdk-2021-07-28.csv', 'aisdk-2021-07-29.csv']
+listOfDates = [20210727, 20210728, 20210729]
 
 # for file in listOfFiles:
 #     reverse_file(file)
@@ -21,4 +22,5 @@ listOfFiles = ['aisdk-2021-07-27.csv', 'aisdk-2021-07-28.csv', 'aisdk-2021-07-29
 # clean_data(config)
 
 if __name__ == '__main__':
-    create_trajectories()
+    for date in listOfDates:
+        create_trajectories(date)
