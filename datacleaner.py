@@ -1,17 +1,12 @@
-import configparser
-from datetime import datetime
-from helper_functions import create_audit_dimension, create_fact_table, create_ship_dimension
-
 import pygrametl
-from pygrametl import ConnectionWrapper
-from pygrametl.datasources import SQLSource
+from datetime import datetime
+from helper_functions import create_audit_dimension
 from database_connection import connect_to_local, connect_via_ssh
 
-version = 1
-counter = 0
+VERSION = 1
 
 
-def clean_data(config):
+def clean_data(config, date_id):
 
     if(config["Environment"]["development"] == "True"):
         connection = connect_via_ssh()
@@ -19,59 +14,114 @@ def clean_data(config):
         connection = connect_to_local()
     dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
 
-    create_query = """
-    CREATE TABLE IF NOT EXISTS fact_ais_clean_v{} AS 
-    TABLE fact_ais 
-    WITH NO DATA;
-    """.format(version)
+    create_query = f"""
+    CREATE TABLE IF NOT EXISTS fact_ais_clean_v{VERSION} (
+            fact_id SERIAL NOT NULL PRIMARY KEY,
+            eta_date_id INTEGER NOT NULL DEFAULT 0,
+            eta_time_id INTEGER NOT NULL DEFAULT 0,
+            ship_id INTEGER NOT NULL,
+            ts_date_id INTEGER NOT NULL,
+            ts_time_id INTEGER NOT NULL,
+            data_source_type_id INTEGER NOT NULL DEFAULT 0,
+            destination_id INTEGER NOT NULL DEFAULT 0,
+            type_of_mobile_id INTEGER NOT NULL DEFAULT 0,
+            navigational_status_id INTEGER NOT NULL DEFAULT 0,
+            cargo_type_id INTEGER NOT NULL DEFAULT 0,
+            type_of_position_fixing_device_id INTEGER NOT NULL DEFAULT 0,
+            ship_type_id INTEGER NOT NULL DEFAULT 0,
+            coordinate geography(point) NOT NULL,
+            draught DOUBLE PRECISION,
+            rot DOUBLE PRECISION,
+            sog DOUBLE PRECISION,
+            cog DOUBLE PRECISION,
+            heading SMALLINT,
+            audit_id INTEGER NOT NULL,
 
-    def pgbulkloader(name, attributes, fieldsep, rowsep, nullval, filehandle):
-        cursor = connection.cursor()
-        cursor.copy_from(file=filehandle, table=name, sep=fieldsep, null=str(nullval),
-                         columns=attributes)
-
-    ship_dimension = create_ship_dimension()
-    audit_dimension = create_audit_dimension()
-    fact_table = create_fact_table(
-        pgbulkloader=pgbulkloader, tb_name="fact_ais_clean_v{}".format(version))
-
-    cur = connection.cursor()
-    cur.execute(create_query)
-
-    query = """
-    SELECT fact_id, eta_date_id, eta_time_id, ship_id, ts_date_id, ts_time_id, data_source_type_id, destination_id, type_of_mobile_id, navigational_status_id, cargo_type_id, type_of_position_fixing_device_id, ship_type_id, coordinate ,ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat, rot, sog, cog, heading, audit_id
-	FROM public.fact_ais 
-    WHERE "audit_id" = 15 AND 
-            ST_Contains((SELECT ST_SimplifyPreserveTopology(wkb_geometry,0.0001) from public.landdata),coordinate::geometry) OR 
-            ST_Contains(ST_GeomFromText('POLYGON((10.5908203 59.3466353,3.5551758 56.6199765,5.1635742 52.9248009,17.7978516 54.3062687,10.5908203 59.3466353),
-                                                (7.8442383 54.6356973, 11.7553711 54.4700376, 15.3259277 54.9081986, 15.2160645 55.3353936, 13.5461426 55.2822440, 11.5576172 57.3146574, 10.6787109 57.7891608, 8.0419922 57.2077101, 7.8442383 54.6356973))',4326),coordinate::geometry);
+            FOREIGN KEY (audit_id)
+                REFERENCES dim_audit (audit_id)
+                ON UPDATE CASCADE
+                ON DELETE CASCADE,
+            FOREIGN KEY (eta_date_id)
+                REFERENCES dim_date (date_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (eta_time_id)
+                REFERENCES dim_time (time_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (ship_id)
+                REFERENCES dim_ship (ship_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (ts_date_id)
+                REFERENCES dim_date (date_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (ts_time_id)
+                REFERENCES dim_time (time_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (data_source_type_id)
+                REFERENCES dim_data_source_type (data_source_type_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (destination_id)
+                REFERENCES dim_destination (destination_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (type_of_mobile_id)
+                REFERENCES dim_type_of_mobile (type_of_mobile_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (navigational_status_id)
+                REFERENCES dim_navigational_status (navigational_status_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (cargo_type_id)
+                REFERENCES dim_cargo_type (cargo_type_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (type_of_position_fixing_device_id)
+                REFERENCES dim_type_of_position_fixing_device (type_of_position_fixing_device_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (ship_type_id)
+                REFERENCES dim_ship_type (ship_type_id)
+                ON UPDATE CASCADE
+        )
     """
 
-    ais_source = SQLSource(connection=connection, query=query)
+    audit_dimension = create_audit_dimension()
 
     audit_obj = {'timestamp': datetime.now(),
                  'processed_records': 0,
                  'source_system': config["Audit"]["source_system"],
                  'etl_version': config["Audit"]["elt_version"],
-                 'table_name': fact_table.name,
+                 'table_name': "fact_ais_clean_v{VERSION}",
                  'comment': config["Audit"]["comment"]}
 
     audit_id = audit_dimension.insert(audit_obj)
 
-    i = 0
-    for row in ais_source:
-        if (i % 10000 == 0):
-            print(str(datetime.now()) + " Reached milestone: " + str(i))
-        row["audit_id"] = audit_id
-        fact_table.insert(row)
-        i = i + 1
+    cur = connection.cursor()
+    cur.execute(create_query)
 
-    audit_obj['processed_records'] = i
+    disable_query = f"""
+        ALTER TABLE fact_ais_clean_v{VERSION} DISABLE TRIGGER ALL;
+    """
+
+    enable_query = f"""
+        ALTER TABLE fact_ais_clean_v{VERSION} ENABLE TRIGGER ALL;	
+    """
+
+    clean_query = f"""
+    INSERT INTO fact_ais_clean_v{VERSION}
+	    SELECT DISTINCT ON (eta_date_id, eta_time_id, ship_id, ts_date_id, ts_time_id, data_source_type_id, destination_id, type_of_mobile_id, navigational_status_id, cargo_type_id, type_of_position_fixing_device_id, ship_type_id, coordinate, draught, rot, sog, cog, heading)
+            fact_id, eta_date_id, eta_time_id, fact_ais.ship_id, ts_date_id, ts_time_id, data_source_type_id, destination_id, type_of_mobile_id, navigational_status_id, cargo_type_id, type_of_position_fixing_device_id, ship_type_id, coordinate, draught, rot, sog, cog, heading, {audit_id}
+        FROM fact_ais INNER JOIN public.dim_ship on fact_ais.ship_id = dim_ship.ship_id, public.danish_waters
+        WHERE 
+            ts_date_id = {date_id}
+            AND mmsi > 99999999
+            AND mmsi < 1000000000
+            AND ST_Contains(geom ,coordinate::geometry);
+    """
+
+    cur.execute(disable_query)
+    cur.execute(clean_query)
+
+    audit_obj['processed_records'] = cur.rowcount
     audit_obj['audit_id'] = audit_id
     audit_dimension.update(audit_obj)
 
+    cur.execute(enable_query)
+
     dw_conn_wrapper.commit()
     dw_conn_wrapper.close()
-
-    print("done")
-    print(counter)
