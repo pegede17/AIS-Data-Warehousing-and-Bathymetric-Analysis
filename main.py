@@ -20,4 +20,5 @@ listOfFiles = ['aisdk-2021-07-27.csv', 'aisdk-2021-07-28.csv', 'aisdk-2021-07-29
 
 # clean_data(config)
 
-create_trajectories(config)
+if __name__ == '__main__':
+    create_trajectories()
