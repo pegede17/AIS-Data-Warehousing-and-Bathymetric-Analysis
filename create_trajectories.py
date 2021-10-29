@@ -58,7 +58,6 @@ def apply_filter_on_trajectories(trajectory_list, filter_func, filter_length):
     return trajectory_collection
 
 def debug_apply(list):
-    print("Starting debug apply")
     mmsi, data = list
 
     if (len(data) < 2):
