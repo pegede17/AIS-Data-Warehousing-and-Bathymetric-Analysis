@@ -35,7 +35,7 @@ def connect_to_local():
     config = configparser.ConfigParser()
     config.read('application.properties')
 
-    connection_string = "host='192.168.87.102' dbname='{}' user='{}' password='{}'".format(
+    connection_string = "host='localhost' dbname='{}' user='{}' password='{}'".format(
         config["Database"]["dbname"],
         config["Database"]["dbuser"],
         config["Database"]["dbpass"]

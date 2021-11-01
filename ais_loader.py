@@ -26,9 +26,11 @@ def load_data_into_db(config):
     try:
         if (config["Database"]["initialize"] == "True"):
             # Create Database
+            print("Creating database")
             connection = create_database()
 
             # Create Tables
+            print("Creating tables")
             commands = create_tables()
 
             cur = connection.cursor()
