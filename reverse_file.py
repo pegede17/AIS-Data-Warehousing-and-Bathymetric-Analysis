@@ -4,6 +4,7 @@
 
 # Creating Stack class (LIFO rule)
 from datetime import datetime
+import os
 
 
 class Stack:
@@ -38,10 +39,13 @@ class Stack:
 
 
 def reverse_file(filename):
+    # Check if file already exists then avoid doing it again
+    if (os.path.isfile('/home/newVol/data/r_' + filename)):
+        return
 
     S = Stack()
-    original = open("/home/ubuntu/data/" + filename)
-    output = open("/home/ubuntu/data/r_" + filename, 'w')
+    original = open("/home/newVol/data/" + filename)
+    output = open("/home/newVol/data/r_" + filename, 'w')
 
     firstLine = True
 
