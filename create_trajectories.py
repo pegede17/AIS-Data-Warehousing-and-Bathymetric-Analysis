@@ -21,11 +21,12 @@ import multiprocessing as mp
 pd.set_option('display.max_columns', 50)
 np.set_printoptions('threshold', 2000)
 np.random.seed(0)
+pyproj.datadir.set_data_dir("C:/Users/AliOz/miniconda3/Library/share/proj")
 
 # File specific settings
 filtered_points = 5
 hampel_filter = HampelFilter(window_length=filtered_points)
-version = 4
+version = 6
 
 def set_global(args):
     global trajectories_per_ship

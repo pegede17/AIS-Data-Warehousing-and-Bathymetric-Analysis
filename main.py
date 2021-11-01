@@ -23,4 +23,6 @@ listOfDates = [20210727, 20210728, 20210729]
 
 if __name__ == '__main__':
     for date in listOfDates:
+        print("Starting " + str(date))
         create_trajectories(date)
+        print("Finished " + str(date))
