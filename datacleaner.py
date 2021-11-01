@@ -86,7 +86,7 @@ def clean_data(config, date_id):
                  'processed_records': 0,
                  'source_system': config["Audit"]["source_system"],
                  'etl_version': config["Audit"]["elt_version"],
-                 'table_name': "fact_ais_clean_v{VERSION}",
+                 'table_name': f"fact_ais_clean_v{VERSION}",
                  'comment': config["Audit"]["comment"]}
 
     audit_id = audit_dimension.insert(audit_obj)
