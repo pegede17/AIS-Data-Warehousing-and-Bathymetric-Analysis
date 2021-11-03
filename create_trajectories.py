@@ -175,12 +175,12 @@ def create_trajectories(date_to_lookup):
     # Function that takes a trajectory collection and creates a filtered set of trajectories
 
     i = 1
-    total = len(gdf_grouped.groups)
-    
+    # total = len(gdf_grouped.groups)
         # print(len(gdf_grouped.get_group(mmsi).columns))
 
     ## Generate a trajectory for each ship
     start_time = datetime.now()
+    print(start_time)
 
     trajectories_per_ship = mp.Manager().dict()
     with concurrent.futures.ProcessPoolExecutor(initializer=set_global, initargs=(trajectories_per_ship,)) as executor:

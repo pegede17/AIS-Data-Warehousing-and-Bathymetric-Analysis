@@ -23,7 +23,7 @@ def get_memory():
 config = configparser.ConfigParser()
 config.read('application.properties')
 
-listOfDates = [20210727, 20210728, 20210729]
+listOfDates = [20211001, 20211002, 20211003]
 
 dates = [
     {
