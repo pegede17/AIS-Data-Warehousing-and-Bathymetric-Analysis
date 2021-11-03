@@ -21,12 +21,12 @@ import multiprocessing as mp
 pd.set_option('display.max_columns', 50)
 np.set_printoptions('threshold', 2000)
 np.random.seed(0)
-pyproj.datadir.set_data_dir("C:/Users/AliOz/miniconda3/Library/share/proj")
+# pyproj.datadir.set_data_dir("C:/Users/AliOz/miniconda3/Library/share/proj")
 
 # File specific settings
 filtered_points = 5
 hampel_filter = HampelFilter(window_length=filtered_points)
-version = 6
+version = 1
 
 def set_global(args):
     global trajectories_per_ship
@@ -113,7 +113,7 @@ def create_trajectories(date_to_lookup):
     # Queries defined
     query = """
     SELECT fact_id, ts_date_id, ship_id, ts_time_id, audit_id, ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat, sog, hour, minute, second, draught
-    FROM fact_ais_clean_v2
+    FROM fact_ais_clean_v1
     INNER JOIN dim_time ON dim_time.time_id = ts_time_id
     WHERE ts_date_id = {}
     """.format(date_to_lookup)
