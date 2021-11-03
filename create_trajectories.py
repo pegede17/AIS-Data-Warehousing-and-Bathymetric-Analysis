@@ -1,124 +1,216 @@
-from datetime import datetime
-from helper_functions import create_audit_dimension, create_tables, create_trajectory_fact_table
-from pygrametl.datasources import SQLSource
-from pygrametl.tables import FactTable
 from pygrametl.datasources import SQLSource, CSVSource
 from pygrametl.tables import Dimension, FactTable
 import pygrametl
 from database_connection import connect_to_local, connect_via_ssh
+import geopandas as gpd
+import movingpandas as mpd
+from shapely.geometry import Point
+from datetime import datetime, timedelta
+from sktime.transformations.series.outlier_detection import HampelFilter
+import numpy as np # linear algebra
+import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+import configparser
+import pyproj
+from datetime import datetime
+from helper_functions import create_audit_dimension, create_tables, create_trajectory_fact_table
+import concurrent.futures
+import multiprocessing as mp
 
-# For interactive work (on ipython) it's easier to work with explicit objects
-# instead of contexts.
+## Configurations
+# Libraries
+pd.set_option('display.max_columns', 50)
+np.set_printoptions('threshold', 2000)
+np.random.seed(0)
+# pyproj.datadir.set_data_dir("C:/Users/AliOz/miniconda3/Library/share/proj")
 
+# File specific settings
+filtered_points = 5
+hampel_filter = HampelFilter(window_length=filtered_points)
+version = 1
 
-def create_trajectories(config):
+def set_global(args):
+    global trajectories_per_ship
+    trajectories_per_ship = args
 
-    version = 1
+def apply_filter_on_trajectories(trajectory_list, filter_func, filter_length):
     trajectories = []
 
-    temp_trajectory = {
-        'ship_id': 0,
-        'time_start_id': 0,
-        'date_start_id': 0,
-        'time_end_id': 0,
-        'date_end_id': 0,
-        'coordinates': "LineString("
-    }
+    for trajectory in trajectory_list:
+        long = trajectory.to_point_gdf().geometry.x
+        lat = trajectory.to_point_gdf().geometry.y
 
-    trajectory_length = 0
+        if (len(long) > filter_length and len(lat) > filter_length):
+            filtered_long = filter_func.fit_transform(long)
+            filtered_lat = filter_func.fit_transform(lat)
 
-    current_ship_id = 0
+            #filtered_long.apply(lambda p: print(p))
+            filtered_result = pd.concat([filtered_long, filtered_lat], axis=1, keys=['long', 'lat']).dropna(axis=0)
 
-    def add_to_trajectory(row):
-        global trajectory_length
-        trajectory_length = trajectory_length + 1
-        temp_trajectory["time_end_id"] = row["ts_time_id"]
-        temp_trajectory["date_end_id"] = row["ts_date_id"]
-        temp_trajectory['coordinates'] = temp_trajectory['coordinates'] + \
-            "," + ((row["coordinate"][6:-1]))
+            test_gdf = gpd.GeoDataFrame(filtered_result.drop(['long', 'lat'], axis=1), crs="EPSG:4326", geometry=gpd.points_from_xy(filtered_result.long, filtered_result.lat))
+            trajectories.append(mpd.Trajectory(test_gdf, 1))
+        else:
+            filtered_result = pd.concat([long, lat], axis=1, keys=['long', 'lat']).dropna(axis=0)
 
-    def create_new_trajectory(row):
-        global trajectory_length
-        trajectory_length = 0
-        temp_trajectory["ship_id"] = row["ship_id"]
-        temp_trajectory["time_start_id"] = row["ts_time_id"]
-        temp_trajectory["date_start_id"] = row["ts_date_id"]
-        temp_trajectory["coordinates"] = "LineString(" + \
-            row["coordinate"][6:-1]
+            test_gdf = gpd.GeoDataFrame(filtered_result.drop(['long', 'lat'], axis=1), crs="EPSG:4326", geometry=gpd.points_from_xy(filtered_result.long, filtered_result.lat))
+            trajectories.append(mpd.Trajectory(test_gdf, 1))
+        
+    trajectory_collection = mpd.TrajectoryCollection(trajectories, 't')
 
-    def end_trajectory():
-        global trajectory_length
-        temp_trajectory['coordinates'] = temp_trajectory['coordinates'] + ")"
-        if(trajectory_length > 4):
-            trajectories.append(temp_trajectory.copy())
-        temp_trajectory.clear()
+    return trajectory_collection
 
+def debug_apply(list):
+    mmsi, data = list
+
+    if (len(data) < 2):
+        return
+    
+    # print("("+str(mmsi)+"):" + str(i) + ' ud af ' + str(total))
+
+    # time_now = datetime.now()
+    # 0.5 knot => meter /sec
+    speed_limit = 0.971922246 
+    data['speed'] = data['sog']
+    trajectory = mpd.Trajectory(data, mmsi)
+    # time_next = (time_now - datetime.now()).total_seconds()
+    # print("Trajectory creation: " + str(time_next))
+
+    if not (trajectory.is_valid()):
+        return
+
+    ## Define and split trajectories based on idle duration
+    # time_now = datetime.now()
+    stops = mpd.SpeedSplitter(trajectory).split(duration=timedelta(minutes=5), speed=speed_limit)
+    # time_next = (time_now - datetime.now()).total_seconds()
+    # print("Stop creation: " + str(time_next))
+    # print("Stops: " + str(len(stops)))
+
+    ## Simplify trajectories using douglas peucker algorithm
+    # time_now = datetime.now()
+    traj_simplified = mpd.DouglasPeuckerGeneralizer(stops).generalize(tolerance=0.0001)
+    # time_next = (time_now - datetime.now()).total_seconds()
+    # print("Simplifying: " + str(time_next))
+
+    ## Apply Hampel filter on trajectories
+    # time_now = datetime.now()
+    filtered_trajectories = apply_filter_on_trajectories(traj_simplified, hampel_filter, filtered_points)
+    # time_next = (time_now - datetime.now()).total_seconds()
+    # print("Filtering: " + str(time_next))
+
+    trajectories_per_ship[mmsi] = filtered_trajectories
+    # print("--------")
+
+def create_trajectories(date_to_lookup):
+    # Config settings
+    config = configparser.ConfigParser()
+    config.read('application.properties')
+    
     if(config["Environment"]["development"] == "True"):
         connection = connect_via_ssh()
     else:
         connection = connect_to_local()
     dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
 
+    # Queries defined
     query = """
-    SELECT fact_id, ts_date_id, ship_id, ts_time_id, audit_id, ST_AsText(coordinate) as coordinate, sog from fact_ais_clean_v1 
-        WHERE "audit_id" = 18 ORDER BY ship_id, ts_date_id, ts_time_id ASC;
-    """
+    SELECT fact_id, ts_date_id, ship_id, ts_time_id, audit_id, ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat, sog, hour, minute, second, draught
+    FROM fact_ais_clean_v1
+    INNER JOIN dim_time ON dim_time.time_id = ts_time_id
+    WHERE ts_date_id = {}
+    """.format(date_to_lookup)
+
+    date_query = """
+    SELECT year, month, day
+    FROM dim_date
+    where date_id = {}
+    """.format(date_to_lookup)
 
     create_query = """
-    CREATE TABLE IF NOT EXISTS fact_trajectory_clean_v{} AS 
-    TABLE fact_trajectory 
-    WITH NO DATA;
+    CREATE TABLE IF NOT EXISTS fact_trajectory_clean_v{} (LIKE fact_trajectory INCLUDING ALL);
     """.format(version)
 
     cur = connection.cursor()
     cur.execute(create_query)
 
-    ais_source = SQLSource(connection=connection, query=query)
+    data = SQLSource(connection=connection, query=query)
+    data_date = SQLSource(connection=connection, query=date_query)
 
     trajectory_fact_table = create_trajectory_fact_table("fact_trajectory_clean_v{}".format(version))
 
     audit_dimension = create_audit_dimension()
 
     audit_obj = {'timestamp': datetime.now(),
-                 'source_system': config["Audit"]["source_system"],
-                 'etl_version': config["Audit"]["elt_version"],
-                 'comment': config["Audit"]["comment"],
-                 'table_name': trajectory_fact_table.name,
-                 'processed_records': 0}
+                    'source_system': config["Audit"]["source_system"],
+                    'etl_version': config["Audit"]["elt_version"],
+                    'comment': config["Audit"]["comment"],
+                    'table_name': trajectory_fact_table.name,
+                    'processed_records': 0}
+
+    data_date_df = pd.DataFrame(data_date)
+
+    data_trajectories = pd.DataFrame(data)
+    data_trajectories['year'] = int(data_date_df['year'])
+    data_trajectories['month'] = int(data_date_df['month'])
+    data_trajectories['day'] = int(data_date_df['day'])
+
+    print(list(data_trajectories.columns))
+
+    data_trajectories['t'] = pd.to_datetime(data_trajectories[['year', 'month', 'day', 'hour', 'minute', 'second']])
+    data_trajectories = data_trajectories.set_index('t')
+
+
+    gdf = gpd.GeoDataFrame(data_trajectories, crs='EPSG:4326', geometry=gpd.points_from_xy(data_trajectories.long, data_trajectories.lat))
+    gdf_grouped = gdf.groupby(by=['ship_id'])
+    print("Finished grouping")
+    print(len(gdf_grouped))
+
+    # Generate draught for each ship
+    draught_per_ship = {}
+    for mmsi, data in gdf_grouped:
+        draughts = data.draught.value_counts().reset_index(name='Count').sort_values(['Count'], ascending=False)['index'].tolist()
+        if (len(draughts) > 0):
+            draught_per_ship[mmsi] = draughts
+        else:
+            draught_per_ship[mmsi] = None
+
+    # Function that takes a trajectory collection and creates a filtered set of trajectories
+
+    i = 1
+    # total = len(gdf_grouped.groups)
+        # print(len(gdf_grouped.get_group(mmsi).columns))
+
+    ## Generate a trajectory for each ship
+    start_time = datetime.now()
+    print(start_time)
+
+    trajectories_per_ship = mp.Manager().dict()
+    with concurrent.futures.ProcessPoolExecutor(initializer=set_global, initargs=(trajectories_per_ship,)) as executor:
+        executor.map(debug_apply, gdf_grouped)
+
+    print((start_time - datetime.now()).total_seconds())
+
+    print(len(trajectories_per_ship))
 
     audit_id = audit_dimension.insert(audit_obj)
 
-    i = 0
-    isCreatingRoute = False
+    for ship in trajectories_per_ship:
+        for traj in trajectories_per_ship[ship]:
+            trajectory_dto = {
+                'ship_id': ship,
+                'duration': traj.get_duration().total_seconds(),
+                'time_start_id': int(traj.get_start_time().strftime("%H%M%S")),
+                'date_start_id': int(traj.get_start_time().strftime("%Y%m%d")),
+                'time_end_id': int(traj.get_end_time().strftime("%H%M%S")),
+                'date_end_id': int(traj.get_end_time().strftime("%Y%m%d")),
+                'linestring': str(traj.to_linestring()),
+                'length_meters': traj.get_length(),
+                'audit_id': audit_id,
+                'draught': draught_per_ship[ship]
+                }
 
-    for row in ais_source:
-        i = i + 1
-        if (i % 100000 == 0):
-            #break
-            print("Reached milestone: " + str(i))
-            print(datetime.now())
-        sog = row["sog"]
-        if(sog != 0 and sog != None):
-            if(not isCreatingRoute):
-                current_ship_id = row["ship_id"]
-                create_new_trajectory(row)
-                isCreatingRoute = True
-            else:
-                if(current_ship_id == row["ship_id"]):
-                    add_to_trajectory(row)
-                else:
-                    end_trajectory()
-                    create_new_trajectory(row)
-        else:
-            if(isCreatingRoute):
-                end_trajectory()
-                isCreatingRoute = False
+            trajectory_fact_table.insert(trajectory_dto)
 
-    for traj in trajectories:
-        traj["audit_id"] = audit_id
-        trajectory_fact_table.insert(traj)
 
-    audit_obj['processed_records'] = len(trajectories)
+    audit_obj['processed_records'] = len(trajectories_per_ship)
     audit_obj['audit_id'] = audit_id
     audit_dimension.update(audit_obj)
 

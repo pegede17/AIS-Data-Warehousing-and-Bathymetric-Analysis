@@ -63,7 +63,6 @@ def create_tables():
             width SMALLINT,
             length SMALLINT,
             callsign VARCHAR(25),
-            draught DOUBLE PRECISION,
             size_a DOUBLE PRECISION,
             size_b DOUBLE PRECISION,
             size_c DOUBLE PRECISION,
@@ -125,6 +124,7 @@ def create_tables():
             type_of_position_fixing_device_id INTEGER NOT NULL DEFAULT 0,
             ship_type_id INTEGER NOT NULL DEFAULT 0,
             coordinate geography(point) NOT NULL,
+            draught DOUBLE PRECISION,
             rot DOUBLE PRECISION,
             sog DOUBLE PRECISION,
             cog DOUBLE PRECISION,
@@ -225,8 +225,11 @@ INSERT INTO public.dim_date(
             date_start_id INTEGER NOT NULL,
             time_end_id INTEGER NOT NULL,
             date_end_id INTEGER NOT NULL,
-            coordinates geometry(linestring) NOT NULL,
+            linestring geometry(linestring) NOT NULL,
+            length_meters FLOAT NOT NULL,
+            duration INTEGER NOT NULL,
             audit_id INTEGER NOT NULL,
+            draught FLOAT[2],
 
             FOREIGN KEY (audit_id)
                 REFERENCES dim_audit (audit_id)
@@ -268,7 +271,7 @@ def create_fact_table(pgbulkloader, tb_name):
         name=tb_name,
         keyrefs=['eta_date_id', 'eta_time_id', 'ship_id', 'ts_date_id', 'ts_time_id', 'data_source_type_id', 'destination_id',
                  'type_of_mobile_id', 'navigational_status_id', 'cargo_type_id', 'type_of_position_fixing_device_id', 'ship_type_id', 'audit_id'],
-        measures=['coordinate', 'rot', 'sog', 'cog', 'heading'],
+        measures=['coordinate', 'draught', 'rot', 'sog', 'cog', 'heading'],
         bulkloader=pgbulkloader,
         fieldsep=',',
         rowsep='\\r\n',
@@ -351,11 +354,13 @@ def create_ship_dimension():
     return CachedDimension(
         name='dim_ship',
         key='ship_id',
-        attributes=['MMSI', 'IMO', 'Name', 'Width', 'Length', 'Callsign',
-                    'Draught', 'size_a', 'size_b', 'size_c', 'size_d'],
+        attributes=['mmsi', 'IMO', 'Name', 'Width', 'Length',
+                    'Callsign', 'size_a', 'size_b', 'size_c', 'size_d'],
         cachefullrows=True,
         prefill=True,
-        cacheoninsert=True
+        cacheoninsert=True,
+        lookupatts=['mmsi'],
+        size=0
     )
 
 
@@ -387,5 +392,5 @@ def create_trajectory_fact_table(tb_name):
         name=tb_name,
         keyrefs=['ship_id', 'time_start_id', 'date_start_id',
                  'time_end_id', 'date_end_id', 'audit_id'],
-        measures=['coordinates']
+        measures=['linestring', 'duration', 'length_meters', 'draught']
     )

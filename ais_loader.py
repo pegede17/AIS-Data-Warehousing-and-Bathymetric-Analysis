@@ -26,9 +26,11 @@ def load_data_into_db(config):
     try:
         if (config["Database"]["initialize"] == "True"):
             # Create Database
+            print("Creating database")
             connection = create_database()
 
             # Create Tables
+            print("Creating tables")
             commands = create_tables()
 
             cur = connection.cursor()
@@ -91,7 +93,8 @@ def load_data_into_db(config):
 
     audit_dimension = create_audit_dimension()
 
-    fact_table = create_fact_table(pgbulkloader=pgbulkloader, tb_name="fact_ais")
+    fact_table = create_fact_table(
+        pgbulkloader=pgbulkloader, tb_name="fact_ais")
 
     audit_obj = {'timestamp': datetime.now(),
                  'processed_records': 0,
@@ -116,12 +119,10 @@ def load_data_into_db(config):
             row[value] = validateToNull(val)
 
     ais_file_handle = open(
-        config["Environment"]["FILE_PATH"], 'r')
+        config["Environment"]["FILE_PATH"] + config["Environment"]["FILE_NAME"], 'r')
     ais_source = CSVSource(f=ais_file_handle, delimiter=',')
 
     transformeddata = TransformingSource(ais_source, transformNulls)
-
-    # inputdata = ProcessSource(transformeddata, batchsize=500, queuesize=10)
 
     i = 0
     for row in transformeddata:
@@ -131,11 +132,15 @@ def load_data_into_db(config):
 
         fact = {}
         fact["audit_id"] = audit_id
+
+        row['MMSI'] = int(row['MMSI'])
+
         fact["ship_id"] = ship_dimension.ensure(row, {
             'size_a': 'A',
             'size_b': 'B',
             'size_c': 'C',
             'size_d': 'D',
+            'mmsi': 'MMSI'
         })
 
         fact["ship_type_id"] = ship_type_dimension.ensure(row, {
@@ -175,6 +180,7 @@ def load_data_into_db(config):
             'ts_date_id': convertTimestampToDateId(row["# Timestamp"]),
             'ts_time_id': convertTimestampToTimeId(row["# Timestamp"]),
             'coordinate': ("POINT(" + row["Longitude"] + " " + row["Latitude"] + ")"),
+            'draught': row["Draught"],
             'rot': row["ROT"],
             'sog': row["SOG"],
             'cog': row["COG"],
