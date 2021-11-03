@@ -7,19 +7,6 @@ from reverse_file import reverse_file
 from create_trajectories import create_trajectories
 import resource
 
-def memory_limit():
-    soft, hard = resource.getrlimit(resource.RLIMIT_AS)
-    resource.setrlimit(resource.RLIMIT_AS, (get_memory() * 1024 / 2, hard))
-
-def get_memory():
-    with open('/proc/meminfo', 'r') as mem:
-        free_memory = 0
-        for i in mem:
-            sline = i.split()
-            if str(sline[0]) in ('MemFree:', 'Buffers:', 'Cached:'):
-                free_memory += int(sline[1])
-    return free_memory
-
 config = configparser.ConfigParser()
 config.read('application.properties')
 
@@ -62,7 +49,7 @@ dates = [
 ## Trajectory Creation
 
 if __name__ == '__main__':
-    memory_limit() # Limitates maximun memory usage to half
+    resource.setrlimit(resource.RLIMIT_AS, (1000, 1000))
     
     for date in listOfDates:
         print("Starting " + str(date))
