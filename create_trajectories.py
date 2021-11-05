@@ -89,7 +89,6 @@ def create_trajectories(date_to_lookup, config):
     FROM fact_ais_clean_v1
     INNER JOIN dim_time ON dim_time.time_id = ts_time_id
     WHERE ts_date_id = {}
-    LIMIT 50000
     """.format(date_to_lookup)
 
     date_query = """
