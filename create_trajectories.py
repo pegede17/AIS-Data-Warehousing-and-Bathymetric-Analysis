@@ -133,7 +133,8 @@ def create_trajectories(date_to_lookup, config):
 
     # TODO-Future: Research faster way to group. Maybe this? https://stackoverflow.com/questions/38143717/groupby-in-python-pandas-fast-way
     gdf_grouped = gdf.groupby(by=['ship_id'])
-
+    del gdf
+    
     print("Finished grouping and converting to gdf! Size: ", len(gdf_grouped))
     t_dataframe_creation_stop = perf_counter()
 
