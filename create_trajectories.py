@@ -59,28 +59,20 @@ def apply_trajectory_manipulation(list):
     if (len(qr_cleaned_data) <= required_no_points):
         return
     
-    t_trajmanipulation_trajectory_start = perf_counter()
     qr_cleaned_data['speed'] = qr_cleaned_data['sog']
     trajectory = mpd.Trajectory(qr_cleaned_data, mmsi)
-    t_trajmanipulation_trajectory_stop = perf_counter()
 
     if not (trajectory.is_valid()):
         return
 
     ## Define and split trajectories based on idle duration
-    t_trajmanipulation_speedsplit_start = perf_counter()
     stops = mpd.SpeedSplitter(trajectory).split(duration=timedelta(minutes=5), speed=speed_limit)
-    t_trajmanipulation_speedsplit_stop = perf_counter()
 
     ## Simplify trajectories using douglas peucker algorithm
-    t_trajmanipulation_simplify_start = perf_counter()
     traj_simplified = mpd.DouglasPeuckerGeneralizer(stops).generalize(tolerance=0.0001)
-    t_trajmanipulation_simplify_stop = perf_counter()
 
     ## Apply Hampel filter on trajectories
-    t_trajmanipulation_hampel_start = perf_counter()
     filtered_trajectories = apply_filter_on_trajectories(traj_simplified, hampel_filter, required_no_points)
-    t_trajmanipulation_hampel_stop = perf_counter()
 
     trajectories_per_ship[mmsi] = filtered_trajectories
 
