@@ -5,7 +5,7 @@ from database_connection import connect_to_local, connect_via_ssh
 import geopandas as gpd
 import movingpandas as mpd
 from shapely.geometry import Point
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from sktime.transformations.series.outlier_detection import HampelFilter
 import numpy as np # linear algebra
 import pandas as pd # qr_cleaned_data processing, CSV file I/O (e.g. pd.read_csv)
@@ -15,6 +15,7 @@ from helper_functions import create_audit_dimension, create_tables, create_traje
 import concurrent.futures
 import multiprocessing as mp
 from time import perf_counter
+import json
 
 ## Configurations and global variables
 np.random.seed(0)
@@ -196,7 +197,27 @@ def create_trajectories(date_to_lookup, config):
 
             trajectory_fact_table.insert(trajectory_dto)
     
+    t_db_traj_insertion_stop = perf_counter()
 
+    # Duration calculation to format: (H:M:S)
+    t_query_execution_duration = str(timedelta(seconds=(t_query_execution_stop - t_query_execution_start)))
+    t_dataframe_creation_duration = str(timedelta(seconds=(t_dataframe_creation_stop - t_dataframe_creation_start)))
+    t_draught_calculation_duration = str(timedelta(seconds=(t_draught_calculation_stop - t_draught_calculation_start)))
+    t_multiprocessing_duration = str(timedelta(seconds=(t_multiprocessing_stop - t_multiprocessing_start)))
+    t_db_traj_insertion_duration = str(timedelta(seconds=(t_db_traj_insertion_stop - t_db_traj_insertion_start)))
+
+    t_json_object = json.dumps({
+        'data_date': date_to_lookup,
+        'query_exec': t_query_execution_duration,
+        'df_create': t_dataframe_creation_duration,
+        'draught_calc': t_draught_calculation_duration,
+        'traj_process': t_multiprocessing_duration,
+        'traj_insert': t_db_traj_insertion_duration
+    })
+
+    print(t_json_object)
+
+    audit_obj['comment'] = t_json_object
     audit_obj['processed_records'] = len(trajectories_per_ship)
     audit_obj['audit_id'] = audit_id
     audit_dimension.update(audit_obj)
@@ -206,21 +227,3 @@ def create_trajectories(date_to_lookup, config):
 
     # Close connections
     connection.close()
-    t_db_traj_insertion_stop = perf_counter()
-
-    t_query_execution_duration = str(timedelta(seconds=(t_query_execution_stop - t_query_execution_start)))
-    t_dataframe_creation_duration = str(timedelta(seconds=(t_dataframe_creation_stop - t_dataframe_creation_start)))
-    t_draught_calculation_duration = str(timedelta(seconds=(t_draught_calculation_stop - t_draught_calculation_start)))
-    t_multiprocessing_duration = str(timedelta(seconds=(t_multiprocessing_stop - t_multiprocessing_start)))
-    t_db_traj_insertion_duration = str(timedelta(seconds=(t_db_traj_insertion_stop - t_db_traj_insertion_start)))
-
-    t_print = """
-    #### Trajectory creation details
-    # Date: {}
-    # Query execution: {}
-    # Draught calculation: {}
-    # Trajectory processing (multi): {}
-    # Trajectory insertion to db: {}
-    """.format(t_query_execution_duration, t_dataframe_creation_duration, t_draught_calculation_duration, t_multiprocessing_duration, t_db_traj_insertion_duration)
-
-    print(t_print)
