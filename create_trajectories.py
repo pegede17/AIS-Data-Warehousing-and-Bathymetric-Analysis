@@ -11,10 +11,10 @@ import numpy as np # linear algebra
 import pandas as pd # qr_cleaned_data processing, CSV file I/O (e.g. pd.read_csv)
 import configparser
 import pyproj
-from datetime import datetime
 from helper_functions import create_audit_dimension, create_tables, create_trajectory_fact_table
 import concurrent.futures
 import multiprocessing as mp
+from time import perf_counter
 
 ## Configurations and global variables
 np.random.seed(0)
@@ -38,7 +38,6 @@ def apply_filter_on_trajectories(trajectory_list, filter_func, filter_length):
             filtered_long = filter_func.fit_transform(long)
             filtered_lat = filter_func.fit_transform(lat)
 
-            #filtered_long.apply(lambda p: print(p))
             filtered_result = pd.concat([filtered_long, filtered_lat], axis=1, keys=['long', 'lat']).dropna(axis=0)
 
             test_gdf = gpd.GeoDataFrame(filtered_result.drop(['long', 'lat'], axis=1), crs="EPSG:4326", geometry=gpd.points_from_xy(filtered_result.long, filtered_result.lat))
@@ -59,20 +58,28 @@ def apply_trajectory_manipulation(list):
     if (len(qr_cleaned_data) <= required_no_points):
         return
     
+    t_trajmanipulation_trajectory_start = perf_counter()
     qr_cleaned_data['speed'] = qr_cleaned_data['sog']
     trajectory = mpd.Trajectory(qr_cleaned_data, mmsi)
+    t_trajmanipulation_trajectory_stop = perf_counter()
 
     if not (trajectory.is_valid()):
         return
 
     ## Define and split trajectories based on idle duration
+    t_trajmanipulation_speedsplit_start = perf_counter()
     stops = mpd.SpeedSplitter(trajectory).split(duration=timedelta(minutes=5), speed=speed_limit)
+    t_trajmanipulation_speedsplit_stop = perf_counter()
 
     ## Simplify trajectories using douglas peucker algorithm
+    t_trajmanipulation_simplify_start = perf_counter()
     traj_simplified = mpd.DouglasPeuckerGeneralizer(stops).generalize(tolerance=0.0001)
+    t_trajmanipulation_simplify_stop = perf_counter()
 
     ## Apply Hampel filter on trajectories
+    t_trajmanipulation_hampel_start = perf_counter()
     filtered_trajectories = apply_filter_on_trajectories(traj_simplified, hampel_filter, required_no_points)
+    t_trajmanipulation_hampel_stop = perf_counter()
 
     trajectories_per_ship[mmsi] = filtered_trajectories
 
@@ -89,6 +96,7 @@ def create_trajectories(date_to_lookup, config):
     FROM fact_ais_clean_v1
     INNER JOIN dim_time ON dim_time.time_id = ts_time_id
     WHERE ts_date_id = {}
+    LIMIT 50000
     """.format(date_to_lookup)
 
     date_query = """
@@ -101,23 +109,17 @@ def create_trajectories(date_to_lookup, config):
     CREATE TABLE IF NOT EXISTS fact_trajectory_clean_v{} (LIKE fact_trajectory INCLUDING ALL);
     """.format(version)
 
+    t_query_execution_start = perf_counter()
+
     cur = connection.cursor()
     cur.execute(create_query)
 
     qr_cleaned_data = SQLSource(connection=connection, query=query)
     qr_date_details = SQLSource(connection=connection, query=date_query)
 
-    trajectory_fact_table = create_trajectory_fact_table("fact_trajectory_clean_v{}".format(version))
+    t_query_execution_stop = perf_counter()
 
-    audit_dimension = create_audit_dimension()
-
-    audit_obj = {'timestamp': datetime.now(),
-                    'source_system': config["Audit"]["source_system"],
-                    'etl_version': config["Audit"]["elt_version"],
-                    'comment': config["Audit"]["comment"],
-                    'table_name': trajectory_fact_table.name,
-                    'processed_records': 0}
-
+    t_dataframe_creation_start = perf_counter()
     data_date_df = pd.DataFrame(qr_date_details)
     del qr_date_details
 
@@ -139,10 +141,11 @@ def create_trajectories(date_to_lookup, config):
     # TODO-Future: Research faster way to group. Maybe this? https://stackoverflow.com/questions/38143717/groupby-in-python-pandas-fast-way
     gdf_grouped = gdf.groupby(by=['ship_id'])
 
-    print("Finished grouping and converting to gdf")
-    print(len(gdf_grouped))
+    print("Finished grouping and converting to gdf! Size: ", len(gdf_grouped))
+    t_dataframe_creation_stop = perf_counter()
 
     # Generate draught for each ship
+    t_draught_calculation_start = perf_counter()
     draught_per_ship = {}
     for mmsi, qr_cleaned_data in gdf_grouped:
         draughts = qr_cleaned_data.draught.value_counts().reset_index(name='Count').sort_values(['Count'], ascending=False)['index'].tolist()
@@ -150,19 +153,31 @@ def create_trajectories(date_to_lookup, config):
             draught_per_ship[mmsi] = draughts
         else:
             draught_per_ship[mmsi] = None
+    t_draught_calculation_stop = perf_counter()
 
-    start_time = datetime.now()
-    print(start_time)
+    t_multiprocessing_start = perf_counter()
 
     # Multiprocessing
     trajectories_per_ship = mp.Manager().dict()
     with concurrent.futures.ProcessPoolExecutor(initializer=set_global_variables, initargs=(trajectories_per_ship,)) as executor:
         executor.map(apply_trajectory_manipulation, gdf_grouped)
 
-    print((start_time - datetime.now()).total_seconds())
+    t_multiprocessing_stop = perf_counter()
+
+    trajectory_fact_table = create_trajectory_fact_table("fact_trajectory_clean_v{}".format(version))
+
+    audit_dimension = create_audit_dimension()
+
+    audit_obj = {'timestamp': datetime.now(),
+                    'source_system': config["Audit"]["source_system"],
+                    'etl_version': config["Audit"]["elt_version"],
+                    'comment': config["Audit"]["comment"],
+                    'table_name': trajectory_fact_table.name,
+                    'processed_records': 0}
 
     audit_id = audit_dimension.insert(audit_obj)
 
+    t_db_traj_insertion_start = perf_counter() 
     for ship in trajectories_per_ship:
         for traj in trajectories_per_ship[ship]:
             trajectory_dto = {
@@ -180,7 +195,7 @@ def create_trajectories(date_to_lookup, config):
                 }
 
             trajectory_fact_table.insert(trajectory_dto)
-
+    
 
     audit_obj['processed_records'] = len(trajectories_per_ship)
     audit_obj['audit_id'] = audit_id
@@ -191,3 +206,21 @@ def create_trajectories(date_to_lookup, config):
 
     # Close connections
     connection.close()
+    t_db_traj_insertion_stop = perf_counter()
+
+    t_query_execution_duration = str(timedelta(seconds=(t_query_execution_stop - t_query_execution_start)))
+    t_dataframe_creation_duration = str(timedelta(seconds=(t_dataframe_creation_stop - t_dataframe_creation_start)))
+    t_draught_calculation_duration = str(timedelta(seconds=(t_draught_calculation_stop - t_draught_calculation_start)))
+    t_multiprocessing_duration = str(timedelta(seconds=(t_multiprocessing_stop - t_multiprocessing_start)))
+    t_db_traj_insertion_duration = str(timedelta(seconds=(t_db_traj_insertion_stop - t_db_traj_insertion_start)))
+
+    t_print = """
+    #### Trajectory creation details
+    # Date: {}
+    # Query execution: {}
+    # Draught calculation: {}
+    # Trajectory processing (multi): {}
+    # Trajectory insertion to db: {}
+    """.format(t_query_execution_duration, t_dataframe_creation_duration, t_draught_calculation_duration, t_multiprocessing_duration, t_db_traj_insertion_duration)
+
+    print(t_print)
