@@ -393,5 +393,5 @@ def create_trajectory_fact_table(tb_name):
         name=tb_name,
         keyrefs=['ship_id', 'time_start_id', 'date_start_id',
                  'time_end_id', 'date_end_id', 'audit_id'],
-        measures=['linestring', 'duration', 'length_meters', 'draught']
+        measures=['coordinates', 'duration', 'length_meters', 'draught', 'total_points']
     )
