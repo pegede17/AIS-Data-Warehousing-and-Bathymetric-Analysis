@@ -48,10 +48,8 @@ dates = [
 
 ## Trajectory Creation
 
-if __name__ == '__main__':
-    resource.setrlimit(resource.RLIMIT_AS, (1000, 1000))
-    
+if __name__ == '__main__':    
     for date in listOfDates:
         print("Starting " + str(date))
-        create_trajectories(date)
+        create_trajectories(date, config)
         print("Finished " + str(date))

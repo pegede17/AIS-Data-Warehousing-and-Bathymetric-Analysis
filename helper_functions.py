@@ -225,10 +225,11 @@ INSERT INTO public.dim_date(
             date_start_id INTEGER NOT NULL,
             time_end_id INTEGER NOT NULL,
             date_end_id INTEGER NOT NULL,
-            linestring geometry(linestring) NOT NULL,
+            coordinates geometry(linestring) NOT NULL,
             length_meters FLOAT NOT NULL,
             duration INTEGER NOT NULL,
             audit_id INTEGER NOT NULL,
+            total_points INTEGER NOT NULL,
             draught FLOAT[2],
 
             FOREIGN KEY (audit_id)
