@@ -174,6 +174,9 @@ def create_tables():
         )
         """,
         """
+        CREATE INDEX ON fact_ais (ts_date_id);
+        """,
+        """
         INSERT INTO public.dim_time(time_id, hour, minute, second)
         select to_char(second, 'hh24miss')::integer AS time_id,
         extract(hour from second) as Hour, 

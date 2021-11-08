@@ -1,4 +1,5 @@
 from create_database import create_database
+from dansk_farvand import create_dansk_farvand
 from database_connection import connect_to_local, connect_via_ssh
 import psycopg2
 import pygrametl
@@ -32,9 +33,12 @@ def load_data_into_db(config):
             # Create Tables
             print("Creating tables")
             commands = create_tables()
+            dansk_farvand = create_dansk_farvand()
 
             cur = connection.cursor()
             for command in commands:
+                cur.execute(command)
+            for command in dansk_farvand:
                 cur.execute(command)
                 # close communication with the PostgreSQL database server
             cur.close()
