@@ -21,8 +21,9 @@ import json
 np.random.seed(0)
 required_no_points = 5
 hampel_filter = HampelFilter(window_length=required_no_points)
-speed_limit = 0.971922246 # 0.5 knots in metres /sec
-version = 1
+speed_split = 0.971922246 # 0.5 knots in metres /sec
+max_speed = 18.0055556 # 35 knots in metres /sec
+version = 2
 
 def set_global_variables(args):
     global trajectories_per_ship
@@ -41,13 +42,13 @@ def apply_filter_on_trajectories(trajectory_list, filter_func, filter_length):
 
             filtered_result = pd.concat([filtered_long, filtered_lat], axis=1, keys=['long', 'lat']).dropna(axis=0)
 
-            test_gdf = gpd.GeoDataFrame(filtered_result.drop(['long', 'lat'], axis=1), crs="EPSG:4326", geometry=gpd.points_from_xy(filtered_result.long, filtered_result.lat))
-            trajectories.append(mpd.Trajectory(test_gdf, 1))
+            temp_gdf = gpd.GeoDataFrame(filtered_result.drop(['long', 'lat'], axis=1), crs="EPSG:4326", geometry=gpd.points_from_xy(filtered_result.long, filtered_result.lat))
+            trajectories.append(mpd.Trajectory(temp_gdf, 1))
         else:
             filtered_result = pd.concat([long, lat], axis=1, keys=['long', 'lat']).dropna(axis=0)
 
-            test_gdf = gpd.GeoDataFrame(filtered_result.drop(['long', 'lat'], axis=1), crs="EPSG:4326", geometry=gpd.points_from_xy(filtered_result.long, filtered_result.lat))
-            trajectories.append(mpd.Trajectory(test_gdf, 1))
+            temp_gdf = gpd.GeoDataFrame(filtered_result.drop(['long', 'lat'], axis=1), crs="EPSG:4326", geometry=gpd.points_from_xy(filtered_result.long, filtered_result.lat))
+            trajectories.append(mpd.Trajectory(temp_gdf, 1))
         
     trajectory_collection = mpd.TrajectoryCollection(trajectories, 't')
 
@@ -66,7 +67,7 @@ def apply_trajectory_manipulation(list):
         return
 
     ## Define and split trajectories based on idle duration
-    stops = mpd.SpeedSplitter(trajectory).split(duration=timedelta(minutes=5), speed=speed_limit)
+    stops = mpd.SpeedSplitter(trajectory).split(duration=timedelta(minutes=5), speed=speed_split, max_speed=max_speed)
 
     ## Simplify trajectories using douglas peucker algorithm
     traj_simplified = mpd.DouglasPeuckerGeneralizer(stops).generalize(tolerance=0.0001)
@@ -88,7 +89,7 @@ def create_trajectories(date_to_lookup, config):
     SELECT fact_id, ts_date_id, ship_id, ts_time_id, audit_id, ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat, sog, hour, minute, second, draught
     FROM fact_ais_clean_v1
     INNER JOIN dim_time ON dim_time.time_id = ts_time_id
-    WHERE ts_date_id = {}
+    WHERE ts_date_id = {} AND ship_id = 2176
     """.format(date_to_lookup)
 
     date_query = """
