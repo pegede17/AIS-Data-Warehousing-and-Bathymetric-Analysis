@@ -207,8 +207,6 @@ def create_trajectories(date_to_lookup, config):
         'traj_insert': t_db_traj_insertion_duration
     })
 
-    print(t_json_object)
-
     audit_obj['comment'] = t_json_object
     audit_obj['processed_records'] = len(trajectories_per_ship)
     audit_obj['audit_id'] = audit_id
