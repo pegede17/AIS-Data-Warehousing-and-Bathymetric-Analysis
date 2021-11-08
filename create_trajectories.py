@@ -23,7 +23,7 @@ required_no_points = 5
 hampel_filter = HampelFilter(window_length=required_no_points)
 speed_split = 0.971922246 # 0.5 knots in metres /sec
 max_speed = 18.0055556 # 35 knots in metres /sec
-version = 2
+version = 1
 
 def set_global_variables(args):
     global trajectories_per_ship
@@ -89,7 +89,7 @@ def create_trajectories(date_to_lookup, config):
     SELECT fact_id, ts_date_id, ship_id, ts_time_id, audit_id, ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat, sog, hour, minute, second, draught
     FROM fact_ais_clean_v1
     INNER JOIN dim_time ON dim_time.time_id = ts_time_id
-    WHERE ts_date_id = {} AND ship_id = 2176
+    WHERE ts_date_id = {}
     """.format(date_to_lookup)
 
     date_query = """
