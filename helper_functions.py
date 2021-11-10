@@ -234,6 +234,7 @@ INSERT INTO public.dim_date(
             audit_id INTEGER NOT NULL,
             total_points INTEGER NOT NULL,
             draught FLOAT[2],
+            ship_type_id INTEGER NOT NULL DEFAULT 0,
 
             FOREIGN KEY (audit_id)
                 REFERENCES dim_audit (audit_id)
@@ -395,6 +396,6 @@ def create_trajectory_fact_table(tb_name):
     return FactTable(
         name=tb_name,
         keyrefs=['ship_id', 'time_start_id', 'date_start_id',
-                 'time_end_id', 'date_end_id', 'audit_id'],
+                 'time_end_id', 'date_end_id', 'audit_id', 'ship_type_id'],
         measures=['coordinates', 'duration', 'length_meters', 'draught', 'total_points']
     )

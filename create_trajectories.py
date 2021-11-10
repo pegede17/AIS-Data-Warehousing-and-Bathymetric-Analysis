@@ -86,10 +86,11 @@ def create_trajectories(date_to_lookup, config):
 
     # Queries defined
     query = """
-    SELECT fact_id, ts_date_id, ship_id, ts_time_id, audit_id, ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat, sog, hour, minute, second, draught
+    SELECT ship_type_id, ts_date_id, ship_id, ts_time_id, audit_id, ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat, sog, hour, minute, second, draught
     FROM fact_ais_clean_v1
     INNER JOIN dim_time ON dim_time.time_id = ts_time_id
     WHERE ts_date_id = {}
+    LIMIT 1000
     """.format(date_to_lookup)
 
     date_query = """
@@ -149,6 +150,11 @@ def create_trajectories(date_to_lookup, config):
             draught_per_ship[mmsi] = None
     t_draught_calculation_stop = perf_counter()
 
+    # Create dictionary with ship type id based on their MMSI
+    shiptype_based_on_mmsi = {}
+    for mmsi, qr_cleaned_data in gdf_grouped:
+        shiptype_based_on_mmsi[mmsi] = qr_cleaned_data['ship_type_id']
+    
     t_multiprocessing_start = perf_counter()
 
     # Multiprocessing
@@ -185,7 +191,8 @@ def create_trajectories(date_to_lookup, config):
                 'length_meters': traj.get_length(),
                 'total_points': traj.size(),
                 'audit_id': audit_id,
-                'draught': draught_per_ship[ship]
+                'draught': draught_per_ship[ship],
+                'ship_type_id': shiptype_based_on_mmsi[ship]
                 }
 
             trajectory_fact_table.insert(trajectory_dto)
