@@ -90,7 +90,7 @@ def create_trajectories(date_to_lookup, config):
     FROM fact_ais_clean_v1
     INNER JOIN dim_time ON dim_time.time_id = ts_time_id
     WHERE ts_date_id = {}
-    LIMIT 1000
+    LIMIT 50000
     """.format(date_to_lookup)
 
     date_query = """
@@ -153,7 +153,8 @@ def create_trajectories(date_to_lookup, config):
     # Create dictionary with ship type id based on their MMSI
     shiptype_based_on_mmsi = {}
     for mmsi, qr_cleaned_data in gdf_grouped:
-        shiptype_based_on_mmsi[mmsi] = qr_cleaned_data['ship_type_id']
+        type = qr_cleaned_data.ship_type_id.value_counts().reset_index(name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]
+        shiptype_based_on_mmsi[mmsi] = type
     
     t_multiprocessing_start = perf_counter()
 
@@ -192,7 +193,7 @@ def create_trajectories(date_to_lookup, config):
                 'total_points': traj.size(),
                 'audit_id': audit_id,
                 'draught': draught_per_ship[ship],
-                'ship_type_id': shiptype_based_on_mmsi[ship]
+                'ship_type_id': int(shiptype_based_on_mmsi[ship])
                 }
 
             trajectory_fact_table.insert(trajectory_dto)
