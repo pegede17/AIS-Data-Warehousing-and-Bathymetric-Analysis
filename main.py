@@ -186,7 +186,7 @@ for date in dates:
     clean_data(config, date["year"] + date["month"] + date["date"])
 
     print("Starting " + date["year"] + date["month"] + date["date"])
-    create_trajectories(date, config)
+    create_trajectories(date["year"] + date["month"] + date["date"], config)
     print("Finished " + date["year"] + date["month"] + date["date"])
 
 
