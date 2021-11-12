@@ -44,12 +44,12 @@ def apply_filter_on_trajectories(trajectory_list, filter_func, filter_length):
 
             temp_gdf = gpd.GeoDataFrame(filtered_result.drop(['long', 'lat'], axis=1), crs="EPSG:4326", geometry=gpd.points_from_xy(filtered_result.long, filtered_result.lat))
             trajectories.append(mpd.Trajectory(temp_gdf, 1))
-        else:
-            print("Can't apply hampel filter, length of lat + long is not >= 5")
-            filtered_result = pd.concat([long, lat], axis=1, keys=['long', 'lat']).dropna(axis=0)
+        # else:
+        #     print("Can't apply hampel filter, length of lat + long is not >= 5")
+        #     filtered_result = pd.concat([long, lat], axis=1, keys=['long', 'lat']).dropna(axis=0)
 
-            temp_gdf = gpd.GeoDataFrame(filtered_result.drop(['long', 'lat'], axis=1), crs="EPSG:4326", geometry=gpd.points_from_xy(filtered_result.long, filtered_result.lat))
-            trajectories.append(mpd.Trajectory(temp_gdf, 1))
+        #     temp_gdf = gpd.GeoDataFrame(filtered_result.drop(['long', 'lat'], axis=1), crs="EPSG:4326", geometry=gpd.points_from_xy(filtered_result.long, filtered_result.lat))
+        #     trajectories.append(mpd.Trajectory(temp_gdf, 1))
         
     trajectory_collection = mpd.TrajectoryCollection(trajectories, 't')
 
