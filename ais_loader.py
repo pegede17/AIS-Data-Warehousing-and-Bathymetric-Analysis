@@ -129,10 +129,9 @@ def load_data_into_db(config):
     transformeddata = TransformingSource(ais_source, transformNulls)
 
     i = 0
+    print("Starting loading" + str(datetime.now()))
     for row in transformeddata:
         i = i + 1
-        if (i % 10000 == 0):
-            print(str(datetime.now()) + " Reached milestone: " + str(i))
 
         fact = {}
         fact["audit_id"] = audit_id
