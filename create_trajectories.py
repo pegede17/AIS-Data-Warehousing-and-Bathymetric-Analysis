@@ -70,13 +70,13 @@ def apply_trajectory_manipulation(list):
     ## Define and split trajectories based on idle duration
     stops = mpd.SpeedSplitter(trajectory).split(duration=timedelta(minutes=5), speed=speed_split, max_speed=max_speed)
 
-    ## Simplify trajectories using douglas peucker algorithm
-    traj_simplified = mpd.DouglasPeuckerGeneralizer(stops).generalize(tolerance=0.0001)
-
     ## Apply Hampel filter on trajectories
-    filtered_trajectories = apply_filter_on_trajectories(traj_simplified, hampel_filter, required_no_points)
+    filtered_trajectories = apply_filter_on_trajectories(stops, hampel_filter, required_no_points)
 
-    trajectories_per_ship[mmsi] = filtered_trajectories
+    ## Simplify trajectories using douglas peucker algorithm
+    traj_simplified = mpd.DouglasPeuckerGeneralizer(filtered_trajectories).generalize(tolerance=0.0001)
+
+    trajectories_per_ship[mmsi] = traj_simplified
 
 def create_trajectories(date_to_lookup, config):    
     if(config["Environment"]["development"] == "True"):
