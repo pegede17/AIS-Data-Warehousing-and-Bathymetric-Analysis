@@ -110,6 +110,7 @@ def clean_data(config, date_id):
         FROM fact_ais INNER JOIN public.dim_ship on fact_ais.ship_id = dim_ship.ship_id, public.danish_waters
         WHERE 
             ts_date_id = {date_id}
+            AND draught < 28.5
             AND mmsi > 99999999
             AND mmsi < 1000000000
             AND ST_Contains(geom ,coordinate::geometry);
