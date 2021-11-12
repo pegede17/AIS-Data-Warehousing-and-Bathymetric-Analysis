@@ -57,11 +57,18 @@ def apply_filter_on_trajectories(trajectory_list, filter_func, filter_length):
 def apply_trajectory_manipulation(list):
     mmsi, qr_cleaned_data = list
 
-    if (len(qr_cleaned_data) <= required_no_points):
-        return
+    # if (len(qr_cleaned_data) <= required_no_points):
+    #     return
     
     qr_cleaned_data['speed'] = qr_cleaned_data['sog']
     trajectory = mpd.Trajectory(qr_cleaned_data, mmsi)
+
+    print("Size: ")
+    print(int(trajectory.size()))
+
+    if (trajectory.size() <= required_no_points):
+        print("Trajectory doesnt have enough points")
+        return
 
     if not (trajectory.is_valid()):
         return
