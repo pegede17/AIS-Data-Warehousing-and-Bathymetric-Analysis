@@ -91,6 +91,7 @@ def create_trajectories(date_to_lookup, config):
     FROM fact_ais_clean_v1
     INNER JOIN dim_time ON dim_time.time_id = ts_time_id
     WHERE ts_date_id = {}
+    LIMIT 1000
     """.format(date_to_lookup)
 
     date_query = """
@@ -99,14 +100,14 @@ def create_trajectories(date_to_lookup, config):
     where date_id = {}
     """.format(date_to_lookup)
 
-    create_query = """
-    CREATE TABLE IF NOT EXISTS fact_trajectory_clean_v{} (LIKE fact_trajectory INCLUDING ALL);
-    """.format(version)
+    # create_query = """
+    # CREATE TABLE IF NOT EXISTS fact_trajectory_clean_v{} (LIKE fact_trajectory INCLUDING ALL);
+    # """.format(version)
 
     t_query_execution_start = perf_counter()
 
-    cur = connection.cursor()
-    cur.execute(create_query)
+    # cur = connection.cursor()
+    # cur.execute(create_query)
 
     qr_cleaned_data = SQLSource(connection=connection, query=query)
     qr_date_details = SQLSource(connection=connection, query=date_query)
@@ -165,7 +166,7 @@ def create_trajectories(date_to_lookup, config):
 
     t_multiprocessing_stop = perf_counter()
 
-    trajectory_fact_table = create_trajectory_fact_table("fact_trajectory_clean_v{}".format(version))
+    trajectory_fact_table = create_trajectory_fact_table("fact_trajectory")
 
     audit_dimension = create_audit_dimension()
 
