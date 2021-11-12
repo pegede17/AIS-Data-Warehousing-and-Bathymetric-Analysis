@@ -10,7 +10,7 @@ import resource
 config = configparser.ConfigParser()
 config.read('application.properties')
 
-listOfDates = [20211001, 20211002, 20211003]
+listOfDates = [20211001]
 
 dates = [
     {

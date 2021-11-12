@@ -23,7 +23,7 @@ required_no_points = 5
 hampel_filter = HampelFilter(window_length=required_no_points)
 speed_split = 0.971922246 # 0.5 knots in metres /sec
 max_speed = 18.0055556 # 35 knots in metres /sec
-version = 1
+version = 2
 
 def set_global_variables(args):
     global trajectories_per_ship
@@ -36,7 +36,7 @@ def apply_filter_on_trajectories(trajectory_list, filter_func, filter_length):
         long = trajectory.to_point_gdf().geometry.x
         lat = trajectory.to_point_gdf().geometry.y
 
-        if (len(long) > filter_length and len(lat) > filter_length):
+        if (len(long) >= filter_length and len(lat) >= filter_length):
             filtered_long = filter_func.fit_transform(long)
             filtered_lat = filter_func.fit_transform(lat)
 
@@ -45,6 +45,7 @@ def apply_filter_on_trajectories(trajectory_list, filter_func, filter_length):
             temp_gdf = gpd.GeoDataFrame(filtered_result.drop(['long', 'lat'], axis=1), crs="EPSG:4326", geometry=gpd.points_from_xy(filtered_result.long, filtered_result.lat))
             trajectories.append(mpd.Trajectory(temp_gdf, 1))
         else:
+            print("Can't apply hampel filter, length of lat + long is not >= 5")
             filtered_result = pd.concat([long, lat], axis=1, keys=['long', 'lat']).dropna(axis=0)
 
             temp_gdf = gpd.GeoDataFrame(filtered_result.drop(['long', 'lat'], axis=1), crs="EPSG:4326", geometry=gpd.points_from_xy(filtered_result.long, filtered_result.lat))
@@ -56,21 +57,11 @@ def apply_filter_on_trajectories(trajectory_list, filter_func, filter_length):
 
 def apply_trajectory_manipulation(list):
     mmsi, qr_cleaned_data = list
-
-    # if (len(qr_cleaned_data) <= required_no_points):
-    #     return
     
     qr_cleaned_data['speed'] = qr_cleaned_data['sog']
     trajectory = mpd.Trajectory(qr_cleaned_data, mmsi)
 
-    print("Size: ")
-    print(int(trajectory.size()))
-    
-    print("Size 2:")
-    print(len(qr_cleaned_data))
-
     if (trajectory.size() <= required_no_points):
-        print("Trajectory doesnt have enough points")
         return
 
     if not (trajectory.is_valid()):
@@ -100,7 +91,6 @@ def create_trajectories(date_to_lookup, config):
     FROM fact_ais_clean_v1
     INNER JOIN dim_time ON dim_time.time_id = ts_time_id
     WHERE ts_date_id = {}
-    LIMIT 1000
     """.format(date_to_lookup)
 
     date_query = """
