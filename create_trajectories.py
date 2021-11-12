@@ -65,6 +65,9 @@ def apply_trajectory_manipulation(list):
 
     print("Size: ")
     print(int(trajectory.size()))
+    
+    print("Size 2:")
+    print(len(qr_cleaned_data))
 
     if (trajectory.size() <= required_no_points):
         print("Trajectory doesnt have enough points")
@@ -97,6 +100,7 @@ def create_trajectories(date_to_lookup, config):
     FROM fact_ais_clean_v1
     INNER JOIN dim_time ON dim_time.time_id = ts_time_id
     WHERE ts_date_id = {}
+    LIMIT 1000
     """.format(date_to_lookup)
 
     date_query = """
