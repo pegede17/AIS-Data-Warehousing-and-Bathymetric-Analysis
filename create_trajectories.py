@@ -23,7 +23,6 @@ required_no_points = 5
 hampel_filter = HampelFilter(window_length=required_no_points)
 speed_split = 0.971922246 # 0.5 knots in metres /sec
 max_speed = 18.0055556 # 35 knots in metres /sec
-version = 2
 
 def set_global_variables(args):
     global trajectories_per_ship
@@ -165,7 +164,7 @@ def create_trajectories(date_to_lookup, config):
 
     t_multiprocessing_stop = perf_counter()
 
-    trajectory_fact_table = create_trajectory_fact_table("fact_trajectory")
+    trajectory_fact_table = create_trajectory_fact_table("fact_trajectory_v2")
 
     audit_dimension = create_audit_dimension()
 
