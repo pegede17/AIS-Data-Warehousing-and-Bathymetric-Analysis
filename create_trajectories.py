@@ -87,7 +87,7 @@ def create_trajectories(date_to_lookup, config):
     # Queries defined
     query = """
     SELECT ship_type_id, ts_date_id, ship_id, ts_time_id, audit_id, ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat, sog, hour, minute, second, draught
-    FROM fact_ais_clean_v1
+    FROM fact_ais_clean_v2
     INNER JOIN dim_time ON dim_time.time_id = ts_time_id
     WHERE ts_date_id = {}
     """.format(date_to_lookup)
