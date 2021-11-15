@@ -23,7 +23,7 @@ required_no_points = 5
 hampel_filter = HampelFilter(window_length=required_no_points)
 speed_split = 0.971922246 # 0.5 knots in metres /sec
 max_speed = 18.0055556 # 35 knots in metres /sec
-version = 1
+version = 2
 
 def set_global_variables(args):
     global trajectories_per_ship

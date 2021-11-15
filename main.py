@@ -174,14 +174,14 @@ dates = [
 
 for date in dates:
     file = f'aisdk-{date["year"]}-{date["month"]}-{date["date"]}.csv'
-    print("Reversing: " + file)
-    reverse_file(file)
+    # print("Reversing: " + file)
+    # reverse_file(file)
     config["Environment"]["FILE_NAME"] = "r_" + file
-    print(config["Environment"]["FILE_NAME"])
-    print("Loading: " + file)
-    load_data_into_db(config)
+    # print(config["Environment"]["FILE_NAME"])
+    # print("Loading: " + file)
+    # load_data_into_db(config)
 
-    config["Database"]["initialize"] = "False"
+    # config["Database"]["initialize"] = "False"
     print("Cleaning: " + file)
     clean_data(config, date["year"] + date["month"] + date["date"])
 
