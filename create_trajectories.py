@@ -17,6 +17,7 @@ import concurrent.futures
 import multiprocessing as mp
 from time import perf_counter
 import json
+import gc
 
 # Configurations and global variables
 np.random.seed(0)
@@ -56,6 +57,8 @@ def apply_filter_on_trajectories(trajectory_list, filter_func, filter_length):
         #     trajectories.append(mpd.Trajectory(temp_gdf, 1))
 
     trajectory_collection = mpd.TrajectoryCollection(trajectories, 't')
+    del trajectories
+    del trajectory_list
 
     return trajectory_collection
 
@@ -85,6 +88,12 @@ def apply_trajectory_manipulation(list):
         filtered_trajectories).generalize(tolerance=0.0001)
 
     trajectories_per_ship[mmsi] = traj_simplified
+
+    del list
+    del mmsi
+    del qr_cleaned_data
+    del stops
+    del filtered_trajectories
 
 
 def create_trajectories(date_to_lookup, config):
@@ -177,6 +186,7 @@ def create_trajectories(date_to_lookup, config):
         executor.map(apply_trajectory_manipulation, gdf_grouped)
 
     t_multiprocessing_stop = perf_counter()
+    del gdf_grouped
 
     trajectory_fact_table = create_trajectory_fact_table(
         "fact_trajectory_test")
@@ -242,6 +252,11 @@ def create_trajectories(date_to_lookup, config):
 
     dw_conn_wrapper.commit()
     dw_conn_wrapper.close()
+
+    del trajectories_per_ship
+    del trajectory_fact_table
+
+    gc.collect(generation=2)
 
     # Close connections
     connection.close()

@@ -6,6 +6,7 @@ import configparser
 from reverse_file import reverse_file
 from create_trajectories import create_trajectories
 import resource
+import gc
 
 config = configparser.ConfigParser()
 config.read('application.properties')
@@ -188,6 +189,7 @@ for date in dates:
     print("Starting " + date["year"] + date["month"] + date["date"])
     create_trajectories(date["year"] + date["month"] + date["date"], config)
     print("Finished " + date["year"] + date["month"] + date["date"])
+    gc.collect(generation=2)
 
 
 # Trajectory Creation
