@@ -114,8 +114,8 @@ def create_trajectories(date_to_lookup, config):
 
     t_query_execution_start = perf_counter()
 
-    # cur = connection.cursor()
-    # cur.execute(create_query)
+    cur = connection.cursor()
+    cur.execute(create_query)
 
     qr_cleaned_data = SQLSource(connection=connection, query=query)
     qr_date_details = SQLSource(connection=connection, query=date_query)
