@@ -254,7 +254,7 @@ INSERT INTO public.dim_date(
                 ON UPDATE CASCADE,
             FOREIGN KEY (date_end_id)
                 REFERENCES dim_date (date_id)
-                ON UPDATE CASCADE
+                ON UPDATE CASCADE,
             FOREIGN KEY (ship_type_id)
                 REFERENCES dim_ship_type (ship_type_id)
                 ON UPDATE CASCADE
