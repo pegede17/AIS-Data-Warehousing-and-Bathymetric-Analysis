@@ -192,7 +192,11 @@ config.read('application.properties')
 #     gc.collect(generation=2)
 
 for month in range(11):
+    if (month < 7):
+        continue
     for day in range(31):
+        if (month == 7 and day < 12):
+            continue
         if(month == 1 and day > 27):
             continue
         if(month == 3 or month == 5 or month == 8 or month == 10):
