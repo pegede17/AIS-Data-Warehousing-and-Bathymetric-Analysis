@@ -13,7 +13,7 @@ config.read('application.properties')
 
 # listOfDates = [20211001]
 
-# dates = [
+dates = [
 #     # {
 #     #     "year": "2021",
 #     #     "month": "10",
@@ -154,65 +154,65 @@ config.read('application.properties')
 #         "month": "10",
 #         "date": "28"
 #     },
-#     {
-#         "year": "2021",
-#         "month": "10",
-#         "date": "29"
-#     },
-#     {
-#         "year": "2021",
-#         "month": "10",
-#         "date": "30"
-#     },
-#     {
-#         "year": "2021",
-#         "month": "10",
-#         "date": "31"
-#     }
-# ]
+    {
+        "year": "2021",
+        "month": "10",
+        "date": "29"
+    },
+    {
+        "year": "2021",
+        "month": "10",
+        "date": "30"
+    },
+    {
+        "year": "2021",
+        "month": "10",
+        "date": "31"
+    }
+]
 
-# # Data loading
+# Data loading
 
-# for date in dates:
-#     file = f'aisdk-{date["year"]}-{date["month"]}-{date["date"]}.csv'
-#     # print("Reversing: " + file)
-#     # reverse_file(file)
-#     config["Environment"]["FILE_NAME"] = "r_" + file
-#     # print(config["Environment"]["FILE_NAME"])
-#     # print("Loading: " + file)
-#     # load_data_into_db(config)
+for date in dates:
+    file = f'aisdk-{date["year"]}-{date["month"]}-{date["date"]}.csv'
+    print("Reversing: " + file)
+    reverse_file(file)
+    config["Environment"]["FILE_NAME"] = "r_" + file
+    print(config["Environment"]["FILE_NAME"])
+    print("Loading: " + file)
+    load_data_into_db(config)
 
-#     # config["Database"]["initialize"] = "False"
-#     # print("Cleaning: " + file)
-#     # clean_data(config, date["year"] + date["month"] + date["date"])
+    # config["Database"]["initialize"] = "False"
+    # print("Cleaning: " + file)
+    # clean_data(config, date["year"] + date["month"] + date["date"])
 
-#     print("Starting " + date["year"] + date["month"] + date["date"])
-#     create_trajectories(date["year"] + date["month"] + date["date"], config)
-#     print("Finished " + date["year"] + date["month"] + date["date"])
-#     gc.collect(generation=2)
+    # print("Starting " + date["year"] + date["month"] + date["date"])
+    # create_trajectories(date["year"] + date["month"] + date["date"], config)
+    # print("Finished " + date["year"] + date["month"] + date["date"])
+    gc.collect(generation=2)
 
-for month in range(11):
-    if (month < 7):
-        continue
-    for day in range(31):
-        if (month == 7 and day < 12):
-            continue
-        if(month == 1 and day > 27):
-            continue
-        if(month == 3 or month == 5 or month == 8 or month == 10):
-            if(day == 30):
-                continue
+# for month in range(11):
+#     if (month < 7):
+#         continue
+#     for day in range(31):
+#         if (month == 7 and day < 12):
+#             continue
+#         if(month == 1 and day > 27):
+#             continue
+#         if(month == 3 or month == 5 or month == 8 or month == 10):
+#             if(day == 30):
+#                 continue
 
-        file = f'aisdk_2021{(month + 1):02d}{(day + 1):02d}.csv'
+#         file = f'aisdk_2021{(month + 1):02d}{(day + 1):02d}.csv'
 
-        print("Reversing: " + file)
-        reverse_file(file)
-        config["Environment"]["FILE_NAME"] = "r_" + file
-        print(config["Environment"]["FILE_NAME"])
-        print("Loading: " + file)
-        load_data_into_db(config)
-        gc.collect(generation=2)
-        config["Database"]["initialize"] = "False"
+#         print("Reversing: " + file)
+#         reverse_file(file)
+#         config["Environment"]["FILE_NAME"] = "r_" + file
+#         print(config["Environment"]["FILE_NAME"])
+#         print("Loading: " + file)
+#         load_data_into_db(config)
+#         gc.collect(generation=2)
+#         config["Database"]["initialize"] = "False"
 
 # Trajectory Creation
 
