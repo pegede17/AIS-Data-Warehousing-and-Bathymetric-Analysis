@@ -195,7 +195,7 @@ for month in range(11):
     for day in range(31):
         if(month == 0):
             continue
-        if(month == 1 and day < 13):
+        if(month == 1 and day < 12):
             continue
         if(month == 1 and day > 27):
             continue
