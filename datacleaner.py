@@ -78,7 +78,7 @@ def clean_data(config, date_id):
                 REFERENCES dim_ship_type (ship_type_id)
                 ON UPDATE CASCADE
         );
-    CREATE INDEX ON fact_ais_clean_v{VERSION} (ts_date_id);
+    CREATE INDEX IF NOT EXISTS ts_date_id ON fact_ais_clean_v{VERSION} (ts_date_id);
     """
 
     audit_dimension = create_audit_dimension()
