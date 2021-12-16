@@ -1,5 +1,5 @@
 import pygrametl
-from datetime import datetime
+from datetime import date, datetime
 from helper_functions import create_audit_dimension
 from database_connection import connect_to_local, connect_via_ssh
 
@@ -88,7 +88,7 @@ def clean_data(config, date_id):
                  'source_system': config["Audit"]["source_system"],
                  'etl_version': config["Audit"]["elt_version"],
                  'table_name': f"fact_ais_clean_v{VERSION}",
-                 'comment': config["Audit"]["comment"]}
+                 'comment': f"Date: {date_id}"}
 
     audit_id = audit_dimension.insert(audit_obj)
 
