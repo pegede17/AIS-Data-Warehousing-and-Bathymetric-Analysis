@@ -193,37 +193,29 @@ config.read('application.properties')
 
 for month in range(11):
     for day in range(31):
-        if(month < 6):
-            continue
-        if(month == 6 and day < 12):
-            continue
-        if(month == 0):
-            continue
-        if(month == 1 and day < 12):
-            continue
         if(month == 1 and day > 27):
             continue
         if(month == 3 or month == 5 or month == 8 or month == 10):
             if(day == 30):
                 continue
 
-        file = f'aisdk_2021{(month + 1):02d}{(day + 1):02d}.csv'
-
+        # file = f'aisdk_2021{(month + 1):02d}{(day + 1):02d}.csv'
+        date = "2021" + f'{(month + 1):02d}' + f'{(day + 1):02d}'
         # # print("Reversing: " + file)
         # # reverse_file(file)
         # config["Environment"]["FILE_NAME"] = "r_" + file
         # print(config["Environment"]["FILE_NAME"])
-        print("2021" + f'{(month + 1):02d}' + f'{(day + 1):02d}')
-        clean_data(config, "2021" + f'{(month + 1):02d}' + f'{(day + 1):02d}')
+        # print("2021" + f'{(month + 1):02d}' + f'{(day + 1):02d}')
+        # clean_data(config, "2021" + f'{(month + 1):02d}' + f'{(day + 1):02d}')
         # print("Loading: " + file)
         # load_data_into_db(config)
+        create_trajectories(date, config)
+        print("Finished " + str(date))
         gc.collect(generation=2)
-        config["Database"]["initialize"] = "False"
+        # config["Database"]["initialize"] = "False"
 
 # Trajectory Creation
 
 # if __name__ == '__main__':
 #     for date in listOfDates:
 #         print("Starting " + str(date))
-#         create_trajectories(date, config)
-#         print("Finished " + str(date))

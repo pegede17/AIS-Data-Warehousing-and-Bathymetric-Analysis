@@ -117,14 +117,7 @@ def create_trajectories(date_to_lookup, config):
     where date_id = {}
     """.format(date_to_lookup)
 
-    create_query = """
-    CREATE TABLE IF NOT EXISTS fact_trajectory_test (LIKE fact_trajectory INCLUDING ALL);
-    """
-
     t_query_execution_start = perf_counter()
-
-    cur = connection.cursor()
-    cur.execute(create_query)
 
     qr_cleaned_data = SQLSource(connection=connection, query=query)
     qr_date_details = SQLSource(connection=connection, query=date_query)
@@ -189,7 +182,7 @@ def create_trajectories(date_to_lookup, config):
     del gdf_grouped
 
     trajectory_fact_table = create_trajectory_fact_table(
-        "fact_trajectory_test")
+        "fact_trajectory")
 
     audit_dimension = create_audit_dimension()
 
