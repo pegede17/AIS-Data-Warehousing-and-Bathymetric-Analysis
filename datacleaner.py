@@ -16,7 +16,7 @@ def clean_data(config, date_id):
 
     create_query = f"""
     CREATE TABLE IF NOT EXISTS fact_ais_clean_v{VERSION} (
-            fact_id BIG SERIAL NOT NULL PRIMARY KEY,
+            fact_id BIGSERIAL NOT NULL PRIMARY KEY,
             eta_date_id INTEGER NOT NULL DEFAULT 0,
             eta_time_id INTEGER NOT NULL DEFAULT 0,
             ship_id INTEGER NOT NULL,

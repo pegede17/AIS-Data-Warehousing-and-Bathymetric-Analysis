@@ -110,7 +110,7 @@ def create_tables():
         """,
         """
         CREATE TABLE IF NOT EXISTS fact_ais (
-            fact_id BIG SERIAL NOT NULL PRIMARY KEY,
+            fact_id BIGSERIAL NOT NULL PRIMARY KEY,
             eta_date_id INTEGER NOT NULL DEFAULT 0,
             eta_time_id INTEGER NOT NULL DEFAULT 0,
             ship_id INTEGER NOT NULL,
@@ -221,7 +221,7 @@ INSERT INTO public.dim_date(
         """,
         """
         CREATE TABLE IF NOT EXISTS fact_trajectory (
-            trajectory_id BIG SERIAL PRIMARY KEY,
+            trajectory_id BIGSERIAL PRIMARY KEY,
             ship_id INTEGER NOT NULL,
             time_start_id INTEGER NOT NULL,
             date_start_id INTEGER NOT NULL,
