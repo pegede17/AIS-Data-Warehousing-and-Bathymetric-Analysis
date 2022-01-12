@@ -193,9 +193,7 @@ config.read('application.properties')
 
 for month in range(11):
     for day in range(31):
-        if(month == 0):
-            continue
-        if(month == 1 and day < 9):
+        if(month < 5):
             continue
         if(month == 1 and day > 27):
             continue
