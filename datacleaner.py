@@ -1,5 +1,5 @@
 import pygrametl
-from datetime import datetime
+from datetime import date, datetime
 from helper_functions import create_audit_dimension
 from database_connection import connect_to_local, connect_via_ssh
 
@@ -16,7 +16,7 @@ def clean_data(config, date_id):
 
     create_query = f"""
     CREATE TABLE IF NOT EXISTS fact_ais_clean_v{VERSION} (
-            fact_id SERIAL NOT NULL PRIMARY KEY,
+            fact_id BIGSERIAL NOT NULL PRIMARY KEY,
             eta_date_id INTEGER NOT NULL DEFAULT 0,
             eta_time_id INTEGER NOT NULL DEFAULT 0,
             ship_id INTEGER NOT NULL,
@@ -78,7 +78,7 @@ def clean_data(config, date_id):
                 REFERENCES dim_ship_type (ship_type_id)
                 ON UPDATE CASCADE
         );
-    CREATE INDEX ON fact_ais_clean_v{VERSION} (ts_date_id);
+    CREATE INDEX IF NOT EXISTS ts_date_id ON fact_ais_clean_v{VERSION} (ts_date_id);
     """
 
     audit_dimension = create_audit_dimension()
@@ -88,7 +88,7 @@ def clean_data(config, date_id):
                  'source_system': config["Audit"]["source_system"],
                  'etl_version': config["Audit"]["elt_version"],
                  'table_name': f"fact_ais_clean_v{VERSION}",
-                 'comment': config["Audit"]["comment"]}
+                 'comment': f"Date: {date_id}"}
 
     audit_id = audit_dimension.insert(audit_obj)
 
@@ -111,6 +111,8 @@ def clean_data(config, date_id):
         WHERE 
             ts_date_id = {date_id}
             AND (draught < 28.5 OR draught IS NULL)
+            AND width < 75
+            AND length < 488
             AND mmsi > 99999999
             AND mmsi < 1000000000
             AND ST_Contains(geom ,coordinate::geometry);

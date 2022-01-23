@@ -56,7 +56,7 @@ def create_tables():
         """,
         """
         CREATE TABLE IF NOT EXISTS dim_ship (
-            ship_id INTEGER NOT NULL,
+            ship_id SERIAL NOT NULL,
             mmsi BIGINT NOT NULL,
             imo BIGINT,
             name VARCHAR(100),
@@ -110,7 +110,7 @@ def create_tables():
         """,
         """
         CREATE TABLE IF NOT EXISTS fact_ais (
-            fact_id SERIAL NOT NULL PRIMARY KEY,
+            fact_id BIGSERIAL NOT NULL PRIMARY KEY,
             eta_date_id INTEGER NOT NULL DEFAULT 0,
             eta_time_id INTEGER NOT NULL DEFAULT 0,
             ship_id INTEGER NOT NULL,
@@ -213,7 +213,6 @@ INSERT INTO public.dim_date(
         extract(epoch from datum) AS Epoch,
         extract(week from datum) AS Week
     FROM (
-        -- There are 3 leap years in this range, so calculate 365 * 10 + 3 records
         SELECT '2021-01-01'::DATE + sequence.day AS datum
         FROM generate_series(0,2000) AS sequence(day)
         GROUP BY sequence.day
@@ -222,7 +221,7 @@ INSERT INTO public.dim_date(
         """,
         """
         CREATE TABLE IF NOT EXISTS fact_trajectory (
-            trajectory_id SERIAL PRIMARY KEY,
+            trajectory_id BIGSERIAL PRIMARY KEY,
             ship_id INTEGER NOT NULL,
             time_start_id INTEGER NOT NULL,
             date_start_id INTEGER NOT NULL,
@@ -254,7 +253,7 @@ INSERT INTO public.dim_date(
                 ON UPDATE CASCADE,
             FOREIGN KEY (date_end_id)
                 REFERENCES dim_date (date_id)
-                ON UPDATE CASCADE
+                ON UPDATE CASCADE,
             FOREIGN KEY (ship_type_id)
                 REFERENCES dim_ship_type (ship_type_id)
                 ON UPDATE CASCADE
