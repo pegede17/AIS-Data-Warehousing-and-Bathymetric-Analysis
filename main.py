@@ -182,19 +182,17 @@ config.read('application.properties')
 #     print("Loading: " + file)
 #     load_data_into_db(config)
 
-    # config["Database"]["initialize"] = "False"
-    # print("Cleaning: " + file)
-    # clean_data(config, date["year"] + date["month"] + date["date"])
+# config["Database"]["initialize"] = "False"
+# print("Cleaning: " + file)
+# clean_data(config, date["year"] + date["month"] + date["date"])
 
-    # print("Starting " + date["year"] + date["month"] + date["date"])
-    # create_trajectories(date["year"] + date["month"] + date["date"], config)
-    # print("Finished " + date["year"] + date["month"] + date["date"])
-    # gc.collect(generation=2)
+# print("Starting " + date["year"] + date["month"] + date["date"])
+# create_trajectories(date["year"] + date["month"] + date["date"], config)
+# print("Finished " + date["year"] + date["month"] + date["date"])
+# gc.collect(generation=2)
 
 for month in range(11):
     for day in range(31):
-        if(month < 5):
-            continue
         if(month == 1 and day > 27):
             continue
         if(month == 3 or month == 5 or month == 8 or month == 10):
@@ -208,10 +206,10 @@ for month in range(11):
         # config["Environment"]["FILE_NAME"] = "r_" + file
         # print(config["Environment"]["FILE_NAME"])
         # print("2021" + f'{(month + 1):02d}' + f'{(day + 1):02d}')
-        # clean_data(config, "2021" + f'{(month + 1):02d}' + f'{(day + 1):02d}')
+        clean_data(config, "2021" + f'{(month + 1):02d}' + f'{(day + 1):02d}')
         # print("Loading: " + file)
         # load_data_into_db(config)
-        create_trajectories(date, config)
+        # create_trajectories(date, config)
         print("Finished " + str(date))
         gc.collect(generation=2)
         # config["Database"]["initialize"] = "False"
