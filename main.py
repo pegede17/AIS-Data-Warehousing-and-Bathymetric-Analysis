@@ -4,8 +4,8 @@ from datacleaner import clean_data
 from ais_loader import load_data_into_db
 import configparser
 from reverse_file import reverse_file
-from create_trajectories import create_trajectories
-import resource
+# from create_trajectories import create_trajectories
+# import resource
 import gc
 
 config = configparser.ConfigParser()
