@@ -97,6 +97,9 @@ def apply_trajectory_manipulation(list):
 
 
 def testingPOC(date_to_lookup, config):
+
+    trajectories_per_ship = {}
+
     if(config["Environment"]["development"] == "True"):
         connection = connect_via_ssh()
     else:
@@ -176,7 +179,32 @@ def testingPOC(date_to_lookup, config):
     t_multiprocessing_start = perf_counter()
 
     # Multiprocessing
-    apply_trajectory_manipulation(gdf_grouped)
+    # apply_trajectory_manipulation(gdf_grouped)
+
+
+    for mmsi, qr_cleaned_data in gdf_grouped:
+        qr_cleaned_data['speed'] = qr_cleaned_data['sog']
+        trajectory = mpd.Trajectory(qr_cleaned_data, mmsi)
+
+        if (trajectory.size() <= required_no_points):
+            return
+
+        if not (trajectory.is_valid()):
+            return
+
+        # Define and split trajectories based on idle duration
+        stops = mpd.SpeedSplitter(trajectory).split(duration=timedelta(
+            minutes=5), speed=speed_split, max_speed=max_speed)
+
+        # Apply Hampel filter on trajectories
+        filtered_trajectories = apply_filter_on_trajectories(
+            stops, hampel_filter, required_no_points)
+
+        # Simplify trajectories using douglas peucker algorithm
+        traj_simplified = mpd.DouglasPeuckerGeneralizer(
+            filtered_trajectories).generalize(tolerance=0.0001)
+
+        trajectories_per_ship[mmsi] = traj_simplified
 
     t_multiprocessing_stop = perf_counter()
     del gdf_grouped
