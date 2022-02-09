@@ -14,7 +14,6 @@ import configparser
 import pyproj
 from helper_functions import create_audit_dimension, create_tables, create_trajectory_fact_table
 import concurrent.futures
-import multiprocessing as mp
 from time import perf_counter
 import json
 import gc
@@ -105,7 +104,7 @@ def testingPOC(date_to_lookup, config):
 
     # Queries defined
     query = """
-    SELECT ts_date_id, ts_time_id, sog, ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat
+    SELECT ship_type_id, ts_date_id, ship_id, ts_time_id, audit_id, ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat, sog, hour, minute, second, draught
     FROM public.fact_ais
     INNER JOIN dim_time ON dim_time.time_id = ts_time_id
 	WHERE ts_date_id = 20210110 AND ship_id = 10
@@ -141,6 +140,8 @@ def testingPOC(date_to_lookup, config):
         data_trajectories[['year', 'month', 'day', 'hour', 'minute', 'second']])
     data_trajectories = data_trajectories.set_index('t')
 
+    print(data_trajectories)
+
     gdf = gpd.GeoDataFrame(data_trajectories, crs='EPSG:4326', geometry=gpd.points_from_xy(
         data_trajectories.long, data_trajectories.lat))
     del data_trajectories
@@ -174,9 +175,7 @@ def testingPOC(date_to_lookup, config):
     t_multiprocessing_start = perf_counter()
 
     # Multiprocessing
-    trajectories_per_ship = mp.Manager().dict()
-    with concurrent.futures.ProcessPoolExecutor(initializer=set_global_variables, initargs=(trajectories_per_ship,)) as executor:
-        executor.map(apply_trajectory_manipulation, gdf_grouped)
+    apply_trajectory_manipulation(gdf_grouped)
 
     t_multiprocessing_stop = perf_counter()
     del gdf_grouped

@@ -1,13 +1,5 @@
-from logging import log
-from datacleaner import clean_data
-# from create_trajectories import create_trajectories
-from ais_loader import load_data_into_db
 import configparser
-from reverse_file import reverse_file
-from create_trajectories import create_trajectories
 from testingPOC import testingPOC
-import resource
-import gc
 
 config = configparser.ConfigParser()
 config.read('application.properties')
@@ -219,7 +211,7 @@ config.read('application.properties')
 
 
 ## Trajectory similarity testing
-testingPOC(config=config)
+testingPOC(123, config=config)
 
 # Trajectory Creation
 
