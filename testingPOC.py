@@ -63,6 +63,7 @@ def apply_filter_on_trajectories(trajectory_list, filter_func, filter_length):
 
 
 def apply_trajectory_manipulation(list):
+    print(list)
     mmsi, qr_cleaned_data = list
 
     qr_cleaned_data['speed'] = qr_cleaned_data['sog']
