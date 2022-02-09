@@ -5,6 +5,7 @@ from ais_loader import load_data_into_db
 import configparser
 from reverse_file import reverse_file
 from create_trajectories import create_trajectories
+from testingPOC import testingPOC
 import resource
 import gc
 
@@ -191,30 +192,34 @@ config.read('application.properties')
     # print("Finished " + date["year"] + date["month"] + date["date"])
     # gc.collect(generation=2)
 
-for month in range(11):
-    for day in range(31):
-        if(month < 5):
-            continue
-        if(month == 1 and day > 27):
-            continue
-        if(month == 3 or month == 5 or month == 8 or month == 10):
-            if(day == 30):
-                continue
+# for month in range(11):
+#     for day in range(31):
+#         if(month < 5):
+#             continue
+#         if(month == 1 and day > 27):
+#             continue
+#         if(month == 3 or month == 5 or month == 8 or month == 10):
+#             if(day == 30):
+#                 continue
 
-        # file = f'aisdk_2021{(month + 1):02d}{(day + 1):02d}.csv'
-        date = "2021" + f'{(month + 1):02d}' + f'{(day + 1):02d}'
-        # # print("Reversing: " + file)
-        # # reverse_file(file)
-        # config["Environment"]["FILE_NAME"] = "r_" + file
-        # print(config["Environment"]["FILE_NAME"])
-        # print("2021" + f'{(month + 1):02d}' + f'{(day + 1):02d}')
-        # clean_data(config, "2021" + f'{(month + 1):02d}' + f'{(day + 1):02d}')
-        # print("Loading: " + file)
-        # load_data_into_db(config)
-        create_trajectories(date, config)
-        print("Finished " + str(date))
-        gc.collect(generation=2)
+#         # file = f'aisdk_2021{(month + 1):02d}{(day + 1):02d}.csv'
+#         date = "2021" + f'{(month + 1):02d}' + f'{(day + 1):02d}'
+#         # # print("Reversing: " + file)
+#         # # reverse_file(file)
+#         # config["Environment"]["FILE_NAME"] = "r_" + file
+#         # print(config["Environment"]["FILE_NAME"])
+#         # print("2021" + f'{(month + 1):02d}' + f'{(day + 1):02d}')
+#         # clean_data(config, "2021" + f'{(month + 1):02d}' + f'{(day + 1):02d}')
+#         # print("Loading: " + file)
+#         # load_data_into_db(config)
+#         create_trajectories(date, config)
+#         print("Finished " + str(date))
+#         gc.collect(generation=2)
         # config["Database"]["initialize"] = "False"
+
+
+## Trajectory similarity testing
+testingPOC(config=config)
 
 # Trajectory Creation
 
