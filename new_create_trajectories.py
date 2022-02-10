@@ -4,8 +4,27 @@ from database_connection import connect_to_local, connect_via_ssh
 from pygrametl.datasources import SQLSource, CSVSource
 import configparser
 import pandas as pd
-
+import math 
+import pyperclip
 from datetime import datetime, timedelta
+
+def degreesToRadians(degrees):
+    return degrees * math.pi / 180
+
+
+def distanceInKmBetweenEarthCoordinates(lat1, lon1, lat2, lon2):
+    earthRadiusKm = 6371
+
+    dLat = degreesToRadians(lat2-lat1)
+    dLon = degreesToRadians(lon2-lon1)
+
+    lat1 = degreesToRadians(lat1)
+    lat2 = degreesToRadians(lat2)
+    # a = (sin(dlat/2))^2 + cos(lat1) * cos(lat2) * (sin(dlon/2))^2
+    # a = math.sin(dLat/2) * math.sin(dLat/2) + math.cos(lat1) * math.cos(lat2) * math.sin(dLon/2) * math.sin(dLon/2) 
+    a = math.sin(dLat/2) * math.sin(dLat/2) + math.sin(dLon/2) * math.sin(dLon/2) * math.cos(lat1) * math.cos(lat2)
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    return earthRadiusKm * c
 
 def traj_splitter(journey, speedTreshold, timeThreshold, SOGLimit):
     firstPointNotAdded = -1
@@ -16,11 +35,38 @@ def traj_splitter(journey, speedTreshold, timeThreshold, SOGLimit):
     timeSinceAboveThreshold = timedelta(minutes=0)
     lastPointOverThreshold = 0
 
+
     for i in range(len(journey)):
 
+        # journey[i]['time'] = datetime.strptime(str(journey[i]['ts_time_id']), "%H%M%S")
+        journey[i]['time'] = datetime(year=1, month=1, day=1, hour=journey[i]['hour'], minute=journey[i]['minute'], second=journey[i]['second'])
+        previousPoint = journey[i-1]
         point = journey[i]
+        distanceToLastPoint = distanceInKmBetweenEarthCoordinates(point['lat'],point['long'], journey[i-1]['lat'], journey[i-1]['long']) * 1000
+        if(i != 0):
+            if ((point['lat'] == previousPoint['lat'] and point['long'] == previousPoint['long']) or point['time'] == previousPoint['time']):
+                continue
+            timeSinceLastPoint = point['time'] - journey[i-1]['time']
+        else:
+            timeSinceLastPoint = timedelta(0)
+        if(timeSinceLastPoint.seconds != 0):
+            calculatedSpeed = distanceToLastPoint/timeSinceLastPoint.seconds
+            speed = calculatedSpeed
+        else:
+            speed = float(point['sog'])
 
-        if(float(point['sog']) < speedTreshold):
+        if(speed > SOGLimit):
+            print(str(point['long']) + ", " + str(point['lat']))
+            if(firstPointNotAdded == -1):
+                continue
+            if(len(tempStopList) > 0):
+                tempStopList = tempStopList + journey[firstPointNotAdded:i - 1]
+            elif (len(tempTrajectoryList) > 0):
+                tempTrajectoryList = tempTrajectoryList + journey[firstPointNotAdded:i - 1]
+            firstPointNotAdded = -1
+            continue
+
+        if(speed < speedTreshold):
             # Keep track of the first point with a low speed
             if(firstPointNotAdded == -1):
                 firstPointNotAdded = i
@@ -44,7 +90,7 @@ def traj_splitter(journey, speedTreshold, timeThreshold, SOGLimit):
                     tempStopList = tempStopList + journey[firstPointNotAdded:i+1]
                 firstPointNotAdded = -1
 
-        if(float(point['sog']) >= speedTreshold):
+        if(speed >= speedTreshold):
             # Reset counters
             lastPointOverThreshold = i
             # End a "stopped" session and push to stops list
@@ -66,21 +112,25 @@ def traj_splitter(journey, speedTreshold, timeThreshold, SOGLimit):
     if(len(tempTrajectoryList) > 0):
         ship_trajectories.append(tempTrajectoryList.copy())
         tempTrajectoryList.clear()
-
     firstpoint = True
-    print("GEOMETRYCOLLECTION(", end ="")
+
+    linestring = "GEOMETRYCOLLECTION("
     for traj in ship_trajectories:
-        print("LINESTRING(", end =""),
+        linestring = linestring + "LINESTRING("
         firstpoint = True
         for point in traj:
             if (not firstpoint):
-                print(",", end ="")
-            print(str(point['long']), end =""),
-            print(" ", end =""),
-            print(str(point['lat']), end =""),
+                linestring = linestring + ","
+            linestring = linestring + str(point['long'])
+            linestring = linestring + " "
+            linestring = linestring + str(point['lat'])
             firstpoint = False
-        print("),", end ="")
-    print(")")
+        linestring = linestring + "),"
+    linestring = linestring + ")"
+
+    pyperclip.copy(linestring)
+    print("test")
+
 
 config = configparser.ConfigParser()
 config.read('application.properties')
@@ -92,11 +142,20 @@ else:
 dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
 
 # Queries defined
+# query = """
+# SELECT ship_type_id, ts_date_id, ship_id, ts_time_id, audit_id, ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat, sog, hour, minute, second, draught
+# FROM fact_ais_clean_v2
+# INNER JOIN dim_time ON dim_time.time_id = ts_time_id
+# WHERE ts_date_id = 20211026 AND ship_id = 3673
+# ORDER BY ts_time_id ASC
+# """
+
 query = """
 SELECT ship_type_id, ts_date_id, ship_id, ts_time_id, audit_id, ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat, sog, hour, minute, second, draught
 FROM fact_ais_clean_v2
 INNER JOIN dim_time ON dim_time.time_id = ts_time_id
-WHERE ts_date_id = 20210110 AND ship_id = 10
+WHERE ts_date_id = 20211026 and (ship_id = 3673 or ship_id = 2)
+ORDER BY ship_id, ts_time_id ASC
 """
 
 date_query = """
@@ -111,11 +170,20 @@ qr_cleaned_data = SQLSource(connection=connection, query=query)
 qr_date_details = SQLSource(connection=connection, query=date_query)
 
 
-list = []
+listOfShips = []
+listOfPointsInShip = []
+ship_id = -1
 for element in qr_cleaned_data:
-    list.append(element)
+    if (element['ship_id'] == ship_id):
+        listOfPointsInShip.append(element)
+    else:
+        if(len(listOfPointsInShip) != 0):
+            listOfShips.append(listOfPointsInShip.copy())
+            listOfPointsInShip.clear()
 
+        ship_id = element['ship_id']
+        listOfPointsInShip.append(element)
+listOfShips.append(listOfPointsInShip)
 
-# data_trajectories = pd.DataFrame(qr_cleaned_data)
-
-traj_splitter(list, 1, 5, 100)
+for ship in listOfShips:
+    traj_splitter(ship, speedTreshold=0.5, timeThreshold=300, SOGLimit=200)
