@@ -79,70 +79,111 @@ def clean_data(config, date_id):
                 REFERENCES dim_ship_type (ship_type_id)
                 ON UPDATE CASCADE
         ) PARTITION BY RANGE (ts_date_id);
-    CREATE INDEX IF NOT EXISTS ts_date_id ON fact_ais_clean_v{VERSION} (ts_date_id);
 
-    CREATE TABLE if not exists fact_ais_y2021d01 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210101') TO ('20210102'); 
-    CREATE TABLE if not exists fact_ais_y2021d02 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210102') TO ('20210103'); 
-    CREATE TABLE if not exists fact_ais_y2021d03 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210103') TO ('20210104'); 
-    CREATE TABLE if not exists fact_ais_y2021d04 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210104') TO ('20210105'); 
-    CREATE TABLE if not exists fact_ais_y2021d05 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210105') TO ('20210106'); 
-    CREATE TABLE if not exists fact_ais_y2021d06 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210106') TO ('20210107'); 
-    CREATE TABLE if not exists fact_ais_y2021d07 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210107') TO ('20210108'); 
-    CREATE TABLE if not exists fact_ais_y2021d08 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210108') TO ('20210109'); 
-    CREATE TABLE if not exists fact_ais_y2021d09 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210109') TO ('20210110'); 
-    CREATE TABLE if not exists fact_ais_y2021d10 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210110') TO ('20210111'); 
-    CREATE TABLE if not exists fact_ais_y2021d11 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210111') TO ('20210112'); 
-    CREATE TABLE if not exists fact_ais_y2021d12 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210112') TO ('20210113'); 
-    CREATE TABLE if not exists fact_ais_y2021d13 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210113') TO ('20210114'); 
-    CREATE TABLE if not exists fact_ais_y2021d14 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210114') TO ('20210115'); 
-    CREATE TABLE if not exists fact_ais_y2021d15 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210115') TO ('20210116'); 
-    CREATE TABLE if not exists fact_ais_y2021d16 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210116') TO ('20210117'); 
-    CREATE TABLE if not exists fact_ais_y2021d17 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210117') TO ('20210118'); 
-    CREATE TABLE if not exists fact_ais_y2021d18 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210118') TO ('20210119'); 
-    CREATE TABLE if not exists fact_ais_y2021d19 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210119') TO ('20210120'); 
-    CREATE TABLE if not exists fact_ais_y2021d20 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210120') TO ('20210121'); 
-    CREATE TABLE if not exists fact_ais_y2021d21 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210121') TO ('20210122'); 
-    CREATE TABLE if not exists fact_ais_y2021d22 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210122') TO ('20210123'); 
-    CREATE TABLE if not exists fact_ais_y2021d23 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210123') TO ('20210124'); 
-    CREATE TABLE if not exists fact_ais_y2021d24 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210124') TO ('20210125'); 
-    CREATE TABLE if not exists fact_ais_y2021d25 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210125') TO ('20210126'); 
-    CREATE TABLE if not exists fact_ais_y2021d26 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210126') TO ('20210127'); 
-    CREATE TABLE if not exists fact_ais_y2021d27 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210127') TO ('20210128'); 
-    CREATE TABLE if not exists fact_ais_y2021d28 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210128') TO ('20210129'); 
-    CREATE TABLE if not exists fact_ais_y2021d29 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210129') TO ('20210130'); 
-    CREATE TABLE if not exists fact_ais_y2021d30 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210130') TO ('20210131'); 
-    CREATE TABLE if not exists fact_ais_y2021d31 PARTITION OF
-     fact_ais_clean_v{VERSION} FOR VALUES FROM ('20210131') TO ('20210132'); 
+    CREATE TABLE if not exists fact_ais_y2021w1 PARTITION OF 
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210101') TO ('20210108');
+    CREATE TABLE if not exists fact_ais_y2021w2 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210108') TO ('20210115');
+    CREATE TABLE if not exists fact_ais_y2021w3 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210115') TO ('20210122');
+    CREATE TABLE if not exists fact_ais_y2021w4 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210122') TO ('20210129');
+    CREATE TABLE if not exists fact_ais_y2021w5 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210129') TO ('20210205');
+    CREATE TABLE if not exists fact_ais_y2021w6 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210205') TO ('20210212');
+    CREATE TABLE if not exists fact_ais_y2021w7 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210212') TO ('20210219');
+    CREATE TABLE if not exists fact_ais_y2021w8 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210219') TO ('20210226');
+    CREATE TABLE if not exists fact_ais_y2021w9 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210226') TO ('20210305');
+    CREATE TABLE if not exists fact_ais_y2021w10 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210305') TO ('20210312');
+    CREATE TABLE if not exists fact_ais_y2021w11 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210312') TO ('20210319');
+    CREATE TABLE if not exists fact_ais_y2021w12 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210319') TO ('20210326');
+    CREATE TABLE if not exists fact_ais_y2021w13 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210326') TO ('20210402');
+    CREATE TABLE if not exists fact_ais_y2021w14 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210402') TO ('20210409');
+    CREATE TABLE if not exists fact_ais_y2021w15 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210409') TO ('20210416');
+    CREATE TABLE if not exists fact_ais_y2021w16 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210416') TO ('20210423');
+    CREATE TABLE if not exists fact_ais_y2021w17 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210423') TO ('20210430');
+    CREATE TABLE if not exists fact_ais_y2021w18 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210430') TO ('20210507');
+    CREATE TABLE if not exists fact_ais_y2021w19 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210507') TO ('20210514');
+    CREATE TABLE if not exists fact_ais_y2021w20 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210514') TO ('20210521');
+    CREATE TABLE if not exists fact_ais_y2021w21 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210521') TO ('20210528');
+    CREATE TABLE if not exists fact_ais_y2021w22 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210528') TO ('20210604');
+    CREATE TABLE if not exists fact_ais_y2021w23 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210604') TO ('20210611');
+    CREATE TABLE if not exists fact_ais_y2021w24 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210611') TO ('20210618');
+    CREATE TABLE if not exists fact_ais_y2021w25 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210618') TO ('20210625');
+    CREATE TABLE if not exists fact_ais_y2021w26 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210625') TO ('20210702');
+    CREATE TABLE if not exists fact_ais_y2021w27 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210702') TO ('20210709');
+    CREATE TABLE if not exists fact_ais_y2021w28 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210709') TO ('20210716');
+    CREATE TABLE if not exists fact_ais_y2021w29 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210716') TO ('20210723');
+    CREATE TABLE if not exists fact_ais_y2021w30 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210723') TO ('20210730');
+    CREATE TABLE if not exists fact_ais_y2021w31 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210730') TO ('20210806');
+    CREATE TABLE if not exists fact_ais_y2021w32 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210806') TO ('20210813');
+    CREATE TABLE if not exists fact_ais_y2021w33 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210813') TO ('20210820');
+    CREATE TABLE if not exists fact_ais_y2021w34 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210820') TO ('20210827');
+    CREATE TABLE if not exists fact_ais_y2021w35 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210827') TO ('20210903');
+    CREATE TABLE if not exists fact_ais_y2021w36 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210903') TO ('20210910');
+    CREATE TABLE if not exists fact_ais_y2021w37 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210910') TO ('20210917');
+    CREATE TABLE if not exists fact_ais_y2021w38 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210917') TO ('20210924');
+    CREATE TABLE if not exists fact_ais_y2021w39 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20210924') TO ('20211001');
+    CREATE TABLE if not exists fact_ais_y2021w40 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20211001') TO ('20211008');
+    CREATE TABLE if not exists fact_ais_y2021w41 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20211008') TO ('20211015');
+    CREATE TABLE if not exists fact_ais_y2021w42 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20211015') TO ('20211022');
+    CREATE TABLE if not exists fact_ais_y2021w43 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20211022') TO ('20211029');
+    CREATE TABLE if not exists fact_ais_y2021w44 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20211029') TO ('20211105');
+    CREATE TABLE if not exists fact_ais_y2021w45 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20211105') TO ('20211112');
+    CREATE TABLE if not exists fact_ais_y2021w46 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20211112') TO ('20211119');
+    CREATE TABLE if not exists fact_ais_y2021w47 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20211119') TO ('20211126');
+    CREATE TABLE if not exists fact_ais_y2021w48 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20211126') TO ('20211203');
+    CREATE TABLE if not exists fact_ais_y2021w49 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20211203') TO ('20211210');
+    CREATE TABLE if not exists fact_ais_y2021w50 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20211210') TO ('20211217');
+    CREATE TABLE if not exists fact_ais_y2021w51 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20211217') TO ('20211224');
+    CREATE TABLE if not exists fact_ais_y2021w52 PARTITION OF
+        fact_ais_clean_{VERSION} FOR VALUES FROM ('20211224') TO ('20211231');
     """
 
     audit_dimension = create_audit_dimension()
