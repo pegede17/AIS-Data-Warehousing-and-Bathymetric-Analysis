@@ -7,12 +7,17 @@ from pandas import date_range
 from datacleaner import clean_data
 # from create_trajectories import create_trajectories
 from ais_loader import load_data_into_db
+from create_trajectories import create_trajectories
 import configparser
 from reverse_file import reverse_file
 from datetime import datetime, timedelta, date
 # from create_trajectories import create_trajectories
 # import resource
 import gc
+import configparser
+
+config = configparser.ConfigParser()
+config.read('application.properties')
 
 def main(argv):
     start_date = datetime.today()
@@ -36,13 +41,31 @@ def main(argv):
         print("Start date must be before end date")
         exit(2)
 
-    for n in date_range(start_date, end_date):
+    for date in date_range(start_date, end_date):
+        current_date = f'{date.year:04d}{date.month:02d}{date.day:02d}'
+        file = f'aisdk_{current_date}.csv'
+        # reverse_file(file)
+        config["Environment"]["FILE_NAME"] = "r_" + file
+
+        # gc.collect(generation=2)
+
         if args.l:
-            print("Loading " + str(n))
+            print("Loading " + str(current_date))
+            # the data to load will be retrieved from the config
+            load_data_into_db(config=config)
+            
         if args.c:
-            print("Cleaning " + str(n))
+            print("Cleaning " + str(current_date))
+            clean_data(config=config, date_id=current_date)
+
         if args.r:
-            print("Reconstructing trajectories " + str(n))
+            print("Reconstructing trajectories " + str(current_date))
+            create_trajectories(config=config, date_to_lookup=current_date)
+
+        print("Finished " + str(current_date))
+        # gc.collect(generation=2)
+        # config["Database"]["initialize"] = "False"
+
 
     
 
