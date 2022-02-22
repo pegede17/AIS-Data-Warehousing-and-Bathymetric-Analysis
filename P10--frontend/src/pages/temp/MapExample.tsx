@@ -1,6 +1,7 @@
 import React from 'react';
-import { MapContainer, Marker, Popup, TileLayer, Rectangle, LatLng, LatLngBounds } from 'react-leaflet';
-import data from '../../json/constraints'
+import {MapContainer, Marker, Popup, TileLayer, Rectangle, FeatureGroup} from 'react-leaflet';
+import data from '../../json/constraints.json';
+import {LatLng, LatLngBounds} from "leaflet";
 
 const MapExample: React.FC = () => {
   return (
@@ -18,7 +19,7 @@ const MapExample: React.FC = () => {
           Telefon: 99 40 99 40
         </Popup>
       </Marker>
-      <FeatureGroup pathOptions={purpleOptions}>
+      <FeatureGroup pathOptions={ { color: 'purple' } }>
          {data.map((point) => {
           console.log(point.polygon.coordinates.toString())
           return <Rectangle key={point.polygon.coordinates.toString()} bounds={new LatLngBounds(
