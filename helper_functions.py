@@ -1,5 +1,5 @@
 
-from pygrametl.tables import BulkFactTable, CachedDimension, Dimension, FactTable
+from pygrametl.tables import BulkFactTable, CachedDimension, Dimension, FactTable, SnowflakedDimension
 
 
 def create_tables():
@@ -10,13 +10,15 @@ def create_tables():
             data_source_type_id SERIAL NOT NULL,
             data_source_type VARCHAR(10),
             PRIMARY KEY (data_source_type_id)
-        )
+        );
+        INSERT INTO dim_data_source_type (data_source_type) VALUES ('Unknown');
         """,
         """
         CREATE TABLE IF NOT EXISTS dim_ship_type (
             ship_type_id SERIAL NOT NULL PRIMARY KEY,
             ship_type VARCHAR(25)
-        )
+        );
+        INSERT INTO dim_ship_type (ship_type) VALUES ('Unknown');
         """,
         """ 
         CREATE TABLE IF NOT EXISTS dim_destination(
@@ -24,35 +26,40 @@ def create_tables():
             user_defined_destination VARCHAR(100),
             mapped_destination VARCHAR(100),
             PRIMARY KEY (destination_id)
-        )
+        );
+        INSERT INTO dim_destination (user_defined_destination, mapped_destination) VALUES ('Unknown', 'Unknown');
         """,
         """
         CREATE TABLE IF NOT EXISTS dim_type_of_mobile (
             type_of_mobile_id SERIAL NOT NULL,
-            mobile_type VARCHAR(256),
+            mobile_type VARCHAR(50),
             PRIMARY KEY (type_of_mobile_id)
-        )
+        );
+        INSERT INTO dim_type_of_mobile (mobile_type) VALUES ('Unknown');
         """,
         """
         CREATE TABLE IF NOT EXISTS dim_cargo_type (
             cargo_type_id SERIAL NOT NULL,
-            cargo_type VARCHAR(256),
+            cargo_type VARCHAR(50),
             PRIMARY KEY (cargo_type_id)
-        )
+        );
+        INSERT INTO dim_cargo_type (cargo_type) VALUES ('Unknown');
         """,
         """
         CREATE TABLE IF NOT EXISTS dim_navigational_status (
             navigational_status_id SERIAL NOT NULL,
-            navigational_status VARCHAR(256),
+            navigational_status VARCHAR(100),
             PRIMARY KEY (navigational_status_id)
-        )
+        );
+        INSERT INTO dim_navigational_status (navigational_status) VALUES ('Unknown');
         """,
         """
         CREATE TABLE IF NOT EXISTS dim_type_of_position_fixing_device (
             type_of_position_fixing_device_id SERIAL NOT NULL,
-            device_type VARCHAR(256),
+            device_type VARCHAR(50),
             PRIMARY KEY (type_of_position_fixing_device_id)
-        )
+        );
+        INSERT INTO dim_type_of_position_fixing_device (device_type) VALUES ('Unknown');
         """,
         """
         CREATE TABLE IF NOT EXISTS dim_ship (
@@ -67,7 +74,20 @@ def create_tables():
             size_b DOUBLE PRECISION,
             size_c DOUBLE PRECISION,
             size_d DOUBLE PRECISION,
-            PRIMARY KEY (ship_id)
+            ship_type_id INTEGER NOT NULL,
+            type_of_position_fixing_device_id INTEGER NOT NULL,
+            type_of_mobile_id INTEGER NOT NULL,
+
+            PRIMARY KEY (ship_id),
+            FOREIGN KEY (ship_type_id)
+                REFERENCES dim_ship_type (ship_type_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (type_of_position_fixing_device_id)
+                REFERENCES dim_type_of_position_fixing_device (type_of_position_fixing_device_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (type_of_mobile_id)
+                REFERENCES dim_type_of_mobile (type_of_mobile_id)
+                ON UPDATE CASCADE
         )
         """,
         """
@@ -109,6 +129,12 @@ def create_tables():
         )
         """,
         """
+        CREATE TABLE IF NOT EXISTS dim_cell (
+            cell_id BIGSERIAL NOT NULL PRIMARY KEY
+        );
+        INSERT INTO dim_cell (cell_id) VALUES (1);
+        """,
+        """
         CREATE TABLE IF NOT EXISTS fact_ais (
             fact_id BIGSERIAL NOT NULL PRIMARY KEY,
             eta_date_id INTEGER NOT NULL DEFAULT 0,
@@ -116,14 +142,17 @@ def create_tables():
             ship_id INTEGER NOT NULL,
             ts_date_id INTEGER NOT NULL,
             ts_time_id INTEGER NOT NULL,
-            data_source_type_id INTEGER NOT NULL DEFAULT 0,
-            destination_id INTEGER NOT NULL DEFAULT 0,
-            type_of_mobile_id INTEGER NOT NULL DEFAULT 0,
-            navigational_status_id INTEGER NOT NULL DEFAULT 0,
-            cargo_type_id INTEGER NOT NULL DEFAULT 0,
-            type_of_position_fixing_device_id INTEGER NOT NULL DEFAULT 0,
-            ship_type_id INTEGER NOT NULL DEFAULT 0,
-            coordinate geography(point) NOT NULL,
+            data_source_type_id INTEGER NOT NULL DEFAULT 1,
+            destination_id INTEGER NOT NULL DEFAULT 1,
+            type_of_mobile_id INTEGER NOT NULL DEFAULT 1,
+            navigational_status_id INTEGER NOT NULL DEFAULT 1,
+            cargo_type_id INTEGER NOT NULL DEFAULT 1,
+            type_of_position_fixing_device_id INTEGER NOT NULL DEFAULT 1,
+            ship_type_id INTEGER NOT NULL DEFAULT 1,
+            cell_id BIGINT NOT NULL DEFAULT 1,
+            coordinate GEOGRAPHY(POINT) NOT NULL,
+            latitude DOUBLE PRECISION NOT NULL,
+            longitude DOUBLE PRECISION NOT NULL,
             draught DOUBLE PRECISION,
             rot DOUBLE PRECISION,
             sog DOUBLE PRECISION,
@@ -170,6 +199,9 @@ def create_tables():
                 ON UPDATE CASCADE,
             FOREIGN KEY (ship_type_id)
                 REFERENCES dim_ship_type (ship_type_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (cell_id)
+                REFERENCES dim_cell (cell_id)
                 ON UPDATE CASCADE
         )
         """,
@@ -277,8 +309,8 @@ def create_fact_table(pgbulkloader, tb_name):
     return BulkFactTable(
         name=tb_name,
         keyrefs=['eta_date_id', 'eta_time_id', 'ship_id', 'ts_date_id', 'ts_time_id', 'data_source_type_id', 'destination_id',
-                 'type_of_mobile_id', 'navigational_status_id', 'cargo_type_id', 'type_of_position_fixing_device_id', 'ship_type_id', 'audit_id'],
-        measures=['coordinate', 'draught', 'rot', 'sog', 'cog', 'heading'],
+                 'type_of_mobile_id', 'navigational_status_id', 'cargo_type_id', 'type_of_position_fixing_device_id', 'ship_type_id', 'audit_id', 'cell_id'],
+        measures=['coordinate', 'draught', 'rot', 'sog', 'cog', 'heading', 'latitude', 'longitude'],
         bulkloader=pgbulkloader,
         fieldsep=',',
         rowsep='\\r\n',
@@ -357,18 +389,24 @@ def create_type_of_position_fixing_device_dimension():
     )
 
 
-def create_ship_dimension():
-    return CachedDimension(
+def create_ship_dimension(type_of_position_fixing_device_dimension_dim, ship_type_dim, type_of_mobile_dim):
+    ship_dim = CachedDimension(
         name='dim_ship',
         key='ship_id',
         attributes=['mmsi', 'IMO', 'Name', 'Width', 'Length',
-                    'Callsign', 'size_a', 'size_b', 'size_c', 'size_d'],
+                    'Callsign', 'size_a', 'size_b', 'size_c',
+                    'size_d', 'ship_type_id', 'type_of_mobile_id',
+                    'type_of_position_fixing_device_id'],
         cachefullrows=True,
         prefill=True,
         cacheoninsert=True,
-        lookupatts=['mmsi'],
+        lookupatts=['mmsi', 'Callsign', 'IMO'],
         size=0
     )
+
+    return SnowflakedDimension(
+    [(ship_dim, (type_of_position_fixing_device_dimension_dim, ship_type_dim,type_of_mobile_dim))
+     ])
 
 
 def create_time_dimension():

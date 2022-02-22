@@ -9,7 +9,8 @@
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "args": ["-sd", "01/01/2021", "-ed", "01/01/2021", "-l"]
         }
     ]
 }

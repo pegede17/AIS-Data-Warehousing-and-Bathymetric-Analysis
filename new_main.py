@@ -7,7 +7,7 @@ from pandas import date_range
 from datacleaner import clean_data
 # from create_trajectories import create_trajectories
 from ais_loader import load_data_into_db
-from create_trajectories import create_trajectories
+# from create_trajectories import create_trajectories
 import configparser
 from reverse_file import reverse_file
 from datetime import datetime, timedelta, date
@@ -37,7 +37,7 @@ def main(argv):
         end_date = datetime.strptime(args.ed, '%d/%m/%Y')
         print("End date: " + str(end_date))
 
-    if not start_date < end_date:
+    if not start_date <= end_date:
         print("Start date must be before end date")
         exit(2)
 
@@ -45,7 +45,7 @@ def main(argv):
         current_date = f'{date.year:04d}{date.month:02d}{date.day:02d}'
         file = f'aisdk_{current_date}.csv'
         # reverse_file(file)
-        config["Environment"]["FILE_NAME"] = "r_" + file
+        config["Environment"]["FILE_NAME"] = file
 
         # gc.collect(generation=2)
 

@@ -36,7 +36,7 @@ def traj_splitter(journey, speedTreshold, timeThreshold, SOGLimit):
     lastPointOverThreshold = 0
 
 
-    for i in range(len(journey)):
+    for i, _ in enumerate(journey):
 
         # journey[i]['time'] = datetime.strptime(str(journey[i]['ts_time_id']), "%H%M%S")
         journey[i]['time'] = datetime(year=1, month=1, day=1, hour=journey[i]['hour'], minute=journey[i]['minute'], second=journey[i]['second'])
