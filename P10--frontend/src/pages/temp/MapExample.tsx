@@ -1,5 +1,6 @@
 import React from 'react';
-import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
+import { MapContainer, Marker, Popup, TileLayer, Rectangle, LatLng, LatLngBounds } from 'react-leaflet';
+import data from '../../json/constraints'
 
 const MapExample: React.FC = () => {
   return (
@@ -17,6 +18,14 @@ const MapExample: React.FC = () => {
           Telefon: 99 40 99 40
         </Popup>
       </Marker>
+      <FeatureGroup pathOptions={purpleOptions}>
+         {data.map((point) => {
+          console.log(point.polygon.coordinates.toString())
+          return <Rectangle key={point.polygon.coordinates.toString()} bounds={new LatLngBounds(
+            new LatLng(point.polygon.coordinates[0][0][1] ?? 0, point.polygon.coordinates[0][0][0] ?? 0),
+            new LatLng(point.polygon.coordinates[0][2][1] ?? 0, point.polygon.coordinates[0][2][0] ?? 0))}><Popup>Max: {point.max} Count: {point.count}</Popup></Rectangle>
+        })}
+       </FeatureGroup>
     </MapContainer>
   );
 };

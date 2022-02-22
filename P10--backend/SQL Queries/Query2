@@ -14,7 +14,7 @@ CREATE INDEX geom_50_idx
   
 SELECT boundary_id, boundary
 	FROM public.boundaries_50m
-	WHERE ST_INTERSECTS(ST_SetSRID( ST_MakeLine(ST_MakePoint(10.961613, 56.931903), ST_MakePoint(10.186731, 56.152071)), 4326),boundary)
+	WHERE ST_INTERSECTS(ST_SetSRID( ST_MakePoint(10.961613, 56.931903), 4326),boundary)
 
 SELECT boundary_id, boundary
 FROM public.boundaries_50m

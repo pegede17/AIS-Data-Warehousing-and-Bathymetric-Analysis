@@ -3,22 +3,37 @@ FROM public.boundaries_50m
 WHERE ST_INTERSECTS(ST_SetSRID( ST_MakePoint(10.961613, 56.931903), 4326),boundary
 
 
-with cell as (
-SELECT boundary from boundaries_50m
-	WHERE boundary_id = 164875246
-	LIMIT 1
+-- with cell as (
+-- SELECT boundary from boundaries_50m
+-- 	WHERE boundary_id = 164875246
+-- 	LIMIT 1
+-- ),
+with fact as (
+SELECT * from fact_ais_clean_v2 limit 1
 )
-	SELECT max(draught[1])
-	FROM fact_trajectory, cell
-	WHERE ST_INTERSECTS(boundary, coordinates::geography)
+	SELECT fact_id, boundary_id
+	FROM fact, boundaries_1000m
+	WHERE ST_INTERSECTS(boundary, coordinate::geography)
 
 WITH raster as (
 SELECT ST_MakeEmptyRaster(10000,10000,4002607::float,3269410::float,50::float,50::float,0::float,0::float,3034) ras
+),
+fact as (
+SELECT * from fact_ais_clean_v2 limit 10000000
 )
 SELECT count(fact_id)
-FROM raster, fact_ais_clean_v2
-WHERE ST_WorldToRasterCoord(ras,ST_Transform(coordinate::geometry,3034)) = (1086,1247)
+FROM raster, fact
+WHERE ts_date_id = 20210101 and ST_WorldToRasterCoord(ras,ST_Transform(coordinate::geometry,3034)) = (1086,1247)
 
+					
+WITH raster as (
+SELECT ST_MakeEmptyRaster(10000,10000,4002607::float,3269410::float,50::float,50::float,0::float,0::float,3034) ras
+),
+fact as (
+SELECT * from fact_ais_clean_v2 limit 1000000
+)
+SELECT fact_id, ST_WorldToRasterCoord(ras,ST_Transform(coordinate::geometry,3034))
+FROM raster, fact
 					
 WITH raster as (
 SELECT ST_MakeEmptyRaster(10000,10000,4002607::float,3269410::float,50::float,50::float,0::float,0::float,3034) ras
