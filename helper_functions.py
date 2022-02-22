@@ -399,5 +399,90 @@ def create_trajectory_fact_table(tb_name):
         name=tb_name,
         keyrefs=['ship_id', 'time_start_id', 'date_start_id',
                  'time_end_id', 'date_end_id', 'audit_id', 'ship_type_id'],
-        measures=['coordinates', 'duration', 'length_meters', 'draught', 'total_points']
+        measures=['coordinates', 'duration',
+                  'length_meters', 'draught', 'total_points']
     )
+
+
+def create_cell_dim_queries():
+    return("""
+	
+WITH grid AS (
+SELECT (ST_SquareGrid(10000, ST_Transform(geom,3034))).*
+FROM danish_waters
+WHERE 
+),
+denmark as (
+	SELECT ST_Transform(ST_Simplify(geom,0.05),3034) geom from danish_waters
+)
+  SELECT ST_Transform(g.geom,4326)
+  FROM grid g, denmark d
+  WHERE ST_Intersects(g.geom, d.geom)
+  
+  
+CREATE TABLE boundaries_50m(
+	boundary_id BIGSERIAL PRIMARY KEY,
+	boundary GEOMETRY(POLYGON)
+);
+
+CREATE TABLE boundaries_1000m(
+	boundary_id BIGSERIAL PRIMARY KEY,
+	boundary GEOMETRY(POLYGON)
+);
+
+CREATE TABLE dim_cell (
+	cell_id BIGSERIAL PRIMARY KEY,
+	boundary_50m_id BIGINT,
+	boundary_1000m_id BIGINT,
+	FOREIGN KEY (boundary_50m_id)
+		REFERENCES boundaries_50m (boundary_id),
+	FOREIGN KEY (boundary_1000m_id)
+		REFERENCES boundaries_1000m (boundary_id)
+);
+
+WITH grid AS (
+SELECT (ST_SquareGrid(1000, ST_Transform(geom,3034))).*
+FROM danish_waters
+) --,
+-- denmark as (
+-- 	SELECT ST_Transform(ST_Simplify(geom,0.05),3034) geom from danish_waters
+-- )  
+INSERT INTO boundaries_1000m (boundary)
+SELECT ST_Transform(g.geom,4326)
+  FROM grid g --, denmark d
+--   WHERE ST_Intersects(g.geom, d.geom)
+
+WITH grid AS (
+SELECT (ST_SquareGrid(50, ST_Transform(geom,3034))).*
+FROM danish_waters
+) --,
+-- denmark as (
+-- 	SELECT ST_Transform(ST_Simplify(geom,0.05),3034) geom from danish_waters
+-- )
+INSERT INTO boundaries_50m (boundary)
+SELECT ST_Transform(g.geom,4326)
+  FROM grid g --, denmark d
+--   WHERE ST_Intersects(g.geom, d.geom)
+
+INSERT INTO dim_cell (boundary_50m_id, boundary_1000m_id)
+SELECT b50.boundary_id, b1000.boundary_id
+FROM boundaries_50m b50, boundaries_1000m b1000,
+WHERE ST_Contains(b1000.boundary, b50.boundary)""",
+           """SELECT count(*) from boundaries_1000m
+
+CREATE INDEX geom_1000_idx
+  ON boundaries_1000m
+  USING GIST (boundary);
+  
+CREATE INDEX geom_50_idx
+  ON boundaries_50m
+  USING GIST (boundary);
+  
+ CREATE INDEX geom_1000_idx_text
+  ON boundaries_1000m
+  USING btree(boundary);
+  
+SELECT boundary_id, boundary
+	FROM public.boundaries_1000m
+	WHERE ST_INTERSECTS(ST_SetSRID( ST_Point(10.990976, 58.011979), 4326),boundary)
+	LIMIT 1;""")
