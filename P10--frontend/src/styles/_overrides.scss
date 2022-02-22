@@ -1,0 +1,52 @@
+@import "~bootstrap/scss/functions";
+@import "~bootstrap/scss/variables";
+
+$h1-font-size: $font-size-base * 2.5;
+$h2-font-size: $font-size-base * 2;
+$h3-font-size: $font-size-base * 1.75;
+$h4-font-size: $font-size-base * 1.5;
+$h5-font-size: $font-size-base * 1.25;
+$h6-font-size: $font-size-base;
+$h7-font-size: $font-size-base * 0.85;
+
+$font-sizes: (
+        1: $h1-font-size,
+        2: $h2-font-size,
+        3: $h3-font-size,
+        4: $h4-font-size,
+        5: $h5-font-size,
+        6: $h6-font-size,
+        7: $h7-font-size,
+);
+
+$spacers: (
+        0: 0,
+        1: $spacer * .25,
+        2: $spacer * .5,
+        3: $spacer,
+        4: $spacer * 1.5,
+        5: $spacer * 3,
+        6: $spacer * 4,
+        7: $spacer * 5,
+        8: $spacer * 6,
+        9: $spacer * 7,
+        10: $spacer * 10,
+);
+
+@import "~bootstrap/scss/utilities";
+
+$utilities: map-merge(
+                $utilities,
+                (
+                        "width": map-merge(
+                                        map-get($utilities, "width"),
+                                        (
+                                                values: map-merge(
+                                                                map-get(map-get($utilities, "width"), "values"),
+                                                                (10: 10%, 20: 20%, 30: 30%, 40: 40%, 60: 60%, 70: 70%, 80: 80%, 90: 90%)
+                                                ),
+                                        ),
+                        ),
+                )
+);
+

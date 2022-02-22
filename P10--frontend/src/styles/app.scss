@@ -1,4 +1,11 @@
+@import "overrides";
+@import "~bootstrap/scss/bootstrap";
+
 .leaflet-container {
   width: 100%;
   height: 100%;
+}
+
+.sidebar {
+  transition: 0.5ms linear;
 }
