@@ -29,13 +29,14 @@ GROUP BY  ST_PixelAsPolygon(ras,(ST_WorldToRasterCoord(ras,ST_Transform(coordina
 ORDER BY count(fact_id) DESC
 
 WITH raster as (
-SELECT ST_AddBand(ST_MakeEmptyRaster(200,200,4002607::float,3269410::float,5000::float,5000::float,0::float,0::float,3034),'8BUI'::text) ras
+SELECT ST_AddBand(ST_MakeEmptyRaster(20000,20000,4002607::float,3269410::float,50::float,50::float,0::float,0::float,3034),'8BUI'::text, 0, null) ras
 ),
 traj as (
 	SELECT * from fact_trajectory
-	LIMIT 1000
+ 	WHERE trajectory_id = 2910
+-- 	limit 1
 )
-SELECT (ST_MetaData(ST_Intersection(ras,ST_AsRaster(ST_Transform(ST_SetSRID(coordinates,4326),3034), ras, '8BUI'::text),0))).*
+SELECT trajectory_id, ST_Transform((ST_PixelAsPolygons(ST_Intersection(ras,ST_AsRaster(ST_Transform(ST_SetSRID(coordinates,4326),3034), ras, '8BUI'::text),1))).geom,4326) --(ST_MetaData(ST_Intersection(ras,ST_AsRaster(ST_Transform(ST_SetSRID(coordinates,4326),3034), ras, '8BUI'::text),0))).*
 from raster, traj
 
 
@@ -45,9 +46,7 @@ SELECT ST_MakeEmptyRaster(20000,20000, 10.180489109669665,56.18922493790273,0.00
 ),
 fact as (
 SELECT * from fact_ais_clean_v2 limit 1000000
-) --,
--- r as(
-
+)
 SELECT (ST_WorldToRasterCoord(ras,coordinate::geometry)).*, json_build_object('count', count(fact_id), 'max', max(draught), 'avg', AVG(draught), 'polygon', ST_AsGeoJSON(ST_PixelAsPolygon(ras,(ST_WorldToRasterCoord(ras,coordinate::geometry)).columnx,(ST_WorldToRasterCoord(ras,coordinate::geometry)).rowy)))
 FROM raster, fact
 GROUP BY  ST_AsGeoJSON(ST_PixelAsPolygon(ras,(ST_WorldToRasterCoord(ras,coordinate::geometry)).columnx,(ST_WorldToRasterCoord(ras,coordinate::geometry)).rowy)), ST_WorldToRasterCoord(ras,coordinate::geometry)
@@ -62,3 +61,32 @@ SELECT ST_MakeEmptyRaster(20000,20000, 5.205498,52.841475,0.0005::float,0.0003::
 )
 SELECT (ST_RasterToWorldCoord(ras,20000,20000)).*
 FROM raster
+
+
+
+---------------------------------------------
+-- Get raster coordinates for trajectories --
+CREATE MATERIALIZED VIEW tester_1000 as
+WITH raster as (
+SELECT ST_AddBand(ST_MakeEmptyRaster(100,100,3584734::float,2997812::float,1000::float,1000::float,0::float,0::float,3034),'8BUI'::text, 0, null) ras
+),
+traj as (
+	select * from fact_trajectory
+	limit 1000
+)
+SELECT draught[1], ship_type_id, trajectory_id, (ST_WorldToRasterCoord(ras,(ST_PixelAsPoints(ST_AsRaster(ST_Transform(ST_SetSRID(coordinates,4326),3034), ras, '8BUI'::text, 1, 0, true))).geom)).*
+from raster, traj
+
+
+
+-- CREATE VIEW --
+SELECT columnx, rowy, count(trajectory_id), max(draught)
+FROM tester_1000
+GROUP BY columnx, rowy
+ORDER BY count(trajectory_id) DESC
+
+SELECT ST_Transform(ST_SetSRID(ST_PixelAsPolygon(ST_MakeEmptyRaster(20000,20000,3584734::float,2997812::float,50::float,50::float,0::float,0::float,3034),14308,4048),3034),4326)
+
+SELECT ST_WorldToRaster()
+
+
