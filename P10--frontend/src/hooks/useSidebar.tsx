@@ -6,7 +6,7 @@ export interface SidebarContextState {
 }
 
 export const useSidebar = () => {
-    const [isShown, setShown] = React.useState<boolean>(true);
+    const [isShown, setShown] = React.useState<boolean>(false);
 
     const handleSidebar = (bool?: boolean) => {
         bool ? setShown(bool) : setShown(!isShown);

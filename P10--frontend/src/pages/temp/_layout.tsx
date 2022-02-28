@@ -4,6 +4,7 @@ import styled from "styled-components";
 import MapExample from "./MapExample";
 import Sidebar from "../../components/Sidebar";
 import {SidebarContext} from "../../contexts/sidebarContext";
+import MapExample2 from "./MapExample2";
 
 const MainLayout = () => {
     const {isShown, handleSidebar} = React.useContext(SidebarContext);
@@ -18,7 +19,7 @@ const MainLayout = () => {
                     </div>
 
                     <div className={(isShown ? 'col-10' : 'col-12') + ' p-0 m-0'}>
-                        <MapExample/>
+                        <MapExample2/>
                     </div>
                 </div>
             </Container>

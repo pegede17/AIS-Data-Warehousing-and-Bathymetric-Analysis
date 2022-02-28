@@ -1,3 +1,0 @@
-EXPLAIN SELECT boundary_id, boundary
-	FROM public.boundaries_50m
-	WHERE ST_INTERSECTS(ST_SetSRID( ST_MakePoint(10.961613, 56.931903), 4326),boundary)

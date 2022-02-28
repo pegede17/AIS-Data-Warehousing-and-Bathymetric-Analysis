@@ -1,0 +1,32 @@
+SELECT count(*) from boundaries_1000m
+
+CREATE INDEX geom_1000_idx
+  ON boundaries_1000m
+  USING GIST (boundary);
+  
+CREATE INDEX geom_50_idx
+  ON boundaries_50m
+  USING GIST (boundary);
+  
+ CREATE INDEX geom_1000_idx_text
+  ON boundaries_1000m
+  USING btree(boundary);
+  
+SELECT boundary_id, boundary
+	FROM public.boundaries_50m
+	WHERE ST_INTERSECTS(ST_SetSRID( ST_MakePoint(10.961613, 56.931903), 4326),boundary)
+
+SELECT boundary_id, boundary
+FROM public.boundaries_50m
+WHERE ST_INTERSECTS(ST_SetSRID( ST_MakeLine(ST_MakePoint(10.961613, 56.931903), ST_MakePoint(10.186731, 56.152071)), 4326),boundary)
+
+with cell as (
+SELECT boundary from boundaries_50m
+	WHERE boundary_id = 164875246
+)
+	SELECT count(fact_id), cell
+	FROM fact_ais_clean_v2
+	WHERE ST_INTERSECTS(cell, coordinate)
+SELECT
+    pg_size_pretty (pg_total_relation_size('fact_ais_clean_v2'));
+	
