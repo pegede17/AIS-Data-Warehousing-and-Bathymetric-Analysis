@@ -1,10 +1,11 @@
 import React from 'react';
 import Container from "react-bootstrap/Container";
 import styled from "styled-components";
-import MapExample from "./MapExample";
+import MapExample from "./maps/MapExample";
 import Sidebar from "../../components/Sidebar";
 import {SidebarContext} from "../../contexts/sidebarContext";
-import MapExample2 from "./MapExample2";
+import MapVectorLayer from "./maps/MapVectorLayer";
+import MapGeojson from "./maps/MapGeojson";
 
 const MainLayout = () => {
     const {isShown, handleSidebar} = React.useContext(SidebarContext);
@@ -19,7 +20,7 @@ const MainLayout = () => {
                     </div>
 
                     <div className={(isShown ? 'col-10' : 'col-12') + ' p-0 m-0'}>
-                        <MapExample2/>
+                        <MapGeojson />
                     </div>
                 </div>
             </Container>
