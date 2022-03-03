@@ -1,4 +1,10 @@
 from datetime import datetime, timedelta
+from pygrametl.datasources import SQLSource, CSVSource
+from pygrametl.tables import Dimension, FactTable
+from time import perf_counter
+from database_connection import connect_to_local, connect_via_ssh
+import pygrametl
+import pandas as pd
 
 def traj_splitter(journey, speedTreshold, timeThreshold, SOGLimit):
     firstPointNotAdded = -1
@@ -58,6 +64,48 @@ def traj_splitter(journey, speedTreshold, timeThreshold, SOGLimit):
         tempTrajectoryList.clear()
 
     print("test")
+
+def create_trajectories(date_to_lookup, config):
+    if(config["Environment"]["development"] == "True"):
+        connection = connect_via_ssh()
+    else:
+        connection = connect_to_local()
+    dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
+
+    # Queries defined
+    query = """
+    SELECT ship_type_id, ts_date_id, ship_id, ts_time_id, audit_id, ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat, sog, hour, minute, second, draught
+    FROM fact_ais_clean_v2
+    INNER JOIN dim_time ON dim_time.time_id = ts_time_id
+    WHERE ts_date_id = {}
+    """.format(date_to_lookup)
+
+    date_query = """
+    SELECT year, month, day
+    FROM dim_date
+    where date_id = {}
+    """.format(date_to_lookup)
+
+    t_query_execution_start = perf_counter()
+
+    qr_cleaned_data = SQLSource(connection=connection, query=query)
+    qr_date_details = SQLSource(connection=connection, query=date_query)
+
+    t_query_execution_stop = perf_counter()
+
+    t_dataframe_creation_start = perf_counter()
+    data_date_df = pd.DataFrame(qr_date_details)
+    del qr_date_details
+
+    data_trajectories = pd.DataFrame(qr_cleaned_data)
+    del qr_cleaned_data
+
+    data_trajectories['year'] = int(data_date_df['year'])
+    data_trajectories['month'] = int(data_date_df['month'])
+    data_trajectories['day'] = int(data_date_df['day'])
+
+
+    
 
 #    SOG_sailing = random.uniform(4.5, 14.5)
 #    SOG_stopped = random.uniform(0.5, 5.5)

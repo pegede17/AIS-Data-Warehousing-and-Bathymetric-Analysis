@@ -5,7 +5,7 @@ from logging import log
 
 from pandas import date_range
 from datacleaner import clean_data
-# from create_trajectories import create_trajectories
+from create_trajectories import create_trajectories
 from ais_loader import load_data_into_db
 # from create_trajectories import create_trajectories
 import configparser

@@ -2,16 +2,16 @@ from pygrametl.datasources import SQLSource, CSVSource
 from pygrametl.tables import Dimension, FactTable
 import pygrametl
 from database_connection import connect_to_local, connect_via_ssh
-import geopandas as gpd
+# import geopandas as gpd
 import movingpandas as mpd
-from shapely.geometry import Point
+# from shapely.geometry import Point
 from datetime import date, datetime, timedelta
-from sktime.transformations.series.outlier_detection import HampelFilter
+# from sktime.transformations.series.outlier_detection import HampelFilter
 import numpy as np  # linear algebra
 # qr_cleaned_data processing, CSV file I/O (e.g. pd.read_csv)
 import pandas as pd
 import configparser
-import pyproj
+# import pyproj
 from helper_functions import create_audit_dimension, create_tables, create_trajectory_fact_table
 import concurrent.futures
 import multiprocessing as mp
@@ -22,7 +22,7 @@ import gc
 # Configurations and global variables
 np.random.seed(0)
 required_no_points = 5
-hampel_filter = HampelFilter(window_length=required_no_points)
+# hampel_filter = HampelFilter(window_length=required_no_points)
 speed_split = 0.971922246  # 0.5 knots in metres /sec
 max_speed = 18.0055556  # 35 knots in metres /sec
 
