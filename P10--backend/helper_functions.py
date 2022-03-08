@@ -62,6 +62,14 @@ def create_tables():
         INSERT INTO dim_type_of_position_fixing_device (device_type) VALUES ('Unknown');
         """,
         """
+        CREATE TABLE IF NOT EXISTS dim_trustworthiness (
+            trust_id SERIAL NOT NULL,
+            trust_score DOUBLE PRECISION,
+            PRIMARY KEY (trust_id)
+        );
+        INSERT INTO dim_trustworthiness (trust_score) VALUES (-1);
+        """,
+        """
         CREATE TABLE IF NOT EXISTS dim_ship (
             ship_id SERIAL NOT NULL,
             mmsi BIGINT NOT NULL,
@@ -74,9 +82,10 @@ def create_tables():
             size_b DOUBLE PRECISION,
             size_c DOUBLE PRECISION,
             size_d DOUBLE PRECISION,
-            ship_type_id INTEGER NOT NULL,
-            type_of_position_fixing_device_id INTEGER NOT NULL,
-            type_of_mobile_id INTEGER NOT NULL,
+            ship_type_id INTEGER NOT NULL DEFAULT 1,
+            type_of_position_fixing_device_id INTEGER NOT NULL DEFAULT 1,
+            type_of_mobile_id INTEGER NOT NULL DEFAULT 1,
+            trust_id INTEGER NOT NULL DEFAULT 1,
 
             PRIMARY KEY (ship_id),
             FOREIGN KEY (ship_type_id)
@@ -87,6 +96,9 @@ def create_tables():
                 ON UPDATE CASCADE,
             FOREIGN KEY (type_of_mobile_id)
                 REFERENCES dim_type_of_mobile (type_of_mobile_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (trust_id)
+                REFERENCES dim_trustworthiness (trust_id)
                 ON UPDATE CASCADE
         )
         """,
@@ -252,13 +264,20 @@ INSERT INTO public.dim_date(
     order by 1;
         """,
         """
-        CREATE TABLE IF NOT EXISTS fact_trajectory (
+        CREATE TABLE IF NOT EXISTS fact_trajectory_sailing (
             trajectory_id BIGSERIAL PRIMARY KEY,
             ship_id INTEGER NOT NULL,
+            eta_time_id INTEGER NOT NULL,
+            eta_date_id INTEGER NOT NULL,
             time_start_id INTEGER NOT NULL,
             date_start_id INTEGER NOT NULL,
             time_end_id INTEGER NOT NULL,
             date_end_id INTEGER NOT NULL,
+            data_source_type_id INTEGER NOT NULL,
+            position_fixing_device_id INTEGER NOT NULL,
+            destination_id INTEGER NOT NULL,
+            type_of_mobile_id INTEGER NOT NULL,
+            cargo_type_id INTEGER NOT NULL,
             coordinates geometry(linestring) NOT NULL,
             length_meters FLOAT NOT NULL,
             duration INTEGER NOT NULL,
@@ -266,6 +285,7 @@ INSERT INTO public.dim_date(
             total_points INTEGER NOT NULL,
             draught FLOAT[2],
             ship_type_id INTEGER NOT NULL DEFAULT 0,
+            avg_speed_knots DOUBLE PRECISION NOT NULL,
 
             FOREIGN KEY (audit_id)
                 REFERENCES dim_audit (audit_id)
@@ -288,9 +308,121 @@ INSERT INTO public.dim_date(
                 ON UPDATE CASCADE,
             FOREIGN KEY (ship_type_id)
                 REFERENCES dim_ship_type (ship_type_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (eta_time_id)
+                REFERENCES dim_time (time_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (eta_date_id)
+                REFERENCES dim_date (date_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (data_source_type_id)
+                REFERENCES dim_data_source_type (data_source_type_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (position_fixing_device_id)
+                REFERENCES dim_position_fixing_device (position_fixing_device_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (destination_id)
+                REFERENCES dim_destination (destination_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (type_of_mobile_id)
+                REFERENCES dim_type_of_mobile (type_of_mobile_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (cargo_type_id)
+                REFERENCES dim_cargo_type (cargo_type_id)
                 ON UPDATE CASCADE
         )
         """,
+        """
+        CREATE TABLE IF NOT EXISTS fact_trajectory_stopped (
+            trajectory_id BIGSERIAL PRIMARY KEY,
+            ship_id INTEGER NOT NULL,
+            eta_time_id INTEGER NOT NULL,
+            eta_date_id INTEGER NOT NULL,
+            time_start_id INTEGER NOT NULL,
+            date_start_id INTEGER NOT NULL,
+            time_end_id INTEGER NOT NULL,
+            date_end_id INTEGER NOT NULL,
+            data_source_type_id INTEGER NOT NULL,
+            position_fixing_device_id INTEGER NOT NULL,
+            destination_id INTEGER NOT NULL,
+            type_of_mobile_id INTEGER NOT NULL,
+            cargo_type_id INTEGER NOT NULL,
+            coordinates geometry(linestring) NOT NULL,
+            length_meters FLOAT NOT NULL,
+            duration INTEGER NOT NULL,
+            audit_id INTEGER NOT NULL,
+            total_points INTEGER NOT NULL,
+            draught FLOAT[2],
+            ship_type_id INTEGER NOT NULL DEFAULT 0,
+            avg_speed_knots DOUBLE PRECISION NOT NULL,
+
+            FOREIGN KEY (audit_id)
+                REFERENCES dim_audit (audit_id)
+                ON UPDATE CASCADE
+                ON DELETE CASCADE,
+            FOREIGN KEY (ship_id)
+                REFERENCES dim_ship (ship_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (time_start_id)
+                REFERENCES dim_time (time_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (date_start_id)
+                REFERENCES dim_date (date_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (time_end_id )
+                REFERENCES dim_time (time_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (date_end_id)
+                REFERENCES dim_date (date_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (ship_type_id)
+                REFERENCES dim_ship_type (ship_type_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (eta_time_id)
+                REFERENCES dim_time (time_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (eta_date_id)
+                REFERENCES dim_date (date_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (data_source_type_id)
+                REFERENCES dim_data_source_type (data_source_type_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (position_fixing_device_id)
+                REFERENCES dim_position_fixing_device (position_fixing_device_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (destination_id)
+                REFERENCES dim_destination (destination_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (type_of_mobile_id)
+                REFERENCES dim_type_of_mobile (type_of_mobile_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY (cargo_type_id)
+                REFERENCES dim_cargo_type (cargo_type_id)
+                ON UPDATE CASCADE
+        )
+        """,
+        """
+        CREATE TABLE dim_cell (
+            cell_id BIGSERIAL PRIMARY KEY,
+            columnx_50m BIGINT,
+            rowy_50m BIGINT,
+            columnx_100m BIGINT,
+            rowy_100m BIGINT,
+            columnx_500m BIGINT,
+            rowy_500m BIGINT,
+            columnx_1000m BIGINT,
+            rowy_1000m BIGINT,
+            boundary_50m GEOMETRY,
+            boundary_100m GEOMETRY,
+            boundary_500m GEOMETRY,
+            boundary_1000m GEOMETRY
+        );
+        """,
+        """
+        CREATE TABLE bridge_traj_sailing_cell (
+            
+        )
+        """
     )
 
 
@@ -310,7 +442,8 @@ def create_fact_table(pgbulkloader, tb_name):
         name=tb_name,
         keyrefs=['eta_date_id', 'eta_time_id', 'ship_id', 'ts_date_id', 'ts_time_id', 'data_source_type_id', 'destination_id',
                  'type_of_mobile_id', 'navigational_status_id', 'cargo_type_id', 'type_of_position_fixing_device_id', 'ship_type_id', 'audit_id', 'cell_id'],
-        measures=['coordinate', 'draught', 'rot', 'sog', 'cog', 'heading', 'latitude', 'longitude'],
+        measures=['coordinate', 'draught', 'rot', 'sog',
+                  'cog', 'heading', 'latitude', 'longitude'],
         bulkloader=pgbulkloader,
         fieldsep=',',
         rowsep='\\r\n',
@@ -405,8 +538,8 @@ def create_ship_dimension(type_of_position_fixing_device_dimension_dim, ship_typ
     )
 
     return SnowflakedDimension(
-    [(ship_dim, (type_of_position_fixing_device_dimension_dim, ship_type_dim,type_of_mobile_dim))
-     ])
+        [(ship_dim, (type_of_position_fixing_device_dimension_dim, ship_type_dim, type_of_mobile_dim))
+         ])
 
 
 def create_time_dimension():
