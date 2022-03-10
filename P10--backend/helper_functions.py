@@ -9,7 +9,7 @@ def create_tables():
         """
         CREATE TABLE IF NOT EXISTS dim_data_source_type (
             data_source_type_id SERIAL NOT NULL,
-            data_source_type VARCHAR(10),
+            data_source_type VARCHAR(16),
             PRIMARY KEY (data_source_type_id)
         );
         INSERT INTO dim_data_source_type (data_source_type) VALUES ('Unknown');
@@ -17,15 +17,15 @@ def create_tables():
         """
         CREATE TABLE IF NOT EXISTS dim_ship_type (
             ship_type_id SERIAL NOT NULL PRIMARY KEY,
-            ship_type VARCHAR(25)
+            ship_type VARCHAR(24)
         );
         INSERT INTO dim_ship_type (ship_type) VALUES ('Unknown');
         """,
-        """ 
+        """
         CREATE TABLE IF NOT EXISTS dim_destination(
             destination_id SERIAL NOT NULL,
-            user_defined_destination VARCHAR(100),
-            mapped_destination VARCHAR(100),
+            user_defined_destination VARCHAR(96),
+            mapped_destination VARCHAR(96),
             PRIMARY KEY (destination_id)
         );
         INSERT INTO dim_destination (user_defined_destination, mapped_destination) VALUES ('Unknown', 'Unknown');
@@ -33,7 +33,7 @@ def create_tables():
         """
         CREATE TABLE IF NOT EXISTS dim_type_of_mobile (
             type_of_mobile_id SERIAL NOT NULL,
-            mobile_type VARCHAR(50),
+            mobile_type VARCHAR(48),
             PRIMARY KEY (type_of_mobile_id)
         );
         INSERT INTO dim_type_of_mobile (mobile_type) VALUES ('Unknown');
@@ -41,7 +41,7 @@ def create_tables():
         """
         CREATE TABLE IF NOT EXISTS dim_cargo_type (
             cargo_type_id SERIAL NOT NULL,
-            cargo_type VARCHAR(50),
+            cargo_type VARCHAR(48),
             PRIMARY KEY (cargo_type_id)
         );
         INSERT INTO dim_cargo_type (cargo_type) VALUES ('Unknown');
@@ -49,7 +49,7 @@ def create_tables():
         """
         CREATE TABLE IF NOT EXISTS dim_navigational_status (
             navigational_status_id SERIAL NOT NULL,
-            navigational_status VARCHAR(100),
+            navigational_status VARCHAR(96),
             PRIMARY KEY (navigational_status_id)
         );
         INSERT INTO dim_navigational_status (navigational_status) VALUES ('Unknown');
@@ -57,7 +57,7 @@ def create_tables():
         """
         CREATE TABLE IF NOT EXISTS dim_type_of_position_fixing_device (
             type_of_position_fixing_device_id SERIAL NOT NULL,
-            device_type VARCHAR(50),
+            device_type VARCHAR(48),
             PRIMARY KEY (type_of_position_fixing_device_id)
         );
         INSERT INTO dim_type_of_position_fixing_device (device_type) VALUES ('Unknown');
@@ -75,10 +75,6 @@ def create_tables():
             ship_id SERIAL NOT NULL,
             mmsi BIGINT NOT NULL,
             imo BIGINT,
-            name VARCHAR(100),
-            width SMALLINT,
-            length SMALLINT,
-            callsign VARCHAR(25),
             size_a DOUBLE PRECISION,
             size_b DOUBLE PRECISION,
             size_c DOUBLE PRECISION,
@@ -87,6 +83,10 @@ def create_tables():
             type_of_position_fixing_device_id INTEGER NOT NULL DEFAULT 1,
             type_of_mobile_id INTEGER NOT NULL DEFAULT 1,
             trust_id INTEGER NOT NULL DEFAULT 1,
+            width SMALLINT,
+            length SMALLINT,
+            callsign VARCHAR(24),
+            name VARCHAR(96),
 
             PRIMARY KEY (ship_id),
             FOREIGN KEY (ship_type_id)
@@ -101,7 +101,7 @@ def create_tables():
             FOREIGN KEY (trust_id)
                 REFERENCES dim_trustworthiness (trust_id)
                 ON UPDATE CASCADE
-        )
+        );
         """,
         """
         CREATE TABLE IF NOT EXISTS dim_date (
@@ -119,7 +119,7 @@ def create_tables():
             quarter DOUBLE PRECISION NOT NULL,
             epoch DOUBLE PRECISION NOT NULL,
             week DOUBLE PRECISION NOT NULL
-        )
+        );
         """,
         """
         CREATE TABLE IF NOT EXISTS dim_time (
@@ -127,7 +127,7 @@ def create_tables():
             hour SMALLINT NOT NULL,
             minute SMALLINT NOT NULL,
             second SMALLINT NOT NULL
-        )
+        );
         """,
         """
         CREATE TABLE IF NOT EXISTS dim_audit (
@@ -135,36 +135,36 @@ def create_tables():
             timestamp timestamp with time zone NOT NULL,
             processed_records BIGINT NOT NULL,
             inserted_records BIGINT NOT NULL,
-            source_system VARCHAR(100),
-            etl_version VARCHAR(10),
-            table_name VARCHAR(25),
             etl_duration INTERVAL NOT NULL, 
+            etl_version VARCHAR(16),
+            table_name VARCHAR(24),
+            source_system VARCHAR(96),
             description VARCHAR(200),
             PRIMARY KEY(audit_id)
-        )
+        );
         """,
         """
         CREATE TABLE IF NOT EXISTS fact_ais (
             fact_id BIGSERIAL NOT NULL PRIMARY KEY,
-            eta_date_id INTEGER NOT NULL DEFAULT 0,
-            eta_time_id INTEGER NOT NULL DEFAULT 0,
-            ship_id INTEGER NOT NULL,
             ts_date_id INTEGER NOT NULL,
             ts_time_id INTEGER NOT NULL,
-            data_source_type_id INTEGER NOT NULL DEFAULT 1,
-            destination_id INTEGER NOT NULL DEFAULT 1,
+            ship_id INTEGER NOT NULL,
+            ship_type_id INTEGER NOT NULL DEFAULT 1,
             type_of_mobile_id INTEGER NOT NULL DEFAULT 1,
-            navigational_status_id INTEGER NOT NULL DEFAULT 1,
             cargo_type_id INTEGER NOT NULL DEFAULT 1,
             type_of_position_fixing_device_id INTEGER NOT NULL DEFAULT 1,
-            ship_type_id INTEGER NOT NULL DEFAULT 1,
-            coordinate GEOGRAPHY(POINT) NOT NULL,
+            eta_date_id INTEGER NOT NULL DEFAULT 0,
+            eta_time_id INTEGER NOT NULL DEFAULT 0,
+            data_source_type_id INTEGER NOT NULL DEFAULT 1,
+            destination_id INTEGER NOT NULL DEFAULT 1,
+            navigational_status_id INTEGER NOT NULL DEFAULT 1,
             latitude DOUBLE PRECISION NOT NULL,
             longitude DOUBLE PRECISION NOT NULL,
             draught DOUBLE PRECISION,
             rot DOUBLE PRECISION,
             sog DOUBLE PRECISION,
             cog DOUBLE PRECISION,
+            coordinate GEOGRAPHY(POINT) NOT NULL,
             heading SMALLINT,
             audit_id INTEGER NOT NULL,
 
@@ -208,7 +208,7 @@ def create_tables():
             FOREIGN KEY (ship_type_id)
                 REFERENCES dim_ship_type (ship_type_id)
                 ON UPDATE CASCADE
-        )
+        );
         """,
         """
         CREATE INDEX ON fact_ais (ts_date_id);
@@ -224,17 +224,17 @@ def create_tables():
         GROUP BY sequence.second
         ) DQ
         order by 1;
-""",
+        """,
         """
-INSERT INTO public.dim_date(
-	date_id, millennium, century, decade, iso_year, year, month, day, day_of_week, iso_day_of_week, day_of_year, quarter, epoch, week)
-	VALUES (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-""",
+        INSERT INTO public.dim_date(
+        date_id, millennium, century, decade, iso_year, year, month, day, day_of_week, iso_day_of_week, day_of_year, quarter, epoch, week)
+        VALUES (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        """,
         """
-    INSERT INTO public.dim_date(
+        INSERT INTO public.dim_date(
         date_id, millennium, century, decade, iso_year, year, month, day, day_of_week, iso_day_of_week, day_of_year, quarter, epoch, week)
         SELECT
-    -- 	datum as Date,
+        -- 	datum as Date,
         to_char(datum, 'YYYYMMDD')::integer,
         extract(millennium from datum) AS Millenium,
         extract(century from datum) AS Century,
@@ -249,36 +249,36 @@ INSERT INTO public.dim_date(
         extract(quarter from datum) AS Quarter,
         extract(epoch from datum) AS Epoch,
         extract(week from datum) AS Week
-    FROM (
+        FROM (
         SELECT '2021-01-01'::DATE + sequence.day AS datum
         FROM generate_series(0,2000) AS sequence(day)
         GROUP BY sequence.day
         ) DQ
-    order by 1;
+        order by 1;
         """,
         """
         CREATE TABLE IF NOT EXISTS fact_trajectory_sailing (
             trajectory_id BIGSERIAL PRIMARY KEY,
-            ship_id INTEGER NOT NULL,
-            eta_time_id INTEGER NOT NULL,
-            eta_date_id INTEGER NOT NULL,
             time_start_id INTEGER NOT NULL,
             date_start_id INTEGER NOT NULL,
             time_end_id INTEGER NOT NULL,
             date_end_id INTEGER NOT NULL,
-            data_source_type_id INTEGER NOT NULL,
-            type_of_position_fixing_device_id INTEGER NOT NULL,
-            destination_id INTEGER NOT NULL,
+            ship_id INTEGER NOT NULL,
+            ship_type_id INTEGER NOT NULL DEFAULT 0,
             type_of_mobile_id INTEGER NOT NULL,
             cargo_type_id INTEGER NOT NULL,
-            coordinates geometry(linestring) NOT NULL,
-            length_meters FLOAT NOT NULL,
+            type_of_position_fixing_device_id INTEGER NOT NULL,
+            eta_time_id INTEGER NOT NULL,
+            eta_date_id INTEGER NOT NULL,
+            data_source_type_id INTEGER NOT NULL,
+            destination_id INTEGER NOT NULL,
             duration INTEGER NOT NULL,
             audit_id INTEGER NOT NULL,
             total_points INTEGER NOT NULL,
+            length_meters FLOAT NOT NULL,
             draught FLOAT[2],
-            ship_type_id INTEGER NOT NULL DEFAULT 0,
             avg_speed_knots DOUBLE PRECISION NOT NULL,
+            coordinates geometry(linestring) NOT NULL,
 
             FOREIGN KEY (audit_id)
                 REFERENCES dim_audit (audit_id)
@@ -323,31 +323,31 @@ INSERT INTO public.dim_date(
             FOREIGN KEY (cargo_type_id)
                 REFERENCES dim_cargo_type (cargo_type_id)
                 ON UPDATE CASCADE
-        )
+        );
         """,
         """
         CREATE TABLE IF NOT EXISTS fact_trajectory_stopped (
             trajectory_id BIGSERIAL PRIMARY KEY,
-            ship_id INTEGER NOT NULL,
-            eta_time_id INTEGER NOT NULL,
-            eta_date_id INTEGER NOT NULL,
             time_start_id INTEGER NOT NULL,
             date_start_id INTEGER NOT NULL,
             time_end_id INTEGER NOT NULL,
             date_end_id INTEGER NOT NULL,
-            data_source_type_id INTEGER NOT NULL,
-            type_of_position_fixing_device_id INTEGER NOT NULL,
-            destination_id INTEGER NOT NULL,
+            ship_id INTEGER NOT NULL,
+            ship_type_id INTEGER NOT NULL DEFAULT 0,
             type_of_mobile_id INTEGER NOT NULL,
             cargo_type_id INTEGER NOT NULL,
-            coordinates geometry(linestring) NOT NULL,
-            length_meters FLOAT NOT NULL,
+            type_of_position_fixing_device_id INTEGER NOT NULL,
+            eta_time_id INTEGER NOT NULL,
+            eta_date_id INTEGER NOT NULL,
+            data_source_type_id INTEGER NOT NULL,
+            destination_id INTEGER NOT NULL,
             duration INTEGER NOT NULL,
             audit_id INTEGER NOT NULL,
             total_points INTEGER NOT NULL,
+            length_meters FLOAT NOT NULL,
             draught FLOAT[2],
-            ship_type_id INTEGER NOT NULL DEFAULT 0,
             avg_speed_knots DOUBLE PRECISION NOT NULL,
+            coordinates geometry(linestring) NOT NULL,
 
             FOREIGN KEY (audit_id)
                 REFERENCES dim_audit (audit_id)
@@ -392,7 +392,7 @@ INSERT INTO public.dim_date(
             FOREIGN KEY (cargo_type_id)
                 REFERENCES dim_cargo_type (cargo_type_id)
                 ON UPDATE CASCADE
-        )
+        );
         """,
         """
         CREATE TABLE dim_cell (
@@ -442,30 +442,30 @@ INSERT INTO public.dim_date(
         """
         CREATE TABLE IF NOT EXISTS fact_ais_clean (
             fact_id BIGSERIAL NOT NULL PRIMARY KEY,
-            eta_date_id INTEGER NOT NULL DEFAULT 0,
-            eta_time_id INTEGER NOT NULL DEFAULT 0,
-            ship_id INTEGER NOT NULL,
             ts_date_id INTEGER NOT NULL,
             ts_time_id INTEGER NOT NULL,
-            data_source_type_id INTEGER NOT NULL DEFAULT 1,
-            destination_id INTEGER NOT NULL DEFAULT 1,
+            ship_id INTEGER NOT NULL,
+            ship_type_id INTEGER NOT NULL DEFAULT 1,
+            cell_id INTEGER DEFAULT NULL,
             type_of_mobile_id INTEGER NOT NULL DEFAULT 1,
-            navigational_status_id INTEGER NOT NULL DEFAULT 1,
             cargo_type_id INTEGER NOT NULL DEFAULT 1,
             type_of_position_fixing_device_id INTEGER NOT NULL DEFAULT 1,
-            ship_type_id INTEGER NOT NULL DEFAULT 1,
-            coordinate GEOGRAPHY(POINT) NOT NULL,
+            trajectory_stopped_id INTEGER DEFAULT NULL,
+            trajectory_sailing_id INTEGER DEFAULT NULL,
+            audit_id INTEGER NOT NULL,
+            eta_date_id INTEGER NOT NULL DEFAULT 0,
+            eta_time_id INTEGER NOT NULL DEFAULT 0,
+            data_source_type_id INTEGER NOT NULL DEFAULT 1,
+            destination_id INTEGER NOT NULL DEFAULT 1,
+            navigational_status_id INTEGER NOT NULL DEFAULT 1,
             latitude DOUBLE PRECISION NOT NULL,
             longitude DOUBLE PRECISION NOT NULL,
             draught DOUBLE PRECISION,
             rot DOUBLE PRECISION,
             sog DOUBLE PRECISION,
             cog DOUBLE PRECISION,
+            coordinate GEOGRAPHY(POINT) NOT NULL,
             heading SMALLINT,
-            audit_id INTEGER NOT NULL,
-            cell_id INTEGER DEFAULT NULL,
-            trajectory_stopped_id INTEGER DEFAULT NULL,
-            trajectory_sailing_id INTEGER DEFAULT NULL,
 
             FOREIGN KEY (audit_id)
                 REFERENCES dim_audit (audit_id)
@@ -503,7 +503,7 @@ INSERT INTO public.dim_date(
             FOREIGN KEY (trajectory_sailing_id)
                 REFERENCES fact_trajectory_sailing (trajectory_id)
                 ON DELETE SET DEFAULT
-        )
+        );
         """
     )
 
