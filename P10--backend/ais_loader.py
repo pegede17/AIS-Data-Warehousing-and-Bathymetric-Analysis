@@ -6,7 +6,7 @@ import pygrametl
 from pygrametl.datasources import SQLSource, CSVSource
 from pygrametl.tables import BulkFactTable, Dimension, CachedDimension, FactTable, SlowlyChangingDimension
 from sshtunnel import SSHTunnelForwarder
-from helper_functions import create_audit_dimension, create_cargo_type_dimension, create_data_source_type_dimension, create_date_dimension, create_destination_dimension, create_fact_table, create_navigational_status_dimension, create_ship_dimension, create_ship_type_dimension, create_tables, create_time_dimension, create_type_of_mobile_dimension, create_type_of_position_fixing_device_dimension
+from helper_functions import create_audit_dimension, create_cargo_type_dimension, create_data_source_type_dimension, create_date_dimension, create_destination_dimension, create_fact_table, create_navigational_status_dimension, create_ship_dimension, create_ship_type_dimension, create_tables, create_time_dimension, create_type_of_mobile_dimension, create_type_of_position_fixing_device_dimension, create_trustworthiness_dimension
 from pygrametl.datasources import SQLSource, CSVSource, ProcessSource, TransformingSource
 from pygrametl.tables import BulkFactTable, DecoupledFactTable, DimensionPartitioner, DecoupledDimension, Dimension, CachedDimension, FactTable, SlowlyChangingDimension
 from datetime import datetime
@@ -88,7 +88,9 @@ def load_data_into_db(config):
 
     type_of_mobile_dimension = create_type_of_mobile_dimension()
 
-    ship_dimension = create_ship_dimension(type_of_position_fixing_device_dimension, ship_type_dimension, type_of_mobile_dimension)
+    trustworthiness_dimension = create_trustworthiness_dimension()
+
+    ship_dimension = create_ship_dimension(type_of_position_fixing_device_dimension, ship_type_dimension, type_of_mobile_dimension, trustworthiness_dimension)
 
     navigational_status_dimension = create_navigational_status_dimension()
 
@@ -123,6 +125,15 @@ def load_data_into_db(config):
             val = row[value]
             row[value] = validateToNull(val)
 
+    def getTrust(row):
+        match (row['type_of_mobile_id']) :
+            case 'Class A':
+                return 10
+            case 'Class B': 
+                return 2
+            case _:
+                return 5
+
     ais_file_handle = open(
         config["Environment"]["FILE_PATH"] + config["Environment"]["FILE_NAME"], 'r')
     ais_source = CSVSource(f=ais_file_handle, delimiter=',')
@@ -134,8 +145,9 @@ def load_data_into_db(config):
     print("Starting loading " + str(datetime.now()))
     for row in transformeddata:
         timestamp = convertTimestampToTimeId(row["# Timestamp"])
-        if (timestamp < 10000): # Start loading after 10 minutes to bypass null values at midnight
-            continue
+        trust = getTrust(row)
+        row['trust_score'] = trust
+        row['trust_category'] = 0 if trust < 5 else 1 if trust < 8 else 2 
         
         i = i + 1
 
@@ -153,7 +165,9 @@ def load_data_into_db(config):
             'mmsi': 'MMSI',
             'ship_type': 'Ship type',
             'device_type': 'Type of position fixing device',
-            'mobile_type': 'Type of mobile'
+            'mobile_type': 'Type of mobile',
+            'trust_score' : 'trust_score',
+            'trust_category' : 'trust_category'
         })
 
         fact["ship_type_id"] = ship_type_dimension.lookup(row, {
@@ -207,6 +221,7 @@ def load_data_into_db(config):
         fact_table.insert(fact)
 
     audit_obj['processed_records'] = i
+    audit_obj['inserted_records'] = i
     audit_obj['audit_id'] = audit_id
     audit_dimension.update(audit_obj)
 
