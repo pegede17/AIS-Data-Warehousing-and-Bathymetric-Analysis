@@ -66,6 +66,7 @@ def create_tables():
         CREATE TABLE IF NOT EXISTS dim_trustworthiness (
             trust_id SERIAL NOT NULL,
             trust_score DOUBLE PRECISION,
+            trust_category INTEGER,
             PRIMARY KEY (trust_id)
         );
         INSERT INTO dim_trustworthiness (trust_score) VALUES (-1);
@@ -101,7 +102,9 @@ def create_tables():
             FOREIGN KEY (trust_id)
                 REFERENCES dim_trustworthiness (trust_id)
                 ON UPDATE CASCADE
-        )
+        );
+        INSERT INTO dim_ship (mmsi, imo, name, width, length, callsign, size_a, size_b, size_c, size_d, ship_type_id, type_of_position_fixing_device_id, type_of_mobile_id, trust_id) 
+            VALUES (0,0,'Unknown',0,0,'Unknown',0,0,0,0,1,1,1,1);
         """,
         """
         CREATE TABLE IF NOT EXISTS dim_date (
@@ -551,7 +554,7 @@ def create_audit_dimension():
         name='dim_audit',
         key='audit_id',
         attributes=['timestamp', 'processed_records', 'inserted_records' ,'source_system',
-                    'etl_version', 'table_name', 'etl_duration' , 'comment', ]
+                    'etl_version', 'table_name', 'etl_duration' , 'description']
     )
 
 
@@ -630,7 +633,7 @@ def create_ship_dimension(type_of_position_fixing_device_dimension_dim, ship_typ
         cachefullrows=True,
         prefill=True,
         cacheoninsert=True,
-        lookupatts=['mmsi', 'Callsign', 'IMO'],
+        lookupatts=['mmsi'],
         size=0,
         defaultidvalue=1
     )

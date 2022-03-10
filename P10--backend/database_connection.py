@@ -6,7 +6,7 @@ import configparser
 def connect_via_ssh():
 
     config = configparser.ConfigParser()
-    config.read('application.properties')
+    config.read('P10--backend/application.properties')
 
     connection = None
 
@@ -33,7 +33,7 @@ def connect_via_ssh():
 
 def connect_to_local():
     config = configparser.ConfigParser()
-    config.read('application.properties')
+    config.read('P10--backend/application.properties')
 
     connection_string = "host='localhost' dbname='{}' user='{}' password='{}'".format(
         config["Database"]["dbname"],
@@ -48,7 +48,7 @@ def connect_to_local():
 
 def connect_to_postgres_db_via_ssh():
     config = configparser.ConfigParser()
-    config.read('application.properties')
+    config.read('P10--backend/application.properties')
 
     connection = None
 
@@ -75,7 +75,7 @@ def connect_to_postgres_db_via_ssh():
 
 def connect_to_postgres_db_local():
     config = configparser.ConfigParser()
-    config.read('application.properties')
+    config.read('P10--backend/application.properties')
 
     connection_string = "host='localhost' dbname='postgres' user='{}' password='{}'".format(
         config["Database"]["dbuser"],

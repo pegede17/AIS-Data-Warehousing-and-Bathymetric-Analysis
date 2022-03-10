@@ -17,7 +17,7 @@ import gc
 import configparser
 
 config = configparser.ConfigParser()
-config.read('application.properties')
+config.read('P10--backend/application.properties')
 
 def main(argv):
     start_date = datetime.today()

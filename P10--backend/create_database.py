@@ -5,7 +5,7 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 def create_database():
     config = configparser.ConfigParser()
-    config.read('application.properties')
+    config.read('P10--backend/application.properties')
 
     if(config["Environment"]["development"] == "True"):
         connection = connect_to_postgres_db_via_ssh()

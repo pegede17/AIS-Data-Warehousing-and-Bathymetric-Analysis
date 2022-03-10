@@ -20,14 +20,12 @@ def distanceInKmBetweenEarthCoordinates(lat1, lon1, lat2, lon2):
 
     lat1 = degreesToRadians(lat1)
     lat2 = degreesToRadians(lat2)
-    # a = (sin(dlat/2))^2 + cos(lat1) * cos(lat2) * (sin(dlon/2))^2
-    # a = math.sin(dLat/2) * math.sin(dLat/2) + math.cos(lat1) * math.cos(lat2) * math.sin(dLon/2) * math.sin(dLon/2) 
     a = math.sin(dLat/2) * math.sin(dLat/2) + math.sin(dLon/2) * math.sin(dLon/2) * math.cos(lat1) * math.cos(lat2)
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
     return earthRadiusKm * c
 
 def traj_splitter(journey, speedTreshold, timeThreshold, SOGLimit):
-    firstPointNotAdded = -1
+    firstPointWithLowSpeed = -1
     ship_trajectories = []
     ship_stops = []
     tempTrajectoryList = []
@@ -43,33 +41,56 @@ def traj_splitter(journey, speedTreshold, timeThreshold, SOGLimit):
         previousPoint = journey[i-1]
         point = journey[i]
         distanceToLastPoint = distanceInKmBetweenEarthCoordinates(point['lat'],point['long'], journey[i-1]['lat'], journey[i-1]['long']) * 1000
+        
+        # Determine time since last point or set to 0 if it is the first point
         if(i != 0):
             if ((point['lat'] == previousPoint['lat'] and point['long'] == previousPoint['long']) or point['time'] == previousPoint['time']):
                 continue
             timeSinceLastPoint = point['time'] - journey[i-1]['time']
         else:
             timeSinceLastPoint = timedelta(0)
+        
+        #Set speed depending on if time has passed since last point/if we have a previous point
         if(timeSinceLastPoint.seconds != 0):
             calculatedSpeed = distanceToLastPoint/timeSinceLastPoint.seconds
             speed = calculatedSpeed
         else:
             speed = float(point['sog'])
 
+        # Split trajectories if it has been too long since last point
+        if(timeSinceLastPoint > timedelta(minutes=5)):
+            # End current trajectory session and push to trajectory list
+            if(len(tempTrajectoryList) > 0):
+                if(firstPointWithLowSpeed != -1):
+                    tempTrajectoryList = tempTrajectoryList + journey[firstPointWithLowSpeed:i - 1]
+                    firstPointWithLowSpeed = -1
+                ship_trajectories.append(tempTrajectoryList.copy())
+                tempTrajectoryList.clear()
+                
+            elif(len(tempStopList) > 0):
+                if(firstPointWithLowSpeed != -1):
+                    tempStopList = tempStopList + journey[firstPointWithLowSpeed:i - 1]
+                    firstPointWithLowSpeed = -1
+                ship_stops.append(tempStopList.copy())
+                tempStopList.clear()
+            speed = float(point['sog'])
+
+        # Skip a point if it is has a too high speed/it is an outlier
         if(speed > SOGLimit):
             print(str(point['long']) + ", " + str(point['lat']))
-            if(firstPointNotAdded == -1):
+            if(firstPointWithLowSpeed == -1):
                 continue
             if(len(tempStopList) > 0):
-                tempStopList = tempStopList + journey[firstPointNotAdded:i - 1]
+                tempStopList = tempStopList + journey[firstPointWithLowSpeed:i - 1]
             elif (len(tempTrajectoryList) > 0):
-                tempTrajectoryList = tempTrajectoryList + journey[firstPointNotAdded:i - 1]
-            firstPointNotAdded = -1
+                tempTrajectoryList = tempTrajectoryList + journey[firstPointWithLowSpeed:i - 1]
+            firstPointWithLowSpeed = -1
             continue
 
         if(speed < speedTreshold):
             # Keep track of the first point with a low speed
-            if(firstPointNotAdded == -1):
-                firstPointNotAdded = i
+            if(firstPointWithLowSpeed == -1):
+                firstPointWithLowSpeed = i
             # Update time since above threshold
             # timeSinceAboveThreshold = (datetime.strptime(point['timestamp'], '%d-%m-%Y, %H:%M:%S') - datetime.strptime(journey[lastPointOverThreshold]['timestamp'],  '%d-%m-%Y, %H:%M:%S') )
             timeSinceAboveThreshold = point['ts_time_id'] - journey[lastPointOverThreshold]['ts_time_id'] 
@@ -83,12 +104,12 @@ def traj_splitter(journey, speedTreshold, timeThreshold, SOGLimit):
                     ship_trajectories.append(tempTrajectoryList.copy())
                     tempTrajectoryList.clear()
                 # Add points to current stop session
-                if(firstPointNotAdded != -1 and firstPointNotAdded != i):
-                    test = journey[firstPointNotAdded:i+1]
-                    tempStopList = tempStopList + journey[firstPointNotAdded:i+1]
+                if(firstPointWithLowSpeed != -1 and firstPointWithLowSpeed != i):
+                    test = journey[firstPointWithLowSpeed:i+1]
+                    tempStopList = tempStopList + journey[firstPointWithLowSpeed:i+1]
                 else:
-                    tempStopList = tempStopList + journey[firstPointNotAdded:i+1]
-                firstPointNotAdded = -1
+                    tempStopList = tempStopList + journey[firstPointWithLowSpeed:i+1]
+                firstPointWithLowSpeed = -1
 
         if(speed >= speedTreshold):
             # Reset counters
@@ -98,12 +119,12 @@ def traj_splitter(journey, speedTreshold, timeThreshold, SOGLimit):
                 ship_stops.append(tempStopList.copy())
                 tempStopList.clear()
             # Add points to current trajectory
-            if(firstPointNotAdded != -1):
-                tempTrajectoryList = tempTrajectoryList + journey[firstPointNotAdded:i+1]
+            if(firstPointWithLowSpeed != -1):
+                tempTrajectoryList = tempTrajectoryList + journey[firstPointWithLowSpeed:i+1]
             else:
                 tempTrajectoryList.append(point)
             timeSinceAboveThreshold = timedelta(minutes=0)
-            firstPointNotAdded = -1
+            firstPointWithLowSpeed = -1
 
 
     if(len(tempStopList) > 0):

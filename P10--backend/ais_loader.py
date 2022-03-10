@@ -1,3 +1,4 @@
+import imp
 from create_database import create_database
 from dansk_farvand import create_dansk_farvand
 from database_connection import connect_to_local, connect_via_ssh
@@ -14,6 +15,7 @@ import configparser
 from pygrametl.parallel import shareconnectionwrapper, getsharedsequencefactory
 from pygrametl import ConnectionWrapper
 import configparser
+from datetime import timedelta
 # from helper_functions import create_tables
 
 
@@ -105,10 +107,12 @@ def load_data_into_db(config):
 
     audit_obj = {'timestamp': datetime.now(),
                  'processed_records': 0,
+                 'inserted_records': 0,
+                 'etl_duration': timedelta(minutes=0),
                  'source_system': config["Audit"]["source_system"],
                  'etl_version': config["Audit"]["elt_version"],
                  'table_name': fact_table.name,
-                 'comment': config["Audit"]["comment"]}
+                 'description': config["Audit"]["comment"]}
 
     audit_id = audit_dimension.insert(audit_obj)
 
@@ -126,7 +130,7 @@ def load_data_into_db(config):
             row[value] = validateToNull(val)
 
     def getTrust(row):
-        match (row['type_of_mobile_id']) :
+        match (row['Type of mobile']) :
             case 'Class A':
                 return 10
             case 'Class B': 
@@ -222,6 +226,7 @@ def load_data_into_db(config):
 
     audit_obj['processed_records'] = i
     audit_obj['inserted_records'] = i
+    audit_obj['etl_duration'] = timedelta(minutes=50),
     audit_obj['audit_id'] = audit_id
     audit_dimension.update(audit_obj)
 
