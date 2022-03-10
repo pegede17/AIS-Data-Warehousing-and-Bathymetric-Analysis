@@ -69,7 +69,19 @@ def create_tables():
             trust_category INTEGER,
             PRIMARY KEY (trust_id)
         );
-        INSERT INTO dim_trustworthiness (trust_score) VALUES (-1);
+        INSERT INTO dim_trustworthiness (trust_score, trust_category) VALUES 
+            (-1,-1),
+            (0,0),
+            (1,0),
+            (2,1),
+            (3,1),
+            (4,1),
+            (5,2),
+            (6,2),
+            (7,2),
+            (8,3),
+            (9,3),
+            (10,3);
         """,
         """
         CREATE TABLE IF NOT EXISTS dim_ship (
@@ -618,12 +630,13 @@ def create_trustworthiness_dimension():
         attributes=['trust_score', 'trust_category'],
         prefill=True,
         cacheoninsert=True,
-        defaultidvalue=-1
+        defaultidvalue=-1,
+        lookupatts=['trust_score']
     )
 
 
-def create_ship_dimension(type_of_position_fixing_device_dimension_dim, ship_type_dim, type_of_mobile_dim, trustworthiness_dim):
-    ship_dim = CachedDimension(
+def create_ship_dimension():
+    return CachedDimension(
         name='dim_ship',
         key='ship_id',
         attributes=['mmsi', 'IMO', 'Name', 'Width', 'Length',
@@ -633,14 +646,10 @@ def create_ship_dimension(type_of_position_fixing_device_dimension_dim, ship_typ
         cachefullrows=True,
         prefill=True,
         cacheoninsert=True,
-        lookupatts=['mmsi'],
+        lookupatts=['mmsi', 'ship_type_id', 'type_of_position_fixing_device_id', 'type_of_mobile_id'],
         size=0,
         defaultidvalue=1
     )
-
-    return SnowflakedDimension(
-        [(ship_dim, (type_of_position_fixing_device_dimension_dim, ship_type_dim, type_of_mobile_dim, trustworthiness_dim))
-         ])
 
 
 def create_time_dimension():

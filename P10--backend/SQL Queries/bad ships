@@ -1,0 +1,6 @@
+SELECT ship_type, mobile_type, device_type, ship_id, mmsi, imo, name, width, length, callsign, size_a, size_b, size_c from dim_ship s 
+join dim_ship_type st on s.ship_type_id = st.ship_type_id 
+join dim_type_of_mobile tm on tm.type_of_mobile_id = s.type_of_mobile_id 
+join dim_type_of_position_fixing_device tp on s.type_of_position_fixing_device_id = tp.type_of_position_fixing_device_id
+
+where mmsi=331569000

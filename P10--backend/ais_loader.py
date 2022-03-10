@@ -92,7 +92,7 @@ def load_data_into_db(config):
 
     trustworthiness_dimension = create_trustworthiness_dimension()
 
-    ship_dimension = create_ship_dimension(type_of_position_fixing_device_dimension, ship_type_dimension, type_of_mobile_dimension, trustworthiness_dimension)
+    ship_dimension = create_ship_dimension()
 
     navigational_status_dimension = create_navigational_status_dimension()
 
@@ -161,26 +161,8 @@ def load_data_into_db(config):
         row['MMSI'] = int(row['MMSI'])
         fact['cell_id'] = 1
 
-        fact["ship_id"] = ship_dimension.ensure(row, {
-            'size_a': 'A',
-            'size_b': 'B',
-            'size_c': 'C',
-            'size_d': 'D',
-            'mmsi': 'MMSI',
-            'ship_type': 'Ship type',
-            'device_type': 'Type of position fixing device',
-            'mobile_type': 'Type of mobile',
-            'trust_score' : 'trust_score',
-            'trust_category' : 'trust_category'
-        })
 
-        fact["ship_type_id"] = ship_type_dimension.lookup(row, {
-            'ship_type': 'Ship type'
-        })
 
-        fact["type_of_position_fixing_device_id"] = type_of_position_fixing_device_dimension.lookup(row, {
-            'device_type': 'Type of position fixing device'
-        })
 
         fact["cargo_type_id"] = cargo_type_dimension.ensure(row, {
             'cargo_type': 'Cargo type'
@@ -190,9 +172,6 @@ def load_data_into_db(config):
             'navigational_status': 'Navigational status'
         })
 
-        fact["type_of_mobile_id"] = type_of_mobile_dimension.lookup(row, {
-            'mobile_type': 'Type of mobile'
-        })
 
         fact["destination_id"] = destination_dimension.ensure(row, {
             'user_defined_destination': 'Destination',
@@ -201,6 +180,36 @@ def load_data_into_db(config):
 
         fact["data_source_type_id"] = data_source_type_dimension.ensure(row, {
             'data_source_type': 'Data source type'
+        })
+
+        row['type_of_position_fixing_device_id'] = type_of_position_fixing_device_dimension.ensure(row, {
+            'device_type': 'Type of position fixing device'
+        })
+        fact["type_of_position_fixing_device_id"] = row['type_of_position_fixing_device_id']
+
+        row['type_of_mobile_id'] = type_of_mobile_dimension.ensure(row, {
+            'mobile_type': 'Type of mobile'
+        })
+        fact["type_of_mobile_id"] = row['type_of_mobile_id']
+
+        row['ship_type_id'] = ship_type_dimension.ensure(row, {
+            'ship_type': 'Ship type'
+        })
+        fact["ship_type_id"] = row['ship_type_id']
+
+        row['trust_id'] = trustworthiness_dimension.lookup({'trust_score': trust})
+
+
+        fact["ship_id"] = ship_dimension.ensure(row, {
+            'size_a': 'A',
+            'size_b': 'B',
+            'size_c': 'C',
+            'size_d': 'D',
+            'mmsi': 'MMSI',
+            'ship_type_id': 'ship_type_id',
+            'type_of_position_fixing_device_id': "type_of_position_fixing_device_id",
+            'type_of_mobile_id': 'type_of_mobile_id',
+            'trust_id' : 'trust_id'
         })
 
         # Retrieve attributes that are obtained either by formula or as a measure from dataset
