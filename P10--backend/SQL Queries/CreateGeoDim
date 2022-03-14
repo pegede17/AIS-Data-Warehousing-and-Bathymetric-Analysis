@@ -1,9 +1,3 @@
-CREATE TABLE trajectory_relation_geo_v1 (
-	trajectory_id BIGINT NOT NULL,
-	geo_id BIGINT NOT NULL,
-	PRIMARY KEY (trajectory_id, geo_id)
-);
-
 CREATE TABLE raster_50m (
 	ras raster
 );
@@ -29,21 +23,40 @@ INSERT INTO raster_1000m VALUES (ST_AddBand(ST_MakeEmptyRaster(1000,1000,3584734
 
 CREATE TABLE dim_cell (
 	geo_id BIGSERIAL PRIMARY KEY,
-	row_50m BIGINT,
-	column_50m BIGINT,
-	row_100m BIGINT,
-	column_100m BIGINT,
-	row_500m BIGINT,
-	column_500m BIGINT,
-	row_1000m BIGINT,
-	column_1000m BIGINT,
+	columnx_50m BIGINT,
+	rowy_50m BIGINT,
+	columnx_100m BIGINT,
+	rowy_100m BIGINT,
+	columnx_500m BIGINT,
+	rowy_500m BIGINT,
+	columnx_1000m BIGINT,
+	rowy_1000m BIGINT,
 	boundary_50m GEOMETRY,
 	boundary_100m GEOMETRY,
 	boundary_500m GEOMETRY,
 	boundary_1000m GEOMETRY
-)
+);
 
-INSERT INTO geo_dim (
+CREATE TABLE dim_cell (
+	geo_id BIGSERIAL PRIMARY KEY,
+	columnx_50m BIGINT,
+	rowy_50m BIGINT,
+	columnx_100m BIGINT,
+	rowy_100m BIGINT,
+	columnx_500m BIGINT,
+	rowy_500m BIGINT,
+	columnx_1000m BIGINT,
+	rowy_1000m BIGINT,
+	boundary_50m GEOMETRY,
+	boundary_100m GEOMETRY,
+	boundary_500m GEOMETRY,
+	boundary_1000m GEOMETRY
+);
+
+With start_point as (
+	SELECT 3584734 x_start, 2997812 y_start
+)
+INSERT INTO dim_cell (
 	columnx_50m, rowy_50m, 
 	columnx_100m, rowy_100m, 
 	columnx_500m, rowy_500m, 
@@ -52,18 +65,12 @@ INSERT INTO geo_dim (
 	boundary_100m,
 	boundary_500m,
 	boundary_1000m) 
-	SELECT x, y,
-	x/2, y/2,
-	x/10, y/10,
-	x/20, y/20,
-	ST_PixelAsPolygon(raster_50m.ras, x, y),
-	ST_PixelAsPolygon(raster_100m.ras, x/2, y/2),
-	ST_PixelAsPolygon(raster_500m.ras, x/10, y/10),
-	ST_PixelAsPolygon(raster_1000m.ras, x/20, y/20)
-	FROM generate_series(1, 20000) x, generate_series(1, 20000) y, 
-		raster_50m, raster_100m, raster_500m, raster_1000m
-
-SELECT (ST_PixelOfValue(ras,0)).x
-FROM raster_50m
-LIMIT 10
-
+	SELECT columnx, rowy,
+	ceil(columnx/2.0), ceil(rowy/2.0),
+	ceil(columnx/10.0), ceil(rowy/10.0),
+	ceil(columnx/20.0), ceil(rowy/20.0),
+	ST_MakeEnvelope(x_start + ((columnx - 1) * 50),y_start + ((rowy - 1) * 50),x_start + (columnx * 50),y_start + (rowy * 50),3034),
+	ST_MakeEnvelope(x_start + ((ceil(columnx/2.0) - 1) * 100),y_start + ((ceil(rowy/2.0) - 1) * 100),x_start + (ceil(columnx/2.0) * 100),y_start + (ceil(rowy/2.0) * 100),3034),
+	ST_MakeEnvelope(x_start + ((ceil(columnx/10.0) - 1) * 500),y_start + ((ceil(rowy/10.0) - 1) * 500),x_start + (ceil(columnx/10.0) * 500),y_start + (ceil(rowy/10.0) * 500),3034),
+	ST_MakeEnvelope(x_start + ((ceil(columnx/20.0) - 1) * 1000),y_start + ((ceil(rowy/20.0) - 1) * 1000),x_start + (ceil(columnx/20.0) * 1000),y_start + (ceil(rowy/20.0) * 1000),3034)
+	FROM generate_series(1, 20000) columnx, generate_series(1, 20000) rowy, start_point

@@ -34,12 +34,11 @@ def traj_splitter(journey, speedTreshold, timeThreshold, SOGLimit):
     lastPointOverThreshold = 0
 
 
-    for i, _ in enumerate(journey):
+    for i, point in enumerate(journey):
 
         # journey[i]['time'] = datetime.strptime(str(journey[i]['ts_time_id']), "%H%M%S")
         journey[i]['time'] = datetime(year=1, month=1, day=1, hour=journey[i]['hour'], minute=journey[i]['minute'], second=journey[i]['second'])
         previousPoint = journey[i-1]
-        point = journey[i]
         distanceToLastPoint = distanceInKmBetweenEarthCoordinates(point['lat'],point['long'], journey[i-1]['lat'], journey[i-1]['long']) * 1000
         
         # Determine time since last point or set to 0 if it is the first point
@@ -153,42 +152,36 @@ def traj_splitter(journey, speedTreshold, timeThreshold, SOGLimit):
     print("test")
 
 
-config = configparser.ConfigParser()
-config.read('application.properties')
+# gets all AIS data from a given day, to create a journey - then calls splitter - and sets trajectories into database 
+def create_trajectories(date_to_lookup, config):
+    #sets connetction 
+    if(config["Environment"]["development"] == "True"):
+        connection = connect_via_ssh()
+    else:
+        connection = connect_to_local()
+    dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
 
-if(config["Environment"]["development"] == "True"):
-    connection = connect_via_ssh()
-else:
-    connection = connect_to_local()
-dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
+    #query to select all AIS points from the given day
+    query_get_all_ais_from_date = f''' 
+        SELECT ship_type_id, ts_date_id, ship_id, ts_time_id, audit_id, ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat, sog, hour, minute, second, draught
+        FROM fact_ais_clean_v2
+        INNER JOIN dim_time ON dim_time.time_id = ts_time_id
+        WHERE ts_date_id = {date_to_lookup}
+        ORDER BY ship_id, ts_time_id ASC
+        '''
+    
+    
+    t_query_execution_start = perf_counter()
+    
+    #translate query to groupby dataframe on ship id   
+    all_journeys_as_dataframe = (pd.DataFrame(SQLSource(connection=connection, query=query_get_all_ais_from_date))
+                                .groupby(['ship_id']))
+    
+    
 
-# Queries defined
-# query = """
-# SELECT ship_type_id, ts_date_id, ship_id, ts_time_id, audit_id, ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat, sog, hour, minute, second, draught
-# FROM fact_ais_clean_v2
-# INNER JOIN dim_time ON dim_time.time_id = ts_time_id
-# WHERE ts_date_id = 20211026 AND ship_id = 3673
-# ORDER BY ts_time_id ASC
-# """
 
-query = """
-SELECT ship_type_id, ts_date_id, ship_id, ts_time_id, audit_id, ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat, sog, hour, minute, second, draught
-FROM fact_ais_clean_v2
-INNER JOIN dim_time ON dim_time.time_id = ts_time_id
-WHERE ts_date_id = 20211026 and (ship_id = 3673 or ship_id = 2)
-ORDER BY ship_id, ts_time_id ASC
-"""
 
-date_query = """
-SELECT year, month, day
-FROM dim_date
-where date_id = {}
-""".format(20210110)
 
-t_query_execution_start = perf_counter()
-
-qr_cleaned_data = SQLSource(connection=connection, query=query)
-qr_date_details = SQLSource(connection=connection, query=date_query)
 
 
 listOfShips = []
