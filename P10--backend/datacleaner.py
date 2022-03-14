@@ -1,20 +1,30 @@
-import pygrametl
-from datetime import date, datetime
-from helper_functions import create_audit_dimension
-from database_connection import connect_to_local, connect_via_ssh
+from datetime import datetime, timedelta
 
-VERSION = 2
+import pandas as pd
+import pygrametl
+from pygrametl.datasources import SQLSource
+from sqlalchemy import create_engine
+
+from database_connection import connect_to_local, connect_via_ssh
+from helper_functions import create_audit_dimension
+
+VERSION = 1
 
 
 def clean_data(config, date_id):
-
-    if(config["Environment"]["development"] == "True"):
+    if (config["Environment"]["development"] == "True"):
         connection = connect_via_ssh()
     else:
         connection = connect_to_local()
+
+    engineString = f"""postgresql://{config["Database"]["dbuser"]}:{config["Database"]["dbpass"]}@{config["Database"]["hostname"]}:5432/{config["Database"]["dbname"]}"""
+    engine = create_engine(engineString)
+
     dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
 
-    create_query = f"""
+    START_TIME = datetime.today()
+
+    CREATE_DATABASE_QUERY = f"""
     CREATE TABLE IF NOT EXISTS fact_ais_clean_v{VERSION} (
             fact_id BIGSERIAL NOT NULL PRIMARY KEY,
             eta_date_id INTEGER NOT NULL DEFAULT 0,
@@ -36,7 +46,7 @@ def clean_data(config, date_id):
             cog DOUBLE PRECISION,
             heading SMALLINT,
             audit_id INTEGER NOT NULL,
-
+    
             FOREIGN KEY (audit_id)
                 REFERENCES dim_audit (audit_id)
                 ON UPDATE CASCADE
@@ -85,47 +95,90 @@ def clean_data(config, date_id):
 
     audit_obj = {'timestamp': datetime.now(),
                  'processed_records': 0,
+                 'inserted_records': 0,
+                 'etl_duration': timedelta(seconds=1),
                  'source_system': config["Audit"]["source_system"],
                  'etl_version': config["Audit"]["elt_version"],
                  'table_name': f"fact_ais_clean_v{VERSION}",
-                 'comment': f"Date: {date_id}"}
+                 'description': f"Date: {date_id}"}
 
     audit_id = audit_dimension.insert(audit_obj)
 
     cur = connection.cursor()
-    cur.execute(create_query)
+    cur.execute(CREATE_DATABASE_QUERY)
 
-    disable_query = f"""
+    DISABLE_TRIGGERS = f"""
         ALTER TABLE fact_ais_clean_v{VERSION} DISABLE TRIGGER ALL;
     """
 
-    enable_query = f"""
+    ENABLE_TRIGGERS = f"""
         ALTER TABLE fact_ais_clean_v{VERSION} ENABLE TRIGGER ALL;	
     """
 
-    clean_query = f"""
-    INSERT INTO fact_ais_clean_v{VERSION}
-	    SELECT DISTINCT ON (eta_date_id, eta_time_id, ship_id, ts_date_id, ts_time_id, data_source_type_id, destination_id, type_of_mobile_id, navigational_status_id, cargo_type_id, type_of_position_fixing_device_id, ship_type_id, coordinate, draught, rot, sog, cog, heading)
-            fact_id, eta_date_id, eta_time_id, fact_ais.ship_id, ts_date_id, ts_time_id, data_source_type_id, destination_id, type_of_mobile_id, navigational_status_id, cargo_type_id, type_of_position_fixing_device_id, ship_type_id, coordinate, draught, rot, sog, cog, heading, {audit_id}
+    INITIAL_CLEAN_QUERY = f"""
+    SELECT DISTINCT ON (eta_date_id, eta_time_id, ship_id, ts_date_id, ts_time_id, data_source_type_id, destination_id, 
+                    navigational_status_id, cargo_type_id, coordinate, draught, rot, sog, cog, heading)
+            mmsi, fact_ais.type_of_mobile_id, fact_id, eta_date_id, eta_time_id, fact_ais.ship_id, ts_date_id, ts_time_id, data_source_type_id, destination_id, navigational_status_id, cargo_type_id, coordinate, draught, rot, sog, cog, heading
         FROM fact_ais INNER JOIN public.dim_ship on fact_ais.ship_id = dim_ship.ship_id, public.danish_waters
         WHERE 
-            ts_date_id = {date_id}
-            AND (draught < 28.5 OR draught IS NULL)
+            (draught < 28.5 OR draught IS NULL)
             AND width < 75
             AND length < 488
             AND mmsi > 99999999
             AND mmsi < 1000000000
-            AND ST_Contains(geom ,coordinate::geometry);
+            AND ST_Contains(geom ,coordinate::geometry)
     """
 
-    cur.execute(disable_query)
-    cur.execute(clean_query)
+    cur.execute(DISABLE_TRIGGERS)  # Disable triggers during load for efficiency
 
-    audit_obj['processed_records'] = cur.rowcount
+    # Retrieve the points with initial cleaning rules applied directly to where conditions
+    cleaned_data = SQLSource(connection=connection, query=INITIAL_CLEAN_QUERY)
+
+    ais_df = pd.DataFrame(cleaned_data)
+    connection.commit()  # Required in order to release locks
+    ships_grouped = ais_df.groupby(by=['mmsi'])
+
+    dict_updated_ships = {}
+
+    for mmsi, ship_data in ships_grouped:
+        if len(ship_data) < 2:  # We need to have at least 2 rows to choose from
+            continue
+
+        # Create a sequence and count the number of occurrences for each mobile type recorded
+        mobile_type_count = ship_data['type_of_mobile_id'].squeeze().value_counts()
+
+        # Define variable based on the mobile type that have occurred the most
+        best_type = mobile_type_count.reset_index(0)['index'][0]
+
+        # Define the ship_id that have been reported with the previously defined mobile type
+        seq_ship_type = ship_data[ship_data['type_of_mobile_id'] == best_type].squeeze()['ship_id'].value_counts()
+        best_ship_id = seq_ship_type.reset_index(0)['index'][0]
+
+        # Some ships have not reported multiple ship_id's. Therefore, we want to store a list of those that have, so
+        # that we know which ships to update later. That is done by flagging them and adding to a dictionary.
+        flagged = len(seq_ship_type.value_counts()) > 1
+        if flagged:
+            dict_updated_ships[mmsi] = best_ship_id
+
+    # Iterate through all the ships that require an update and update their ship_id for the dataframe
+    for ship in dict_updated_ships:
+        print("Changing ship value of: " + str(ship))
+        ais_df.loc[ais_df['mmsi'] == ship, 'ship_id'] = dict_updated_ships[ship]
+
+    del ais_df['mmsi']  # Remove mmsi column. It was only required during computation
+    ais_df['audit_id'] = audit_id
+    ais_df.to_sql('fact_ais_clean_v1', con=engine, chunksize=500000, index=False, if_exists='append')
+
+    END_TIME = datetime.today()
+
+    audit_obj['processed_records'] = len(ais_df)
+    audit_obj['inserted_records'] = len(ais_df)
+    audit_obj['etl_duration'] = END_TIME - START_TIME
     audit_obj['audit_id'] = audit_id
     audit_dimension.update(audit_obj)
 
-    cur.execute(enable_query)
+    connection.commit()
+    cur.execute(ENABLE_TRIGGERS)
 
     dw_conn_wrapper.commit()
     dw_conn_wrapper.close()
