@@ -1,7 +1,7 @@
-CREATE TABLE raster_50m (
+CREATE TABLE raster_50m_test (
 	ras raster
 );
-INSERT INTO raster_50m VALUES (ST_AddBand(ST_MakeEmptyRaster(20000,20000,3584734::float,2997812::float,50::float,50::float,0::float,0::float,3034),'8BUI'::text, 0, null));
+INSERT INTO raster_50m_test VALUES (ST_AddBand(ST_MakeEmptyRaster(20000,15000,0::float,5900000::float,50::float,50::float,0::float,0::float,32632),'8BUI'::text, 0, null));
 
 
 CREATE TABLE raster_100m (
@@ -74,3 +74,7 @@ INSERT INTO dim_cell (
 	ST_MakeEnvelope(x_start + ((ceil(columnx/10.0) - 1) * 500),y_start + ((ceil(rowy/10.0) - 1) * 500),x_start + (ceil(columnx/10.0) * 500),y_start + (ceil(rowy/10.0) * 500),3034),
 	ST_MakeEnvelope(x_start + ((ceil(columnx/20.0) - 1) * 1000),y_start + ((ceil(rowy/20.0) - 1) * 1000),x_start + (ceil(columnx/20.0) * 1000),y_start + (ceil(rowy/20.0) * 1000),3034)
 	FROM generate_series(1, 20000) columnx, generate_series(1, 20000) rowy, start_point
+	
+SELECT * from dim_cell
+
+
