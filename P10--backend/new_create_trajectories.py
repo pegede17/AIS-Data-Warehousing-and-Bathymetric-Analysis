@@ -27,8 +27,8 @@ def distance_in_km_between_earth_coordinates(lat1, lon1, lat2, lon2):
 
 def traj_splitter(journey:pd.DataFrame, speed_treshold, time_threshold, SOG_limit):
     first_point_with_low_speed = -1
-    ship_trajectories = pd.DataFrame()
-    ship_stops = pd.DataFrame()
+    ship_trajectories = []
+    ship_stops = []
     temp_trajectory_list = pd.DataFrame()
     temp_stop_list = pd.DataFrame()
     time_since_above_threshold = timedelta(minutes=0)
@@ -66,14 +66,14 @@ def traj_splitter(journey:pd.DataFrame, speed_treshold, time_threshold, SOG_limi
             # End current trajectory session and push to trajectory list
             if(len(temp_trajectory_list) > 0):
                 if(first_point_with_low_speed != -1):
-                    temp_trajectory_list = temp_trajectory_list + journey.iloc[first_point_with_low_speed:i - 1]
+                    temp_trajectory_list = pd.concat([temp_trajectory_list, journey.iloc[first_point_with_low_speed:i - 1]], axis = 1)
                     first_point_with_low_speed = -1
                 ship_trajectories.append(temp_trajectory_list.copy())
                 temp_trajectory_list = temp_trajectory_list.iloc[0:0]
                 
             elif(len(temp_stop_list) > 0):
                 if(first_point_with_low_speed != -1):
-                    temp_stop_list = temp_stop_list + journey.iloc[first_point_with_low_speed:i - 1]
+                    temp_stop_list = pd.concat([temp_stop_list , journey.iloc[first_point_with_low_speed:i - 1]], axis = 1)
                     first_point_with_low_speed = -1
                 ship_stops.append(temp_stop_list.copy())
                 temp_stop_list = temp_stop_list.iloc[0:0]
@@ -85,9 +85,9 @@ def traj_splitter(journey:pd.DataFrame, speed_treshold, time_threshold, SOG_limi
             if(first_point_with_low_speed == -1):
                 continue
             if(len(temp_stop_list) > 0):
-                temp_stop_list = temp_stop_list + journey.iloc[first_point_with_low_speed:i - 1]
+                temp_stop_list = pd.concat([temp_stop_list, journey.iloc[first_point_with_low_speed:i - 1]], axis = 1)
             elif (len(temp_trajectory_list) > 0):
-                temp_trajectory_list = temp_trajectory_list + journey.iloc[first_point_with_low_speed:i - 1]
+                temp_trajectory_list = pd.concat([temp_trajectory_list, journey.iloc[first_point_with_low_speed:i - 1]], axis = 1)
             first_point_with_low_speed = -1
             continue
 
@@ -110,9 +110,9 @@ def traj_splitter(journey:pd.DataFrame, speed_treshold, time_threshold, SOG_limi
                 # Add points to current stop session
                 if(first_point_with_low_speed != -1 and first_point_with_low_speed != i):
                     test = journey.iloc[first_point_with_low_speed:i+1]
-                    temp_stop_list = temp_stop_list + journey.iloc[first_point_with_low_speed:i+1]
+                    temp_stop_list = pd.concat([temp_stop_list, journey.iloc[first_point_with_low_speed:i+1]], axis = 1)
                 else:
-                    temp_stop_list = temp_stop_list + journey.iloc[first_point_with_low_speed:i+1]
+                    temp_stop_list = pd.concat([temp_stop_list, journey.iloc[first_point_with_low_speed:i+1]], axis = 1)
                 first_point_with_low_speed = -1
 
         if(speed >= speed_treshold):
@@ -124,9 +124,9 @@ def traj_splitter(journey:pd.DataFrame, speed_treshold, time_threshold, SOG_limi
                 temp_stop_list = temp_stop_list.iloc[0:0]
             # Add points to current trajectory
             if(first_point_with_low_speed != -1):
-                temp_trajectory_list = temp_trajectory_list + journey.iloc[first_point_with_low_speed:i+1]
+                temp_trajectory_list = pd.concat([temp_trajectory_list, journey.iloc[first_point_with_low_speed:i+1]], axis = 1)
             else:
-                temp_trajectory_list.append(point)
+                temp_trajectory_list = pd.concat([temp_trajectory_list, point], axis=1)
             time_since_above_threshold = timedelta(minutes=0)
             first_point_with_low_speed = -1
 
@@ -143,12 +143,12 @@ def traj_splitter(journey:pd.DataFrame, speed_treshold, time_threshold, SOG_limi
     for traj in ship_trajectories:
         linestring = linestring + "LINESTRING("
         firstpoint = True
-        for point in traj:
+        for i, point in traj.iterrows():
             if (not firstpoint):
                 linestring = linestring + ","
-            linestring = linestring + str(point.long)
+            linestring = linestring + str(point.loc['long'])
             linestring = linestring + " "
-            linestring = linestring + str(point.lat)
+            linestring = linestring + str(point.loc['lat'])
             firstpoint = False
         linestring = linestring + "),"
     linestring = linestring + ")"
