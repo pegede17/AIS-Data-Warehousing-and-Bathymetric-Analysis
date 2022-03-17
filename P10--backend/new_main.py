@@ -55,9 +55,9 @@ def main(argv):
 
         if args.l:
             print("Loading " + str(current_date))
-            reverse_file(file)
             # reverse_file(file)
-            file = f'r_aisdk-{date.year:04d}-{date.month:02d}-{date.day:02d}.csv'
+            # reverse_file(file)
+            # file = f'r_aisdk-{date.year:04d}-{date.month:02d}-{date.day:02d}.csv'
             config["Environment"]["FILE_NAME"] = file
             # the data to load will be retrieved from the config
             load_data_into_db(config=config)
