@@ -63,7 +63,6 @@ def clean_data(config, date_id):
             AND mmsi > 99999999
             AND mmsi < 1000000000
             AND ST_Contains(geom ,coordinate::geometry)
-            LIMIT 100
     """
 
     # Disable triggers during load for efficiency
@@ -78,12 +77,14 @@ def clean_data(config, date_id):
         pass
 
     ais_df = pd.DataFrame(cleaned_data)
+    print("Creating initial commit!!")
     connection.commit()  # Required in order to release locks
     ships_grouped = ais_df.groupby(by=['mmsi'])
 
     dict_updated_ships = {}
 
     for mmsi, ship_data in ships_grouped:
+        print(len(ship_data))
         if len(ship_data) < 2:  # We need to have at least 2 rows to choose from
             continue
 
@@ -101,30 +102,40 @@ def clean_data(config, date_id):
 
         # Some ships have not reported multiple ship_id's. Therefore, we want to store a list of those that have, so
         # that we know which ships to update later. That is done by flagging them and adding to a dictionary.
-        flagged = len(seq_ship_type.value_counts()) > 1
-        if flagged:
-            dict_updated_ships[mmsi] = best_ship_id
+        # flagged = len(seq_ship_type.value_counts()) > 1
+        # if flagged:
+
+        dict_updated_ships[mmsi] = best_ship_id
 
     # Iterate through all the ships that require an update and update their ship_id for the dataframe
-    for ship in dict_updated_ships:
-        print("Changing ship value of: " + str(ship))
-        ais_df.loc[ais_df['mmsi'] == ship,
-                   'ship_id'] = dict_updated_ships[ship]
+    # for ship in dict_updated_ships:
+    #     print("Changing ship value of: " + str(ship))
+    #     ais_df.loc[ais_df['mmsi'] == ship,
+    #                'ship_id'] = dict_updated_ships[ship]
+    
     for index, data in ais_df.iterrows():
+        shipExist = dict_updated_ships[data['mmsi']]
+
+        if (shipExist):
+            ais_df.at[index, 'ship_id'] = shipExist
+
         # set_cell_row_and_column(ship_data)
         x, y = transformer.transform(data['latitude'], data['longitude'])
 
         columnx, rowy = ceil((x - 0) /
                              50), ceil((y - 5900000) / 50)
         cell_id = (columnx - 1) * MAX_ROWS + rowy
-        ais_df.at[index, 'cell_id'] = cell_id
-        print(cell_id)
+        ais_df.at[index, 'cell_id'] = 0 # TODO: Change this value to cell_id when calculation is correct and data exists
+        # print(cell_id)
+        print("Iterating through ais_df")
 
     # Remove mmsi column. It was only required during computation
     del ais_df['mmsi']
     ais_df['audit_id'] = audit_id
+    print("AIS_DF to SQL is being called!!")
     ais_df.to_sql('fact_ais_clean', con=engine,
                   chunksize=500000, index=False, if_exists='append')
+    print("DONE!!! AIS_DF_TO_SQL HAS BEEN CALLED!!")
 
     END_TIME = datetime.today()
 
@@ -134,8 +145,10 @@ def clean_data(config, date_id):
     audit_obj['audit_id'] = audit_id
     audit_dimension.update(audit_obj)
 
+    print("Creating connection commit!!")
     connection.commit()
     cur.execute(ENABLE_TRIGGERS)
 
+    print("Creating __dw_conn commit!!")
     dw_conn_wrapper.commit()
     dw_conn_wrapper.close()
