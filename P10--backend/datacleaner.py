@@ -5,7 +5,6 @@ import pandas as pd
 import pygrametl
 from pygrametl.datasources import SQLSource
 from sqlalchemy import create_engine
-import rasterio
 from pyproj import Transformer
 
 
