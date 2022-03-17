@@ -1,5 +1,0 @@
-WITH raster as (
-SELECT ST_AddBand(ST_MakeEmptyRaster(2000,2000, 10.180489109669665,56.18922493790273,0.0005::float,0.0005::float,0::float,0::float,4326),'8BUI'::text,200) ras
-)
-SELECT (ST_DumpAsPolygons(ras)).*
-from raster

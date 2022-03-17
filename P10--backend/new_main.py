@@ -52,7 +52,7 @@ def main(argv):
         if args.l:
             print("Loading " + str(current_date))
             # reverse_file(file)
-            reverse_file(file)
+            # reverse_file(file)
             file = f'r_aisdk_{current_date}.csv'
             config["Environment"]["FILE_NAME"] = file
             # the data to load will be retrieved from the config

@@ -35,7 +35,7 @@ CREATE TABLE dim_cell (
 	boundary_1000m GEOMETRY
 );
 
-With start_point as (
+EXPLAIN With start_point as (
 	SELECT 0 x_start, 5900000 y_start
 )
 INSERT INTO dim_cell (
@@ -55,8 +55,8 @@ INSERT INTO dim_cell (
 	ST_MakeEnvelope(x_start + ((ceil(columnx/2.0) - 1) * 100),y_start + ((ceil(rowy/2.0) - 1) * 100),x_start + (ceil(columnx/2.0) * 100),y_start + (ceil(rowy/2.0) * 100),3034),
 	ST_MakeEnvelope(x_start + ((ceil(columnx/10.0) - 1) * 500),y_start + ((ceil(rowy/10.0) - 1) * 500),x_start + (ceil(columnx/10.0) * 500),y_start + (ceil(rowy/10.0) * 500),3034),
 	ST_MakeEnvelope(x_start + ((ceil(columnx/20.0) - 1) * 1000),y_start + ((ceil(rowy/20.0) - 1) * 1000),x_start + (ceil(columnx/20.0) * 1000),y_start + (ceil(rowy/20.0) * 1000),3034)
-	FROM generate_series(1, 22000) columnx, generate_series(1, 16000) rowy, start_point
+	FROM generate_series(1, 22000) columnx, generate_series(1, 16000) rowy, start_point;
 	
 	
-	
+CREATE INDEX cell_idx on dim_cell (columnx_50m, rowy_50m);
 	
