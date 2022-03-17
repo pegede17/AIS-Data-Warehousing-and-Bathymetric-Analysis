@@ -8,9 +8,9 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "${file}",
+            "program": "${workspaceFolder}/P10--backend/new_main.py",
             "console": "integratedTerminal",
-            "args": ["-sd", "01/10/2021", "-ed", "01/10/2021", "-c"]
+            "args": ["-sd", "01/10/2021", "-ed", "01/10/2021", "-r"]
         }
     ]
 }

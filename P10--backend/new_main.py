@@ -11,7 +11,7 @@ from ais_loader import load_data_into_db
 import configparser
 from reverse_file import reverse_file
 from datetime import datetime, timedelta, date
-# from create_trajectories import create_trajectories
+from new_create_trajectories import create_trajectories
 # import resource
 import gc
 import configparser
@@ -64,7 +64,7 @@ def main(argv):
 
         if args.r:
             print("Reconstructing trajectories " + str(current_date))
-            # create_trajectories(config=config, date_to_lookup=current_date)
+            create_trajectories(config=config, date_to_lookup=current_date)
 
         print("Finished " + str(current_date))
         # gc.collect(generation=2)
