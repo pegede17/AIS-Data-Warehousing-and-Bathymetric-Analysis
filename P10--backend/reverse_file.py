@@ -41,12 +41,12 @@ class Stack:
 def reverse_file(filename):
     # Check if file already exists then avoid doing it again
     # if (os.path.isfile('/home/largeVol/data_year/ftp.ais.dk/ais_data/r_' + filename)):
-    if (os.path.isfile('/home/ubuntu/data//r_' + filename)):
+    if (os.path.isfile('/home/ubuntu/data/r_' + filename)):
         return
 
     S = Stack()
-    original = open("/home/ubuntu/data//" + filename)
-    output = open("/home/ubuntu/data//r_" + filename, 'w')
+    original = open("/home/ubuntu/data/" + filename)
+    output = open("/home/ubuntu/data/r_" + filename, 'w')
 
     firstLine = True
 
