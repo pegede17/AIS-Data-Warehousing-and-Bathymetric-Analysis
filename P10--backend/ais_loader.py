@@ -1,4 +1,5 @@
 import imp
+from time import perf_counter
 from create_database import create_database
 from dansk_farvand import create_dansk_farvand
 from database_connection import connect_to_local, connect_via_ssh
@@ -20,6 +21,7 @@ from datetime import timedelta
 
 
 def load_data_into_db(config):
+    t_start = perf_counter()
 
     # Initialize variables
     connection = None
@@ -232,10 +234,12 @@ def load_data_into_db(config):
         fact.update(fact_extra)  # Adds the extra attributes to the fact object
 
         fact_table.insert(fact)
+    t_end = perf_counter()
 
     audit_obj['processed_records'] = i
     audit_obj['inserted_records'] = i
-    audit_obj['etl_duration'] = timedelta(minutes=50),
+    audit_obj['etl_duration'] = str(
+        timedelta(seconds=(t_end - t_start))),
     audit_obj['audit_id'] = audit_id
     audit_dimension.update(audit_obj)
 

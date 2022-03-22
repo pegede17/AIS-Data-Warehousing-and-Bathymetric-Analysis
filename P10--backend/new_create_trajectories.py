@@ -1,14 +1,13 @@
-from operator import index
 from time import perf_counter
 import pygrametl
 from database_connection import connect_to_local, connect_via_ssh
-from pygrametl.datasources import SQLSource, CSVSource
-import configparser
+from pygrametl.datasources import SQLSource
 import pandas as pd
 import math
-import pyperclip
 from datetime import datetime, timedelta
-
+from helper_functions import create_trajectory_sailing_fact_table, create_trajectory_stopped_fact_table, create_audit_dimension
+from shapely.geometry import LineString
+import geopandas as gpd
 
 def degrees_to_radians(degrees):
     return degrees * math.pi / 180
@@ -28,17 +27,16 @@ def distance_in_km_between_earth_coordinates(lat1, lon1, lat2, lon2):
     return earth_radius_km * c
 
 
-def traj_splitter(journey: pd.DataFrame, speed_treshold, time_threshold, SOG_limit):
+def traj_splitter(journey: gpd.GeoDataFrame, speed_treshold, time_threshold, SOG_limit):
     first_point_with_low_speed = -1
     ship_trajectories = []
     ship_stops = []
-    temp_trajectory_list = pd.DataFrame(columns=journey.columns)
-    temp_stop_list = pd.DataFrame(columns=journey.columns)
+    temp_trajectory_list = gpd.GeoDataFrame(columns=journey.columns)
+    temp_stop_list = gpd.GeoDataFrame(columns=journey.columns)
     time_since_above_threshold = timedelta(minutes=0)
     last_point_over_threshold = 0
 
     journey = journey.reset_index(0)
-    print(journey)
 
     for i in journey.index:
 
@@ -118,7 +116,6 @@ def traj_splitter(journey: pd.DataFrame, speed_treshold, time_threshold, SOG_lim
                     temp_trajectory_list = temp_trajectory_list.iloc[0:0, :]
                 # Add points to current stop session
                 if(first_point_with_low_speed != -1 and first_point_with_low_speed != i):
-                    test = journey.iloc[first_point_with_low_speed:i+1, :]
                     temp_stop_list = pd.concat(
                         [temp_stop_list, journey.iloc[first_point_with_low_speed:i, :]], axis=0)
                 else:
@@ -149,28 +146,54 @@ def traj_splitter(journey: pd.DataFrame, speed_treshold, time_threshold, SOG_lim
     if(len(temp_trajectory_list) > 0):
         ship_trajectories.append(temp_trajectory_list.copy())
         temp_trajectory_list = temp_trajectory_list.iloc[0:0, :]
-    firstpoint = True
 
-    linestring = "GEOMETRYCOLLECTION("
-    for traj in ship_trajectories:
-        linestring = linestring + "LINESTRING("
-        firstpoint = True
-        for i, point in traj.iterrows():
-            if (not firstpoint):
-                linestring = linestring + ","
-            linestring = linestring + str(point.long)
-            linestring = linestring + " "
-            linestring = linestring + str(point.lat)
-            firstpoint = False
-        linestring = linestring + "),"
-    linestring = linestring + ")"
-
-    pyperclip.copy(linestring)
-    print("done with one ship")
+    return ship_trajectories, ship_stops
 
 
 # gets all AIS data from a given day, to create a journey - then calls splitter - and sets trajectories into database
 def create_trajectories(date_to_lookup, config):
+
+    def insert_trajectory(trajectory, sailing : bool):
+        if(len(trajectory) < 5):
+            return
+        linestring = LineString([p for p in list(zip(trajectory.long, trajectory.lat))])
+        duration = trajectory.time.iat[-1] - trajectory.time.iat[0]
+        draughts = trajectory.draught.value_counts().reset_index(
+                            name='Count').sort_values(['Count'], ascending=False)['index'].tolist()
+        if (len(draughts) == 0):
+            draughts = None
+        database_object = {
+            "ship_id": int(trajectory.ship_id.iat[0]),
+            "ship_type_id": int(trajectory.ship_type_id.iat[0]),
+            "type_of_mobile_id": int(trajectory.type_of_mobile_id.iat[0]),
+            "eta_time_id": int(trajectory.eta_time_id.value_counts().reset_index(
+                            name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
+            "eta_date_id": int(trajectory.eta_date_id.value_counts().reset_index(
+                            name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
+            "time_start_id": int(trajectory.ts_time_id.sort_values(ascending=True).tolist()[0]),
+            "date_start_id": int(trajectory.ts_date_id.sort_values(ascending=True).tolist()[0]),
+            "time_end_id": int(trajectory.ts_time_id.sort_values(ascending=False).tolist()[0]),
+            "date_end_id": int(trajectory.ts_date_id.sort_values(ascending=False).tolist()[0]),
+            "cargo_type_id": int(trajectory.cargo_type_id.value_counts().reset_index(
+                            name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
+            "destination_id": int(trajectory.destination_id.value_counts().reset_index(
+                            name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
+            "data_source_type_id": int(trajectory.data_source_type_id.value_counts().reset_index(
+                            name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
+            "type_of_position_fixing_device_id": int(trajectory.type_of_position_fixing_device_id.value_counts().reset_index(
+                            name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
+            "audit_id": audit_sailing_id if sailing else audit_stopped_id,
+            "draught": draughts,
+            "duration": duration.seconds,
+            "coordinates": str(linestring.simplify(tolerance=0.0001)),
+            "length_meters": linestring.length,
+            "avg_speed_knots": linestring.length / duration.seconds, ## FIX
+            "total_points" : len(trajectory)
+        }
+
+        trajectory_sailing_fact_table.insert(database_object)
+
+    t_start = perf_counter()
     # sets connetction
     if(config["Environment"]["development"] == "True"):
         connection = connect_via_ssh()
@@ -180,7 +203,8 @@ def create_trajectories(date_to_lookup, config):
 
     # query to select all AIS points from the given day
     query_get_all_ais_from_date = f''' 
-        SELECT ship_type_id, ts_date_id, ship_id, ts_time_id, audit_id, ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat, sog, hour, minute, second, draught
+        SELECT ship_type_id, eta_time_id, eta_date_id, cargo_type_id, type_of_mobile_id, destination_id, ts_date_id, data_source_type_id, type_of_position_fixing_device_id, ship_id, ts_time_id, 
+                audit_id, ST_AsText(coordinate) point, ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat, sog, hour, minute, second, draught
         FROM fact_ais
         INNER JOIN dim_time ON dim_time.time_id = ts_time_id
         WHERE ts_date_id = {date_to_lookup}
@@ -188,30 +212,64 @@ def create_trajectories(date_to_lookup, config):
         limit(100000)
         '''
 
-    t_query_execution_start = perf_counter()
-
     # translate query to groupby dataframe on ship id
-    all_journeys_as_dataframe = (pd.DataFrame(SQLSource(connection=connection, query=query_get_all_ais_from_date))
-                                 .groupby(['ship_id']))
+    all_journeys_as_dataframe = (gpd.GeoDataFrame(SQLSource(connection=connection, query=query_get_all_ais_from_date),crs='EPSG:4326').groupby(['ship_id']))
 
-    for i, ship in all_journeys_as_dataframe:
-        traj_splitter(ship, speed_treshold=0.5,
+    trajectory_sailing_fact_table = create_trajectory_sailing_fact_table()
+    trajectory_stopped_fact_table = create_trajectory_stopped_fact_table()
+    audit_dimension = create_audit_dimension()
+
+    sailing_audit_obj = {'timestamp': datetime.now(),
+                 'processed_records': 0,
+                 'inserted_records': 0,
+                 'etl_duration': timedelta(minutes=0),
+                 'source_system': config["Audit"]["source_system"],
+                 'etl_version': config["Audit"]["elt_version"],
+                 'table_name': trajectory_sailing_fact_table.name,
+                 'description': config["Audit"]["comment"]}
+
+    stopped_audit_obj = {'timestamp': datetime.now(),
+                 'processed_records': 0,
+                 'inserted_records': 0,
+                 'etl_duration': timedelta(minutes=0),
+                 'source_system': config["Audit"]["source_system"],
+                 'etl_version': config["Audit"]["elt_version"],
+                 'table_name': trajectory_stopped_fact_table.name,
+                 'description': config["Audit"]["comment"]}
+
+    audit_sailing_id = audit_dimension.insert(sailing_audit_obj)
+    audit_stopped_id = audit_dimension.insert(stopped_audit_obj)
+
+    processed_records = 0
+    inserted_sailing_records = 0
+    inserted_stopped_records = 0
+    for _, ship in all_journeys_as_dataframe:
+        processed_records = processed_records + len(ship)
+        sailing, stopped = traj_splitter(ship, speed_treshold=0.5,
                       time_threshold=300, SOG_limit=200)
+        for trajectory in sailing:
+            inserted_sailing_records = inserted_sailing_records + len(trajectory)
+            insert_trajectory(trajectory, True)
+        for trajectory in stopped:
+            inserted_stopped_records = inserted_stopped_records + len(trajectory)
+            insert_trajectory(trajectory, False)
+            
+    t_end = perf_counter()
 
-    # listOfShips = []
-    # listOfPointsInShip = []
-    # ship_id = -1
-    # for element in query_get_all_ais_from_date:
-    #     if (element['ship_id'] == ship_id):
-    #         listOfPointsInShip.append(element)
-    #     else:
-    #         if(len(listOfPointsInShip) != 0):
-    #             listOfShips.append(listOfPointsInShip.copy())
-    #             listOfPointsInShip.clear()
+    sailing_audit_obj['processed_records'] = processed_records
+    sailing_audit_obj['inserted_records'] = inserted_sailing_records
+    sailing_audit_obj['etl_duration'] = timedelta(seconds=(t_end - t_start))
+    sailing_audit_obj['audit_id'] = audit_sailing_id
 
-    #         ship_id = element['ship_id']
-    #         listOfPointsInShip.append(element)
-    # listOfShips.append(listOfPointsInShip)
+    stopped_audit_obj['processed_records'] = processed_records
+    stopped_audit_obj['inserted_records'] = inserted_stopped_records
+    stopped_audit_obj['etl_duration'] = timedelta(seconds=(t_end - t_start))
+    stopped_audit_obj['audit_id'] = audit_stopped_id
 
-    # for ship in listOfShips:
-    #     traj_splitter(ship, speedTreshold=0.5, timeThreshold=300, SOGLimit=200)
+    audit_dimension.update(sailing_audit_obj)
+    audit_dimension.update(stopped_audit_obj)
+
+    dw_conn_wrapper.commit()
+    dw_conn_wrapper.close()
+    connection.close()
+
