@@ -1,0 +1,1 @@
+#this file should contain the trust worthyness algoritme 
