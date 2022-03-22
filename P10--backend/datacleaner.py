@@ -13,6 +13,7 @@ from helper_functions import create_audit_dimension
 
 MAX_COLUMNS = 22000
 MAX_ROWS = 16000
+TRANSFORMER = Transformer.from_crs("epsg:4326", "epsg:32632")
 
 
 def clean_data(config, date_id):
@@ -63,6 +64,7 @@ def clean_data(config, date_id):
             AND mmsi > 99999999
             AND mmsi < 1000000000
             AND ST_Contains(geom ,coordinate::geometry)
+        LIMIT 250000
     """
 
     # Disable triggers during load for efficiency
@@ -71,18 +73,16 @@ def clean_data(config, date_id):
     # Retrieve the points with initial cleaning rules applied directly to where conditions
     cleaned_data = SQLSource(connection=connection, query=INITIAL_CLEAN_QUERY)
 
-    transformer = Transformer.from_crs("epsg:4326", "epsg:32632")
-
-    def set_cell_row_and_column(data):
-        pass
-
     ais_df = pd.DataFrame(cleaned_data)
     print("Creating initial commit!!")
     connection.commit()  # Required in order to release locks
     ships_grouped = ais_df.groupby(by=['mmsi'])
 
+    print("Finished data retrieval and grouping")
+
     dict_updated_ships = {}
 
+    # This loop takes approximately ~3 minutes.
     for mmsi, ship_data in ships_grouped:
         print(len(ship_data))
         if len(ship_data) < 2:  # We need to have at least 2 rows to choose from
@@ -100,41 +100,36 @@ def clean_data(config, date_id):
             'ship_id'].value_counts()
         best_ship_id = seq_ship_type.reset_index(0)['index'][0]
 
-        # Some ships have not reported multiple ship_id's. Therefore, we want to store a list of those that have, so
-        # that we know which ships to update later. That is done by flagging them and adding to a dictionary.
-        # flagged = len(seq_ship_type.value_counts()) > 1
-        # if flagged:
-
         dict_updated_ships[mmsi] = best_ship_id
 
     # Iterate through all the ships that require an update and update their ship_id for the dataframe
-    # for ship in dict_updated_ships:
-    #     print("Changing ship value of: " + str(ship))
-    #     ais_df.loc[ais_df['mmsi'] == ship,
-    #                'ship_id'] = dict_updated_ships[ship]
+    # TODO-Future: Maybe use dataframe.map(dictionary) instead here?
+    for ship in dict_updated_ships:
+        print("Changing ship value of: " + str(ship))
+        ais_df.loc[ais_df['mmsi'] == ship,
+                   'ship_id'] = dict_updated_ships[ship]
     
-    for index, data in ais_df.iterrows():
-        shipExist = dict_updated_ships[data['mmsi']]
-
-        if (shipExist):
-            ais_df.at[index, 'ship_id'] = shipExist
-
-        # set_cell_row_and_column(ship_data)
-        x, y = transformer.transform(data['latitude'], data['longitude'])
+    # Temp comment
+    def calculateCellID(lat, long):
+        x, y = TRANSFORMER.transform(lat, long)
 
         columnx, rowy = ceil((x - 0) /
                              50), ceil((y - 5900000) / 50)
-        cell_id = (columnx - 1) * MAX_ROWS + rowy
-        ais_df.at[index, 'cell_id'] = 0 # TODO: Change this value to cell_id when calculation is correct and data exists
-        # print(cell_id)
-        print("Iterating through ais_df")
+        cell_id = (columnx - 1) * MAX_ROWS + rowy # TODO: Return this value when dim_cell has been created and loaded
+        return 0
+
+    # Create a new column and apply a function that calculates the cell_id based on row coordinates
+    print("Applying cell_id calculations to all rows")
+    ais_df['cell_id'] = ais_df.apply(lambda row: calculateCellID(row['latitude'], row['longitude']), axis=1)
 
     # Remove mmsi column. It was only required during computation
     del ais_df['mmsi']
+
     ais_df['audit_id'] = audit_id
     print("AIS_DF to SQL is being called!!")
-    ais_df.to_sql('fact_ais_clean', con=engine,
-                  chunksize=500000, index=False, if_exists='append')
+    print(datetime.today())
+    ais_df.to_sql('fact_ais_clean', index=False, con=engine, if_exists='append')
+    print(datetime.today())
     print("DONE!!! AIS_DF_TO_SQL HAS BEEN CALLED!!")
 
     END_TIME = datetime.today()
