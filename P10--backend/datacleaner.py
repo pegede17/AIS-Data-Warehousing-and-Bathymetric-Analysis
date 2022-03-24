@@ -64,7 +64,6 @@ def clean_data(config, date_id):
             AND mmsi > 99999999
             AND mmsi < 1000000000
             AND ST_Contains(geom ,coordinate::geometry)
-        LIMIT 250000
     """
 
     # Disable triggers during load for efficiency
@@ -74,7 +73,6 @@ def clean_data(config, date_id):
     cleaned_data = SQLSource(connection=connection, query=INITIAL_CLEAN_QUERY)
 
     ais_df = pd.DataFrame(cleaned_data)
-    print("Creating initial commit!!")
     connection.commit()  # Required in order to release locks
     ships_grouped = ais_df.groupby(by=['mmsi'])
 
@@ -115,8 +113,8 @@ def clean_data(config, date_id):
 
         columnx, rowy = ceil((x - 0) /
                              50), ceil((y - 5900000) / 50)
-        cell_id = (columnx - 1) * MAX_ROWS + rowy # TODO: Return this value when dim_cell has been created and loaded
-        return 0
+        cell_id = (columnx - 1) * MAX_ROWS + rowy
+        return cell_id
 
     # Create a new column and apply a function that calculates the cell_id based on row coordinates
     print("Applying cell_id calculations to all rows")
