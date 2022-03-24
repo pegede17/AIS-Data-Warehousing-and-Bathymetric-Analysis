@@ -524,31 +524,7 @@ INSERT INTO public.dim_date(
         CREATE TABLE raster_50m_test (
             ras raster
         );
-        INSERT INTO raster_50m_test VALUES (ST_AddBand(ST_MakeEmptyRaster(22000,16000,0::float,5900000::float,50::float,50::float,0::float,0::float,32632),'8BUI'::text, 0, null));
-
-        With start_point as (
-            SELECT 0 x_start, 5900000 y_start
-        )
-        INSERT INTO dim_cell (
-            columnx_50m, rowy_50m, 
-            columnx_100m, rowy_100m, 
-            columnx_500m, rowy_500m, 
-            columnx_1000m, rowy_1000m, 
-            boundary_50m,
-            boundary_100m,
-            boundary_500m,
-            boundary_1000m) 
-            SELECT columnx, rowy,
-            ceil(columnx/2.0), ceil(rowy/2.0),
-            ceil(columnx/10.0), ceil(rowy/10.0),
-            ceil(columnx/20.0), ceil(rowy/20.0),
-            ST_MakeEnvelope(x_start + ((columnx - 1) * 50),y_start + ((rowy - 1) * 50),x_start + (columnx * 50),y_start + (rowy * 50),3034),
-            ST_MakeEnvelope(x_start + ((ceil(columnx/2.0) - 1) * 100),y_start + ((ceil(rowy/2.0) - 1) * 100),x_start + (ceil(columnx/2.0) * 100),y_start + (ceil(rowy/2.0) * 100),3034),
-            ST_MakeEnvelope(x_start + ((ceil(columnx/10.0) - 1) * 500),y_start + ((ceil(rowy/10.0) - 1) * 500),x_start + (ceil(columnx/10.0) * 500),y_start + (ceil(rowy/10.0) * 500),3034),
-            ST_MakeEnvelope(x_start + ((ceil(columnx/20.0) - 1) * 1000),y_start + ((ceil(rowy/20.0) - 1) * 1000),x_start + (ceil(columnx/20.0) * 1000),y_start + (ceil(rowy/20.0) * 1000),3034)
-            FROM generate_series(1, 22000) columnx, generate_series(1, 16000) rowy, start_point;
-
-        CREATE INDEX cell_idx on dim_cell (columnx_50m, rowy_50m);
+        
         """
     )
 
@@ -595,8 +571,8 @@ def create_audit_dimension():
     return Dimension(
         name='dim_audit',
         key='audit_id',
-        attributes=['timestamp', 'processed_records', 'inserted_records' ,'source_system',
-                    'etl_version', 'table_name', 'etl_duration' , 'description']
+        attributes=['timestamp', 'processed_records', 'inserted_records', 'source_system',
+                    'etl_version', 'table_name', 'etl_duration', 'description']
     )
 
 
@@ -653,6 +629,8 @@ def create_type_of_position_fixing_device_dimension():
         cacheoninsert=True,
         defaultidvalue=1
     )
+
+
 def create_trustworthiness_dimension():
     return CachedDimension(
         name='dim_trustworthiness',
@@ -676,7 +654,8 @@ def create_ship_dimension():
         cachefullrows=True,
         prefill=True,
         cacheoninsert=True,
-        lookupatts=['mmsi', 'ship_type_id', 'type_of_position_fixing_device_id', 'type_of_mobile_id'],
+        lookupatts=['mmsi', 'ship_type_id',
+                    'type_of_position_fixing_device_id', 'type_of_mobile_id'],
         size=0,
         defaultidvalue=1
     )
@@ -707,11 +686,21 @@ def create_date_dimension():
     )
 
 
-def create_trajectory_fact_table(tb_name):
+def create_trajectory_sailing_fact_table():
     return FactTable(
-        name=tb_name,
-        keyrefs=['ship_id', 'time_start_id', 'date_start_id', 'time_end_id', 'date_end_id', 
-                'audit_id', 'ship_type_id', 'eta_time_id', 'eta_date_id', 'data_source_type_id', 
-                'type_of_position_fixing_device_id', 'destination_id', 'type_of_mobile', 'cargo_type_id'],
-        measures=['coordinates', 'duration', 'length_meters', 'draught', 'total_points', 'avg_speed_knots']
+        name='fact_trajectory_sailing',
+        keyrefs=['ship_id', 'time_start_id', 'date_start_id', 'time_end_id', 'date_end_id',
+                 'audit_id', 'ship_type_id', 'eta_time_id', 'eta_date_id', 'data_source_type_id',
+                 'type_of_position_fixing_device_id', 'destination_id', 'type_of_mobile_id', 'cargo_type_id'],
+        measures=['coordinates', 'duration', 'length_meters',
+                  'draught', 'total_points', 'avg_speed_knots']
+    )
+def create_trajectory_stopped_fact_table():
+    return FactTable(
+        name='fact_trajectory_stopped',
+        keyrefs=['ship_id', 'time_start_id', 'date_start_id', 'time_end_id', 'date_end_id',
+                 'audit_id', 'ship_type_id', 'eta_time_id', 'eta_date_id', 'data_source_type_id',
+                 'type_of_position_fixing_device_id', 'destination_id', 'type_of_mobile_id', 'cargo_type_id'],
+        measures=['coordinates', 'duration', 'length_meters',
+                  'draught', 'total_points', 'avg_speed_knots']
     )

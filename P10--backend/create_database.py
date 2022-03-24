@@ -29,6 +29,7 @@ def create_database():
     connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
     cur = connection.cursor()
     cur.execute("CREATE EXTENSION postgis;")
+    cur.execute("CREATE EXTENSION postgis_raster;")
     cur.close()
 
     return connection

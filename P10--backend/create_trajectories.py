@@ -2,7 +2,7 @@ from pygrametl.datasources import SQLSource, CSVSource
 from pygrametl.tables import Dimension, FactTable
 import pygrametl
 from database_connection import connect_to_local, connect_via_ssh
-# import geopandas as gpd
+import geopandas as gpd
 import movingpandas as mpd
 # from shapely.geometry import Point
 from datetime import date, datetime, timedelta
