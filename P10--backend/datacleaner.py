@@ -110,11 +110,11 @@ def clean_data(config, date_id):
     
     # Temp comment
     def calculateCellID(lat, long):
-        x, y = TRANSFORMER.transform(lat, long)
+        x, y = TRANSFORMER.transform(long, lat)
 
         columnx, rowy = ceil((x - 0) /
                              50), ceil((y - 5900000) / 50)
-        cell_id = (columnx - 1) * MAX_ROWS + rowy
+        cell_id = ((rowy - 1) * MAX_COLUMNS) + columnx
         return cell_id
 
     # Create a new column and apply a function that calculates the cell_id based on row coordinates

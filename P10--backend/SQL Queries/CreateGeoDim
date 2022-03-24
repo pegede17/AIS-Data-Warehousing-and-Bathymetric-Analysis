@@ -35,10 +35,10 @@ INSERT INTO dim_cell (
 	ceil(columnx/2.0), ceil(rowy/2.0),
 	ceil(columnx/10.0), ceil(rowy/10.0),
 	ceil(columnx/20.0), ceil(rowy/20.0),
-	ST_MakeEnvelope(x_start + ((columnx - 1) * 50),y_start + ((rowy - 1) * 50),x_start + (columnx * 50),y_start + (rowy * 50),3034),
-	ST_MakeEnvelope(x_start + ((ceil(columnx/2.0) - 1) * 100),y_start + ((ceil(rowy/2.0) - 1) * 100),x_start + (ceil(columnx/2.0) * 100),y_start + (ceil(rowy/2.0) * 100),3034),
-	ST_MakeEnvelope(x_start + ((ceil(columnx/10.0) - 1) * 500),y_start + ((ceil(rowy/10.0) - 1) * 500),x_start + (ceil(columnx/10.0) * 500),y_start + (ceil(rowy/10.0) * 500),3034),
-	ST_MakeEnvelope(x_start + ((ceil(columnx/20.0) - 1) * 1000),y_start + ((ceil(rowy/20.0) - 1) * 1000),x_start + (ceil(columnx/20.0) * 1000),y_start + (ceil(rowy/20.0) * 1000),3034)
+	ST_MakeEnvelope(x_start + ((columnx - 1) * 50),y_start + ((rowy - 1) * 50),x_start + (columnx * 50),y_start + (rowy * 50),32632),
+	ST_MakeEnvelope(x_start + ((ceil(columnx/2.0) - 1) * 100),y_start + ((ceil(rowy/2.0) - 1) * 100),x_start + (ceil(columnx/2.0) * 100),y_start + (ceil(rowy/2.0) * 100),32632),
+	ST_MakeEnvelope(x_start + ((ceil(columnx/10.0) - 1) * 500),y_start + ((ceil(rowy/10.0) - 1) * 500),x_start + (ceil(columnx/10.0) * 500),y_start + (ceil(rowy/10.0) * 500),32632),
+	ST_MakeEnvelope(x_start + ((ceil(columnx/20.0) - 1) * 1000),y_start + ((ceil(rowy/20.0) - 1) * 1000),x_start + (ceil(columnx/20.0) * 1000),y_start + (ceil(rowy/20.0) * 1000),32632)
 	FROM generate_series(1, 22000) columnx, generate_series(1, 16000) rowy, start_point
 
 

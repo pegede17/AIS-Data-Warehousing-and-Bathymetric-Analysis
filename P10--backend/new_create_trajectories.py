@@ -48,8 +48,6 @@ def traj_splitter(journey: gpd.GeoDataFrame, speed_treshold, time_threshold, SOG
         # Determine time since last point or set to 0 if it is the first point
         if(i != 0):
             previous_point = journey.iloc[i-1, :]
-            if ((point['lat'] == previous_point['lat'] and point['long'] == previous_point['long']) or point['time'] == previous_point['time']):
-                continue
             time_since_last_point = point['time'] - previous_point['time']
             distance_to_last_point = distance_in_km_between_earth_coordinates(
                 point['lat'], point['long'], previous_point['lat'], previous_point['long']) * 1000
@@ -58,9 +56,14 @@ def traj_splitter(journey: gpd.GeoDataFrame, speed_treshold, time_threshold, SOG
             distance_to_last_point = 0
 
         # Set speed depending on if time has passed since last point/if we have a previous point
-        if(time_since_last_point.seconds != 0):
+        if (i == 0 or (point['lat'] == previous_point['lat'] and point['long'] == previous_point['long']) or point['time'] == previous_point['time']):
+            speed = float(point['sog'])
+        elif(time_since_last_point.seconds != 0):
             calculated_speed = distance_to_last_point/time_since_last_point.seconds
-            speed = calculated_speed
+            if(abs(calculated_speed-float(point['sog']))>2):
+                speed = calculated_speed
+            else:
+                speed = float(point['sog'])
         else:
             speed = float(point['sog'])
 
@@ -157,6 +160,7 @@ def create_trajectories(date_to_lookup, config):
         if(len(trajectory) < 5):
             return
         linestring = LineString([p for p in list(zip(trajectory.long, trajectory.lat))])
+        projected_linestring = LineString([p for p in trajectory.geometry])
         duration = trajectory.time.iat[-1] - trajectory.time.iat[0]
         draughts = trajectory.draught.value_counts().reset_index(
                             name='Count').sort_values(['Count'], ascending=False)['index'].tolist()
@@ -186,12 +190,14 @@ def create_trajectories(date_to_lookup, config):
             "draught": draughts,
             "duration": duration.seconds,
             "coordinates": str(linestring.simplify(tolerance=0.0001)),
-            "length_meters": linestring.length,
-            "avg_speed_knots": linestring.length / duration.seconds, ## FIX
+            "length_meters": projected_linestring.length,
+            "avg_speed_knots": projected_linestring.length / duration.seconds, ## FIX
             "total_points" : len(trajectory)
         }
-
-        trajectory_sailing_fact_table.insert(database_object)
+        if (sailing):
+            trajectory_sailing_fact_table.insert(database_object)
+        else:
+            trajectory_stopped_fact_table.insert(database_object)
 
     t_start = perf_counter()
     # sets connetction
@@ -204,16 +210,19 @@ def create_trajectories(date_to_lookup, config):
     # query to select all AIS points from the given day
     query_get_all_ais_from_date = f''' 
         SELECT ship_type_id, eta_time_id, eta_date_id, cargo_type_id, type_of_mobile_id, destination_id, ts_date_id, data_source_type_id, type_of_position_fixing_device_id, ship_id, ts_time_id, 
-                audit_id, ST_AsText(coordinate) point, ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat, sog, hour, minute, second, draught
+                audit_id, coordinate, ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat, sog, hour, minute, second, draught
         FROM fact_ais
         INNER JOIN dim_time ON dim_time.time_id = ts_time_id
         WHERE ts_date_id = {date_to_lookup}
         ORDER BY ship_id, ts_time_id ASC
-        limit(100000)
+        limit(1000000)
         '''
 
     # translate query to groupby dataframe on ship id
-    all_journeys_as_dataframe = (gpd.GeoDataFrame(SQLSource(connection=connection, query=query_get_all_ais_from_date),crs='EPSG:4326').groupby(['ship_id']))
+    all_journeys_as_dataframe = pd.DataFrame(SQLSource(connection=connection, query=query_get_all_ais_from_date))
+    geoSeries = gpd.GeoSeries.from_wkb(all_journeys_as_dataframe['coordinate'], crs=4326)
+    geoSeries = geoSeries.to_crs("epsg:3034")
+    all_journeys_as_geodataframe = gpd.GeoDataFrame(all_journeys_as_dataframe,crs='EPSG:3034', geometry=geoSeries).groupby(['ship_id'])
 
     trajectory_sailing_fact_table = create_trajectory_sailing_fact_table()
     trajectory_stopped_fact_table = create_trajectory_stopped_fact_table()
@@ -243,15 +252,15 @@ def create_trajectories(date_to_lookup, config):
     processed_records = 0
     inserted_sailing_records = 0
     inserted_stopped_records = 0
-    for _, ship in all_journeys_as_dataframe:
+    for _, ship in all_journeys_as_geodataframe:
         processed_records = processed_records + len(ship)
         sailing, stopped = traj_splitter(ship, speed_treshold=0.5,
                       time_threshold=300, SOG_limit=200)
+        inserted_sailing_records = inserted_sailing_records + len(sailing)
         for trajectory in sailing:
-            inserted_sailing_records = inserted_sailing_records + len(trajectory)
             insert_trajectory(trajectory, True)
+        inserted_stopped_records = inserted_stopped_records + len(stopped)
         for trajectory in stopped:
-            inserted_stopped_records = inserted_stopped_records + len(trajectory)
             insert_trajectory(trajectory, False)
             
     t_end = perf_counter()
