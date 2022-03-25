@@ -12,6 +12,7 @@ import configparser
 from reverse_file import reverse_file
 from datetime import datetime, timedelta, date
 from new_create_trajectories import create_trajectories
+from trustworthines import give_trustscore_to_ships
 # import resource
 import gc
 import configparser
@@ -32,7 +33,14 @@ def main(argv):
         "-c", help="Perform cleaning of the dates", action="store_true")
     parser.add_argument(
         "-r", help="Perform trajectory reconstruction of the dates", action="store_true")
+    parser.add_argument(
+        "-t", help="Perform updating the trust scores for ships", action="store_true")
     args = parser.parse_args()
+
+    if args.t:
+        print("updating trustwortiness")
+        give_trustscore_to_ships(config=config)
+        return
 
     if args.sd:
         start_date = datetime.strptime(args.sd, '%d/%m/%Y')
@@ -69,6 +77,9 @@ def main(argv):
         if args.r:
             print("Reconstructing trajectories " + str(current_date))
             create_trajectories(config=config, date_to_lookup=current_date)
+
+
+        
 
         print("Finished " + str(current_date))
         # gc.collect(generation=2)
