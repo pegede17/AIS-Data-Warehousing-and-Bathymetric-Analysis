@@ -53,22 +53,33 @@ def clean_data(config, date_id):
         ALTER TABLE fact_ais_clean ENABLE TRIGGER ALL;	
     """
 
+    JUNK_DATA_QUERY = f"""
+        SELECT patchedShipRef, isOutlier
+        FROM junk_ais_clean    
+    """
+
     INITIAL_CLEAN_QUERY = f"""
     SELECT DISTINCT ON (eta_date_id, eta_time_id, ship_id, ts_date_id, ts_time_id, data_source_type_id, destination_id, 
                     navigational_status_id, cargo_type_id, coordinate, draught, rot, sog, cog, heading)
             latitude, longitude, mmsi, fact_ais.type_of_mobile_id, fact_id, eta_date_id, eta_time_id, fact_ais.ship_id, ts_date_id, ts_time_id, data_source_type_id, destination_id, navigational_status_id, cargo_type_id, coordinate, draught, rot, sog, cog, heading
         FROM fact_ais INNER JOIN public.dim_ship on fact_ais.ship_id = dim_ship.ship_id, public.danish_waters
         WHERE 
-            (draught < 28.5 OR draught IS NULL)
+            ts_date_id = {date_id}
+            AND (draught < 28.5 OR draught IS NULL)
             AND width < 75
             AND length < 488
             AND mmsi > 99999999
             AND mmsi < 1000000000
             AND ST_Contains(geom ,coordinate::geometry)
+        LIMIT 10000
     """
 
     # Disable triggers during load for efficiency
     cur.execute(DISABLE_TRIGGERS)
+
+    # Retrieve junk data and save in memory as dataframe for future use
+    junk_data = SQLSource(connection=connection, query=JUNK_DATA_QUERY)
+    junk_df = pd.DataFrame(junk_data)
 
     # Retrieve the points with initial cleaning rules applied directly to where conditions
     cleaned_data = SQLSource(connection=connection, query=INITIAL_CLEAN_QUERY)
@@ -101,14 +112,19 @@ def clean_data(config, date_id):
 
         dict_updated_ships[mmsi] = best_ship_id
 
-    # Iterate through all the ships that require an update and update their ship_id for the dataframe
+    # Assign default value of junk_id to all ships
+    # df[(df["movie"].isin(df.loc[(df.user == 8), "movie"])) & (df.user!=8)]
+    # patchedShipRef, isOutlier
+    ais_df['junk_id'] = junk_df.index[junk_df['patchedShipRef'] == 'false' & junk_df['isOutlier'] == 'false'].tolist()[0]
+
+    # Iterate through all the ships that require an update and update their ship_id and junk_id for the dataframe
     # TODO-Future: Maybe use dataframe.map(dictionary) instead here?
     for ship in dict_updated_ships:
         print("Changing ship value of: " + str(ship))
         ais_df.loc[ais_df['mmsi'] == ship,
                    'ship_id'] = dict_updated_ships[ship]
     
-    # Temp comment
+    # Function to calculate the correct cell_id given (lat, long)
     def calculateCellID(lat, long):
         x, y = TRANSFORMER.transform(long, lat)
 
@@ -116,7 +132,7 @@ def clean_data(config, date_id):
                              50), ceil((y - 5900000) / 50)
         cell_id = ((rowy - 1) * MAX_COLUMNS) + columnx
         return cell_id
-
+    
     # Create a new column and apply a function that calculates the cell_id based on row coordinates
     print("Applying cell_id calculations to all rows")
     ais_df['cell_id'] = ais_df.apply(lambda row: calculateCellID(row['latitude'], row['longitude']), axis=1)

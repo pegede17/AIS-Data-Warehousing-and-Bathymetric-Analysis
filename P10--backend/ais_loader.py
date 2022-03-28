@@ -20,7 +20,7 @@ from datetime import timedelta
 # from helper_functions import create_tables
 
 
-def load_data_into_db(config):
+def load_data_into_db(config, date_id):
     t_start = perf_counter()
 
     # Initialize variables
@@ -114,7 +114,7 @@ def load_data_into_db(config):
                  'source_system': config["Audit"]["source_system"],
                  'etl_version': config["Audit"]["elt_version"],
                  'table_name': fact_table.name,
-                 'description': config["Audit"]["comment"]}
+                 'description': f"Loading date: {date_id}"}
 
     audit_id = audit_dimension.insert(audit_obj)
 

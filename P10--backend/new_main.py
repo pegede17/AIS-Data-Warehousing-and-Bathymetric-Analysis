@@ -60,7 +60,7 @@ def main(argv):
             # file = f'r_aisdk-{date.year:04d}-{date.month:02d}-{date.day:02d}.csv'
             config["Environment"]["FILE_NAME"] = file
             # the data to load will be retrieved from the config
-            load_data_into_db(config=config)
+            load_data_into_db(config=config, date_id=current_date)
 
         if args.c:
             print("Cleaning " + str(current_date))

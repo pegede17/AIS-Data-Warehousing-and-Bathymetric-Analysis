@@ -455,6 +455,16 @@ INSERT INTO public.dim_date(
         );
         """,
         """
+        CREATE TABLE IF NOT EXISTS junk_ais_clean (
+            junk_id SERIAL NOT NULL PRIMARY KEY,
+            patchedShipRef BOOLEAN NOT NULL,
+            isOutlier BOOLEAN NOT NULL
+        );
+
+        INSERT INTO junk_ais_clean (patchedShipRef, isOutlier) 
+        VALUES (FALSE, FALSE), (FALSE, TRUE), (TRUE, TRUE), (TRUE, FALSE);
+        """,
+        """
         CREATE TABLE IF NOT EXISTS fact_ais_clean (
             fact_id BIGSERIAL NOT NULL PRIMARY KEY,
             eta_date_id INTEGER NOT NULL DEFAULT 0,
@@ -464,6 +474,7 @@ INSERT INTO public.dim_date(
             ts_time_id INTEGER NOT NULL,
             data_source_type_id INTEGER NOT NULL DEFAULT 1,
             destination_id INTEGER NOT NULL DEFAULT 1,
+            junk_id INTEGER NOT NULL,
             type_of_mobile_id INTEGER NOT NULL DEFAULT 1,
             navigational_status_id INTEGER NOT NULL DEFAULT 1,
             cargo_type_id INTEGER NOT NULL DEFAULT 1,
@@ -517,14 +528,15 @@ INSERT INTO public.dim_date(
                 ON DELETE SET DEFAULT,
             FOREIGN KEY (trajectory_sailing_id)
                 REFERENCES fact_trajectory_sailing (trajectory_id)
-                ON DELETE SET DEFAULT
+                ON DELETE SET DEFAULT,
+            FOREIGN KEY (junk_id)
+                REFERENCES junk_ais_clean (junk_id)
         )
         """,
         """
         CREATE TABLE raster_50m_test (
             ras raster
         );
-        
         """
     )
 
