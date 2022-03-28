@@ -9,6 +9,7 @@ from helper_functions import create_trajectory_sailing_fact_table, create_trajec
 from shapely.geometry import LineString
 import geopandas as gpd
 
+
 def degrees_to_radians(degrees):
     return degrees * math.pi / 180
 
@@ -25,14 +26,16 @@ def distance_in_km_between_earth_coordinates(lat1, lon1, lat2, lon2):
         math.sin(dLon/2) * math.cos(lat1) * math.cos(lat2)
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
     return earth_radius_km * c
+    # return math.hypot(abs(lat2 - lat1), abs(lon2 - lon1))
+    # return math.sqrt((lat2 - lat1)**2 + (lon2 - lon1)**2)
 
 
-def traj_splitter(journey: gpd.GeoDataFrame, speed_treshold, time_threshold, SOG_limit):
+def traj_splitter(journey: pd.DataFrame, speed_treshold, time_threshold, SOG_limit):
     first_point_with_low_speed = -1
     ship_trajectories = []
     ship_stops = []
-    temp_trajectory_list = gpd.GeoDataFrame(columns=journey.columns)
-    temp_stop_list = gpd.GeoDataFrame(columns=journey.columns)
+    temp_trajectory_list = pd.DataFrame(columns=journey.columns)
+    temp_stop_list = pd.DataFrame(columns=journey.columns)
     time_since_above_threshold = timedelta(minutes=0)
     last_point_over_threshold = 0
 
@@ -49,8 +52,12 @@ def traj_splitter(journey: gpd.GeoDataFrame, speed_treshold, time_threshold, SOG
         if(i != 0):
             previous_point = journey.iloc[i-1, :]
             time_since_last_point = point['time'] - previous_point['time']
+            # distance_to_last_point = distance_in_km_between_earth_coordinates(
+            #     point.geometry.x, point.geometry.y, previous_point.geometry.x, previous_point.geometry.y)
             distance_to_last_point = distance_in_km_between_earth_coordinates(
                 point['lat'], point['long'], previous_point['lat'], previous_point['long']) * 1000
+            # distance_to_last_point = point.geometry.distance(
+            #     previous_point.geometry)
         else:
             time_since_last_point = timedelta(0)
             distance_to_last_point = 0
@@ -60,7 +67,7 @@ def traj_splitter(journey: gpd.GeoDataFrame, speed_treshold, time_threshold, SOG
             speed = float(point['sog'])
         elif(time_since_last_point.seconds != 0):
             calculated_speed = distance_to_last_point/time_since_last_point.seconds
-            if(abs(calculated_speed-float(point['sog']))>2):
+            if(abs(calculated_speed-float(point['sog'])) > 2):
                 speed = calculated_speed
             else:
                 speed = float(point['sog'])
@@ -156,14 +163,21 @@ def traj_splitter(journey: gpd.GeoDataFrame, speed_treshold, time_threshold, SOG
 # gets all AIS data from a given day, to create a journey - then calls splitter - and sets trajectories into database
 def create_trajectories(date_to_lookup, config):
 
-    def insert_trajectory(trajectory, sailing : bool):
+    def insert_trajectory(trajectory, sailing: bool):
+        geoSeries = gpd.GeoSeries.from_wkb(
+            trajectory['coordinate'], crs=4326)
+        geoSeries = geoSeries.to_crs("epsg:3034")
+        trajectory = gpd.GeoDataFrame(
+            trajectory, crs='EPSG:3034', geometry=geoSeries)
+
         if(len(trajectory) < 5):
             return
-        linestring = LineString([p for p in list(zip(trajectory.long, trajectory.lat))])
+        linestring = LineString(
+            [p for p in list(zip(trajectory.long, trajectory.lat))])
         projected_linestring = LineString([p for p in trajectory.geometry])
         duration = trajectory.time.iat[-1] - trajectory.time.iat[0]
         draughts = trajectory.draught.value_counts().reset_index(
-                            name='Count').sort_values(['Count'], ascending=False)['index'].tolist()
+            name='Count').sort_values(['Count'], ascending=False)['index'].tolist()
         if (len(draughts) == 0):
             draughts = None
         database_object = {
@@ -171,28 +185,28 @@ def create_trajectories(date_to_lookup, config):
             "ship_type_id": int(trajectory.ship_type_id.iat[0]),
             "type_of_mobile_id": int(trajectory.type_of_mobile_id.iat[0]),
             "eta_time_id": int(trajectory.eta_time_id.value_counts().reset_index(
-                            name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
+                name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
             "eta_date_id": int(trajectory.eta_date_id.value_counts().reset_index(
-                            name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
+                name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
             "time_start_id": int(trajectory.ts_time_id.sort_values(ascending=True).tolist()[0]),
             "date_start_id": int(trajectory.ts_date_id.sort_values(ascending=True).tolist()[0]),
             "time_end_id": int(trajectory.ts_time_id.sort_values(ascending=False).tolist()[0]),
             "date_end_id": int(trajectory.ts_date_id.sort_values(ascending=False).tolist()[0]),
             "cargo_type_id": int(trajectory.cargo_type_id.value_counts().reset_index(
-                            name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
+                name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
             "destination_id": int(trajectory.destination_id.value_counts().reset_index(
-                            name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
+                name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
             "data_source_type_id": int(trajectory.data_source_type_id.value_counts().reset_index(
-                            name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
+                name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
             "type_of_position_fixing_device_id": int(trajectory.type_of_position_fixing_device_id.value_counts().reset_index(
-                            name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
+                name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
             "audit_id": audit_sailing_id if sailing else audit_stopped_id,
             "draught": draughts,
             "duration": duration.seconds,
             "coordinates": str(linestring.simplify(tolerance=0.0001)),
             "length_meters": projected_linestring.length,
-            "avg_speed_knots": projected_linestring.length / duration.seconds, ## FIX
-            "total_points" : len(trajectory)
+            "avg_speed_knots": projected_linestring.length / duration.seconds,  # FIX
+            "total_points": len(trajectory)
         }
         if (sailing):
             trajectory_sailing_fact_table.insert(database_object)
@@ -219,32 +233,35 @@ def create_trajectories(date_to_lookup, config):
         '''
 
     # translate query to groupby dataframe on ship id
-    all_journeys_as_dataframe = pd.DataFrame(SQLSource(connection=connection, query=query_get_all_ais_from_date))
-    geoSeries = gpd.GeoSeries.from_wkb(all_journeys_as_dataframe['coordinate'], crs=4326)
-    geoSeries = geoSeries.to_crs("epsg:3034")
-    all_journeys_as_geodataframe = gpd.GeoDataFrame(all_journeys_as_dataframe,crs='EPSG:3034', geometry=geoSeries).groupby(['ship_id'])
+    all_journeys_as_dataframe = pd.DataFrame(
+        SQLSource(connection=connection, query=query_get_all_ais_from_date)).groupby(['ship_id'])
+    # geoSeries = gpd.GeoSeries.from_wkb(
+    #     all_journeys_as_dataframe['coordinate'], crs=4326)
+    # geoSeries = geoSeries.to_crs("epsg:3034")
+    # all_journeys_as_geodataframe = gpd.GeoDataFrame(
+    #     all_journeys_as_dataframe, crs='EPSG:3034', geometry=geoSeries).groupby(['ship_id'])
 
     trajectory_sailing_fact_table = create_trajectory_sailing_fact_table()
     trajectory_stopped_fact_table = create_trajectory_stopped_fact_table()
     audit_dimension = create_audit_dimension()
 
     sailing_audit_obj = {'timestamp': datetime.now(),
-                 'processed_records': 0,
-                 'inserted_records': 0,
-                 'etl_duration': timedelta(minutes=0),
-                 'source_system': config["Audit"]["source_system"],
-                 'etl_version': config["Audit"]["elt_version"],
-                 'table_name': trajectory_sailing_fact_table.name,
-                 'description': config["Audit"]["comment"]}
+                         'processed_records': 0,
+                         'inserted_records': 0,
+                         'etl_duration': timedelta(minutes=0),
+                         'source_system': config["Audit"]["source_system"],
+                         'etl_version': config["Audit"]["elt_version"],
+                         'table_name': trajectory_sailing_fact_table.name,
+                         'description': config["Audit"]["comment"]}
 
     stopped_audit_obj = {'timestamp': datetime.now(),
-                 'processed_records': 0,
-                 'inserted_records': 0,
-                 'etl_duration': timedelta(minutes=0),
-                 'source_system': config["Audit"]["source_system"],
-                 'etl_version': config["Audit"]["elt_version"],
-                 'table_name': trajectory_stopped_fact_table.name,
-                 'description': config["Audit"]["comment"]}
+                         'processed_records': 0,
+                         'inserted_records': 0,
+                         'etl_duration': timedelta(minutes=0),
+                         'source_system': config["Audit"]["source_system"],
+                         'etl_version': config["Audit"]["elt_version"],
+                         'table_name': trajectory_stopped_fact_table.name,
+                         'description': config["Audit"]["comment"]}
 
     audit_sailing_id = audit_dimension.insert(sailing_audit_obj)
     audit_stopped_id = audit_dimension.insert(stopped_audit_obj)
@@ -252,18 +269,21 @@ def create_trajectories(date_to_lookup, config):
     processed_records = 0
     inserted_sailing_records = 0
     inserted_stopped_records = 0
-    for _, ship in all_journeys_as_geodataframe:
+    t_test_start = perf_counter()
+    for _, ship in all_journeys_as_dataframe:
         processed_records = processed_records + len(ship)
         sailing, stopped = traj_splitter(ship, speed_treshold=0.5,
-                      time_threshold=300, SOG_limit=200)
+                                         time_threshold=300, SOG_limit=200)
         inserted_sailing_records = inserted_sailing_records + len(sailing)
         for trajectory in sailing:
             insert_trajectory(trajectory, True)
         inserted_stopped_records = inserted_stopped_records + len(stopped)
         for trajectory in stopped:
             insert_trajectory(trajectory, False)
-            
+
     t_end = perf_counter()
+
+    print(timedelta(minutes=(t_end-t_test_start)))
 
     sailing_audit_obj['processed_records'] = processed_records
     sailing_audit_obj['inserted_records'] = inserted_sailing_records
@@ -281,4 +301,3 @@ def create_trajectories(date_to_lookup, config):
     dw_conn_wrapper.commit()
     dw_conn_wrapper.close()
     connection.close()
-
