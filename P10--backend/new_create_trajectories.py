@@ -336,7 +336,7 @@ def create_trajectories(date_to_lookup, config):
                 inserted_sailing_records += insert_trajectory(trajectory, True)
         if(len(trajectories_per_ship[ship]["stopped"]) > 0):
             for trajectory in trajectories_per_ship[ship]["stopped"]:
-                inserted_sailing_records += insert_trajectory(
+                inserted_stopped_records += insert_trajectory(
                     trajectory, False)
 
     # for ship in all_journeys_as_dataframe:
