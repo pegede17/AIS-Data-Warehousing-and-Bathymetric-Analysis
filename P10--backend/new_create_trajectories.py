@@ -26,93 +26,132 @@ def distance_in_km_between_earth_coordinates(lat1, lon1, lat2, lon2):
         math.sin(dLon/2) * math.cos(lat1) * math.cos(lat2)
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
     return earth_radius_km * c
-    # return math.hypot(abs(lat2 - lat1), abs(lon2 - lon1))
-    # return math.sqrt((lat2 - lat1)**2 + (lon2 - lon1)**2)
+
+
+def get_distance_and_time_since_last_point(point, previous_point, i):
+    if(i != 0):
+        time_since_last_point = point.time - previous_point.time
+        distance_to_last_point = distance_in_km_between_earth_coordinates(
+            point.lat, point.long, previous_point.lat, previous_point.long) * 1000
+    else:
+        time_since_last_point = timedelta(0)
+        distance_to_last_point = 0
+    return time_since_last_point, distance_to_last_point
+
+
+def get_speed(distance_to_last_point, time_since_last_point, point, i):
+    sog = float(point.sog)
+    if (i == 0 or distance_to_last_point == 0 or time_since_last_point.seconds == 0):
+        return sog
+    else:
+        # TODO fix enhed så det er i knob
+        calculated_speed = distance_to_last_point/time_since_last_point.seconds
+        if(abs(calculated_speed-sog) > 2):
+            return calculated_speed
+        else:
+            return sog
+
+
+def handle_time_gap(points: pd.DataFrame, trajectories: list, first_point_not_handled: int, i: int, journey: pd.DataFrame):
+    if(first_point_not_handled != -1):
+        points = pd.concat(
+            [points, journey.iloc[first_point_not_handled:i - 1, :]])
+        first_point_not_handled = -1
+    trajectories.append(points.copy())
+    points = points.iloc[0:0, :]
+    return trajectories, points, first_point_not_handled
+
+
+def skip_point(points: pd.DataFrame, first_point_not_handled: int, i: int, journey: pd.DataFrame, timer):
+    time_skip_start = perf_counter_ns()
+    stopped_points = pd.concat(
+        [stopped_points, journey.iloc[first_point_not_handled:i - 1, :]])
+    first_point_not_handled = -1
+    time_skip_end = perf_counter_ns()
+    timer.append(time_skip_end-time_skip_start)
+
+    return stopped_points, first_point_not_handled
 
 
 def traj_splitter(journey: pd.DataFrame, speed_treshold, time_threshold, SOG_limit):
-    first_point_not_handled = -1
-    temp_trajectory_list = pd.DataFrame(columns=journey.columns)
-    temp_stop_list = pd.DataFrame(columns=journey.columns)
-    ship_trajectories = []
-    ship_stops = []
-    time_since_above_threshold = timedelta(minutes=0)
-    last_point_over_threshold = 0
 
     journey = journey.reset_index(0)
     journey["time"] = journey.apply(lambda row: datetime(year=1, month=1, day=1, hour=row['hour'],
                                                          minute=row['minute'], second=row['second']), axis=1)
 
-    for i in journey.index:
+    first_point_not_handled = -1
+    sailing_points = pd.DataFrame(columns=journey.columns)
+    stopped_points = pd.DataFrame(columns=journey.columns)
+    sailing_trajectories = []
+    stopped_trajectories = []
+    time_since_above_threshold = timedelta(minutes=0)
+    last_point_over_threshold = 0
+    time_initial = []
+    time_skip = []
+    time_above = []
+    time_below = []
 
-        # journey.at(i)['time'] = datetime.strptime(str(journey.at(i)['ts_time_id']), "%H%M%S")
-        # TODO brug apply måske
-        # journey.at[i, 'time'] = datetime(year=1, month=1, day=1, hour=journey.at[i, 'hour'],
-        #                                  minute=journey.at[i, 'minute'], second=journey.at[i, 'second'])
+    for i in journey.index:
+        time_initial_start = perf_counter_ns()
         point = journey.iloc[i, :]
 
         # Determine time since last point or set to 0 if it is the first point
-        if(i != 0):
-            previous_point = journey.iloc[i-1, :]
-            time_since_last_point = point.time - previous_point.time
-            # distance_to_last_point = distance_in_km_between_earth_coordinates(
-            #     point.geometry.x, point.geometry.y, previous_point.geometry.x, previous_point.geometry.y)
-            distance_to_last_point = distance_in_km_between_earth_coordinates(
-                point['lat'], point['long'], previous_point['lat'], previous_point['long']) * 1000
-            # distance_to_last_point = point.geometry.distance(
-            #     previous_point.geometry)
-        else:
-            time_since_last_point = timedelta(0)
-            distance_to_last_point = 0
+        time_since_last_point, distance_to_last_point = get_distance_and_time_since_last_point(
+            point, journey.iloc[i-1, :], i)
 
         # Set speed depending on if time has passed since last point/if we have a previous point
-        # TODO check om nødvendig
-        sog = float(point['sog'])
-        if (i == 0 or distance_to_last_point == 0 or time_since_last_point == timedelta(0)):
-            speed = sog
-        else:
-            # TODO fix enhed så det er i knob
-            calculated_speed = distance_to_last_point/time_since_last_point.seconds
-            if(abs(calculated_speed-sog) > 2):
-                speed = calculated_speed
-            else:
-                speed = sog
+        speed = get_speed(distance_to_last_point,
+                          time_since_last_point, point, i)
 
         # TODO lav switch på de 4 cases
         # Split trajectories if it has been too long since last point
         if(time_since_last_point > timedelta(minutes=5)):
             # End current trajectory session and push to trajectory list
-            if(len(temp_trajectory_list) > 0):
-                # TODO slet dette check
-                if(first_point_not_handled != -1):
-                    temp_trajectory_list = pd.concat(
-                        [temp_trajectory_list, journey.iloc[first_point_not_handled:i - 1, :]], axis=0)
-                    first_point_not_handled = -1
-                ship_trajectories.append(temp_trajectory_list.copy())
-                # TODO check om mest effektiv måde at clear på
-                temp_trajectory_list = temp_trajectory_list.iloc[0:0]
-
+            if(len(sailing_points) > 0):
+                sailing_trajectories, sailing_points, first_point_not_handled = handle_time_gap(
+                    sailing_points, sailing_trajectories, first_point_not_handled, i, journey)
             else:
-                if(first_point_not_handled != -1):
-                    temp_stop_list = pd.concat(
-                        [temp_stop_list, journey.iloc[first_point_not_handled:i - 1, :]], axis=0)
-                    first_point_not_handled = -1
-                ship_stops.append(temp_stop_list.copy())
-                temp_stop_list = temp_stop_list.iloc[0:0]
+                stopped_trajectories, stopped_points, first_point_not_handled = handle_time_gap(
+                    stopped_points, stopped_trajectories, first_point_not_handled, i, journey)
+        time_initial_end = perf_counter_ns()
+        time_initial.append(time_initial_end-time_initial_start)
+
         # Skip a point if it is has a too high speed/it is an outlier
         if(speed > SOG_limit):
             if(first_point_not_handled == -1):
                 continue
-            if(len(temp_stop_list) > 0):
-                temp_stop_list = pd.concat(
-                    [temp_stop_list, journey.iloc[first_point_not_handled:i - 1, :]], axis=0)
-            elif (len(temp_trajectory_list) > 0):
-                temp_trajectory_list = pd.concat(
-                    [temp_trajectory_list, journey.iloc[first_point_not_handled:i - 1, :]], axis=0)
+            if(len(stopped_points) > 0):
+                stopped_points, first_point_not_handled = skip_point(
+                    stopped_points, first_point_not_handled, i, journey, time_skip)
+                continue
+            elif (len(sailing_points) > 0):
+                sailing_points, first_point_not_handled = skip_point(
+                    sailing_points, first_point_not_handled, i, journey, time_skip)
+                continue
+
+        if(speed >= speed_treshold):
+            time_above_start = perf_counter_ns()
+            # Reset counters
+            last_point_over_threshold = i
+            # End a "stopped" session and push to stops list
+            if(len(stopped_points) > 0):
+                stopped_trajectories.append(stopped_points.copy())
+                stopped_points = stopped_points.iloc[0:0]
+            # Add points to current trajectory
+            if(first_point_not_handled != -1):
+                sailing_points = pd.concat(
+                    [sailing_points, journey.iloc[first_point_not_handled:i, :]])
+            else:
+                sailing_points.loc[len(
+                    sailing_points.index)] = journey.iloc[i]
+            time_since_above_threshold = timedelta(minutes=0)
             first_point_not_handled = -1
+            time_above_end = perf_counter_ns()
+            time_above.append(time_above_end-time_above_start)
             continue
 
         if(speed < speed_treshold):
+            time_below_start = perf_counter_ns()
             # Keep track of the first point with a low speed
             if(first_point_not_handled == -1):
                 first_point_not_handled = i
@@ -126,50 +165,36 @@ def traj_splitter(journey: pd.DataFrame, speed_treshold, time_threshold, SOG_lim
 
             if(time_since_above_threshold > time_threshold):
                 # End "sailing session and push to trajectory list
-                if(len(temp_trajectory_list) > 0):
-                    ship_trajectories.append(temp_trajectory_list.copy())
-                    temp_trajectory_list = temp_trajectory_list.iloc[0:0]
+                if(len(sailing_points) > 0):
+                    sailing_trajectories.append(sailing_points.copy())
+                    sailing_points = sailing_points.iloc[0:0]
                 # Add points to current stop session
                 if(i == first_point_not_handled or first_point_not_handled == -1):
-                    temp_stop_list.loc[len(
-                        temp_stop_list.index)] = journey.iloc[i]
+                    stopped_points.loc[len(
+                        stopped_points.index)] = journey.iloc[i]
                 else:
-                    temp_stop_list = pd.concat(
-                        [temp_stop_list, journey.iloc[first_point_not_handled:i, :]], axis=0)
+                    stopped_points = pd.concat(
+                        [stopped_points, journey.iloc[first_point_not_handled:i, :]])
                 first_point_not_handled = -1
-                # if(first_point_not_handled != -1 and first_point_not_handled != i):
-                #     temp_stop_list = pd.concat(
-                #         [temp_stop_list, journey.iloc[first_point_not_handled:i, :]], axis=0)
-                # else:
-                #     temp_stop_list = pd.concat(
-                #         [temp_stop_list, journey.iloc[first_point_not_handled:i, :]], axis=0)
-                # first_point_not_handled = -1
+            time_below_end = perf_counter_ns()
+            time_below.append(time_below_end-time_below_start)
 
-        if(speed >= speed_treshold):
-            # Reset counters
-            last_point_over_threshold = i
-            # End a "stopped" session and push to stops list
-            if(len(temp_stop_list) > 0):
-                ship_stops.append(temp_stop_list.copy())
-                temp_stop_list = temp_stop_list.iloc[0:0]
-            # Add points to current trajectory
-            if(first_point_not_handled != -1):
-                temp_trajectory_list = pd.concat(
-                    [temp_trajectory_list, journey.iloc[first_point_not_handled:i, :]], axis=0)
-            else:
-                temp_trajectory_list = pd.concat(
-                    [temp_trajectory_list, journey.iloc[i, :].to_frame().transpose()], axis=0)
-            time_since_above_threshold = timedelta(minutes=0)
-            first_point_not_handled = -1
+    if(len(stopped_points) > 0):
+        stopped_trajectories.append(stopped_points.copy())
+        stopped_points = stopped_points.iloc[0:0, :]
+    if(len(sailing_points) > 0):
+        sailing_trajectories.append(sailing_points.copy())
+        sailing_points = sailing_points.iloc[0:0, :]
+    if(len(time_initial) > 0):
+        print(f"{'Initial:':<12}" + str(sum(time_initial)/len(time_initial)))
+    if(len(time_skip) > 0):
+        print(f"{'Skip:':<12}" + str(sum(time_skip)/len(time_skip)))
+    if(len(time_above) > 0):
+        print(f"{'Above:':<12}" + str(sum(time_above)/len(time_above)))
+    if(len(time_below) > 0):
+        print(f"{'Below:':<12}" + str(sum(time_below)/len(time_below)))
 
-    if(len(temp_stop_list) > 0):
-        ship_stops.append(temp_stop_list.copy())
-        temp_stop_list = temp_stop_list.iloc[0:0]
-    if(len(temp_trajectory_list) > 0):
-        ship_trajectories.append(temp_trajectory_list.copy())
-        temp_trajectory_list = temp_trajectory_list.iloc[0:0]
-
-    return ship_trajectories, ship_stops
+    return sailing_trajectories, stopped_trajectories
 
 
 # gets all AIS data from a given day, to create a journey - then calls splitter - and sets trajectories into database
@@ -188,6 +213,8 @@ def create_trajectories(date_to_lookup, config):
             [p for p in list(zip(trajectory.long, trajectory.lat))])
         projected_linestring = LineString([p for p in trajectory.geometry])
         duration = trajectory.time.iat[-1] - trajectory.time.iat[0]
+        if (duration.seconds == 0):
+            return 0
         draughts = trajectory.draught.value_counts().reset_index(
             name='Count').sort_values(['Count'], ascending=False)['index'].tolist()
         if (len(draughts) == 0):
@@ -242,17 +269,12 @@ def create_trajectories(date_to_lookup, config):
         INNER JOIN dim_time ON dim_time.time_id = ts_time_id
         WHERE ts_date_id = {date_to_lookup}
         ORDER BY ship_id, ts_time_id ASC
-        limit(1000)
+        limit(100000)
         '''
 
     # translate query to groupby dataframe on ship id
     all_journeys_as_dataframe = pd.DataFrame(
         SQLSource(connection=connection, query=query_get_all_ais_from_date)).groupby(['ship_id'])
-    # geoSeries = gpd.GeoSeries.from_wkb(
-    #     all_journeys_as_dataframe['coordinate'], crs=4326)
-    # geoSeries = geoSeries.to_crs("epsg:3034")
-    # all_journeys_as_geodataframe = gpd.GeoDataFrame(
-    #     all_journeys_as_dataframe, crs='EPSG:3034', geometry=geoSeries).groupby(['ship_id'])
 
     trajectory_sailing_fact_table = create_trajectory_sailing_fact_table()
     trajectory_stopped_fact_table = create_trajectory_stopped_fact_table()
@@ -287,11 +309,10 @@ def create_trajectories(date_to_lookup, config):
         processed_records = processed_records + len(ship)
         sailing, stopped = traj_splitter(ship, speed_treshold=0.5,
                                          time_threshold=300, SOG_limit=200)
-        inserted_sailing_records = inserted_sailing_records
-        for trajectory in sailing:
-            inserted_sailing_records += insert_trajectory(trajectory, True)
-        for trajectory in stopped:
-            inserted_stopped_records += insert_trajectory(trajectory, False)
+        # for trajectory in sailing:
+        #     inserted_sailing_records += insert_trajectory(trajectory, True)
+        # for trajectory in stopped:
+        #     inserted_stopped_records += insert_trajectory(trajectory, False)
 
     t_end = perf_counter()
 
