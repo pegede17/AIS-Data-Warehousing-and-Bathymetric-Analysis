@@ -80,8 +80,12 @@ def skip_point(points: pd.DataFrame, first_point_not_handled: int, i: int, journ
     return stopped_points, first_point_not_handled
 
 
-def traj_splitter(ship, speed_treshold, time_threshold, SOG_limit):
+def traj_splitter(ship):
+    speed_treshold = 0.5
+    time_threshold = 300
+    SOG_limit = 200
     id, journey = ship
+    print(id)
 
     journey = journey.reset_index(0)
     journey["time"] = journey.apply(lambda row: datetime(year=1, month=1, day=1, hour=row['hour'],
@@ -318,12 +322,14 @@ def create_trajectories(date_to_lookup, config):
     with concurrent.futures.ProcessPoolExecutor(initializer=set_global_variables, initargs=(trajectories_per_ship)) as executor:
         executor.map(traj_splitter, all_journeys_as_dataframe)
 
-    for ship in trajectories_per_ship:
-        sailing, stopped = ship
-        for trajectory in sailing:
-            inserted_sailing_records += insert_trajectory(trajectory, True)
-        for trajectory in stopped:
-            inserted_stopped_records += insert_trajectory(trajectory, False)
+    # for ship in trajectories_per_ship:
+    #     for test in trajectories_per_ship[ship]:
+    #         sailing, stopped = test
+    #         for trajectory in sailing:
+    #             inserted_sailing_records += insert_trajectory(trajectory, True)
+    #         for trajectory in stopped:
+    #             inserted_stopped_records += insert_trajectory(
+    #                 trajectory, False)
 
     # for ship in all_journeys_as_dataframe:
     #     processed_records = processed_records + len(ship)
