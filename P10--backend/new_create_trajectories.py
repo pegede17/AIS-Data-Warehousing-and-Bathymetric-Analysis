@@ -205,8 +205,8 @@ def traj_splitter(ship):
     #     print(f"{'Above:':<12}" + str(sum(time_above)/len(time_above)))
     # if(len(time_below) > 0):
     #     print(f"{'Below:':<12}" + str(sum(time_below)/len(time_below)))
-
-    trajectories_per_ship[id] = sailing_trajectories, stopped_trajectories
+    trajectories = {"stopped": stopped_trajectories, "sailing": sailing_points}
+    trajectories_per_ship[id] = trajectories
 
 
 # gets all AIS data from a given day, to create a journey - then calls splitter - and sets trajectories into database
@@ -277,11 +277,11 @@ def create_trajectories(date_to_lookup, config):
     query_get_all_ais_from_date = f'''
         SELECT ship_type_id, eta_time_id, eta_date_id, cargo_type_id, type_of_mobile_id, destination_id, ts_date_id, data_source_type_id, type_of_position_fixing_device_id, ship_id, ts_time_id,
                 audit_id, coordinate, ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat, sog, hour, minute, second, draught
-        FROM fact_ais_clean
+        FROM fact_ais
         INNER JOIN dim_time ON dim_time.time_id = ts_time_id
         WHERE ts_date_id = {date_to_lookup}
         ORDER BY ship_id, ts_time_id ASC
-        limit(100000)
+        limit(1000)
         '''
 
     # translate query to groupby dataframe on ship id
@@ -319,17 +319,16 @@ def create_trajectories(date_to_lookup, config):
     t_test_start = perf_counter()
 
     trajectories_per_ship = mp.Manager().dict()
-    with concurrent.futures.ProcessPoolExecutor(initializer=set_global_variables, initargs=(trajectories_per_ship)) as executor:
+    with concurrent.futures.ProcessPoolExecutor(initializer=set_global_variables, initargs=(trajectories_per_ship,)) as executor:
         executor.map(traj_splitter, all_journeys_as_dataframe)
 
-    # for ship in trajectories_per_ship:
-    #     for test in trajectories_per_ship[ship]:
-    #         sailing, stopped = test
-    #         for trajectory in sailing:
-    #             inserted_sailing_records += insert_trajectory(trajectory, True)
-    #         for trajectory in stopped:
-    #             inserted_stopped_records += insert_trajectory(
-    #                 trajectory, False)
+    for ship in trajectories_per_ship:
+        if(len(trajectories_per_ship[ship]["sailing"]) > 0):
+            for trajectory in trajectories_per_ship[ship]["sailing"]:
+                inserted_sailing_records += insert_trajectory(trajectory, True)
+        if(len(trajectories_per_ship[ship]["stopped"]) > 0):
+            for trajectory in trajectories_per_ship[ship]["stopped"]:
+                inserted_sailing_records += insert_trajectory(trajectory, True)
 
     # for ship in all_journeys_as_dataframe:
     #     processed_records = processed_records + len(ship)
