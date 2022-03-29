@@ -62,13 +62,13 @@ def handle_time_gap(points: pd.DataFrame, trajectories: list, first_point_not_ha
     return trajectories, points, first_point_not_handled
 
 
-def skip_point(points: pd.DataFrame, first_point_not_handled: int, i: int, journey: pd.DataFrame, timer):
-    time_skip_start = perf_counter_ns()
+def skip_point(points: pd.DataFrame, first_point_not_handled: int, i: int, journey: pd.DataFrame):
+    # time_skip_start = perf_counter_ns()
     stopped_points = pd.concat(
         [stopped_points, journey.iloc[first_point_not_handled:i - 1, :]])
     first_point_not_handled = -1
-    time_skip_end = perf_counter_ns()
-    timer.append(time_skip_end-time_skip_start)
+    # time_skip_end = perf_counter_ns()
+    # timer.append(time_skip_end-time_skip_start)
 
     return stopped_points, first_point_not_handled
 
@@ -86,13 +86,13 @@ def traj_splitter(journey: pd.DataFrame, speed_treshold, time_threshold, SOG_lim
     stopped_trajectories = []
     time_since_above_threshold = timedelta(minutes=0)
     last_point_over_threshold = 0
-    time_initial = []
-    time_skip = []
-    time_above = []
-    time_below = []
+    # time_initial = []
+    # time_skip = []
+    # time_above = []
+    # time_below = []
 
     for i in journey.index:
-        time_initial_start = perf_counter_ns()
+        # time_initial_start = perf_counter_ns()
         point = journey.iloc[i, :]
 
         # Determine time since last point or set to 0 if it is the first point
@@ -113,8 +113,8 @@ def traj_splitter(journey: pd.DataFrame, speed_treshold, time_threshold, SOG_lim
             else:
                 stopped_trajectories, stopped_points, first_point_not_handled = handle_time_gap(
                     stopped_points, stopped_trajectories, first_point_not_handled, i, journey)
-        time_initial_end = perf_counter_ns()
-        time_initial.append(time_initial_end-time_initial_start)
+        # time_initial_end = perf_counter_ns()
+        # time_initial.append(time_initial_end-time_initial_start)
 
         # Skip a point if it is has a too high speed/it is an outlier
         if(speed > SOG_limit):
@@ -122,15 +122,15 @@ def traj_splitter(journey: pd.DataFrame, speed_treshold, time_threshold, SOG_lim
                 continue
             if(len(stopped_points) > 0):
                 stopped_points, first_point_not_handled = skip_point(
-                    stopped_points, first_point_not_handled, i, journey, time_skip)
+                    stopped_points, first_point_not_handled, i, journey)
                 continue
             elif (len(sailing_points) > 0):
                 sailing_points, first_point_not_handled = skip_point(
-                    sailing_points, first_point_not_handled, i, journey, time_skip)
+                    sailing_points, first_point_not_handled, i, journey)
                 continue
 
         if(speed >= speed_treshold):
-            time_above_start = perf_counter_ns()
+            # time_above_start = perf_counter_ns()
             # Reset counters
             last_point_over_threshold = i
             # End a "stopped" session and push to stops list
@@ -146,12 +146,12 @@ def traj_splitter(journey: pd.DataFrame, speed_treshold, time_threshold, SOG_lim
                     sailing_points.index)] = journey.iloc[i]
             time_since_above_threshold = timedelta(minutes=0)
             first_point_not_handled = -1
-            time_above_end = perf_counter_ns()
-            time_above.append(time_above_end-time_above_start)
+            # time_above_end = perf_counter_ns()
+            # time_above.append(time_above_end-time_above_start)
             continue
 
         if(speed < speed_treshold):
-            time_below_start = perf_counter_ns()
+            # time_below_start = perf_counter_ns()
             # Keep track of the first point with a low speed
             if(first_point_not_handled == -1):
                 first_point_not_handled = i
@@ -176,8 +176,8 @@ def traj_splitter(journey: pd.DataFrame, speed_treshold, time_threshold, SOG_lim
                     stopped_points = pd.concat(
                         [stopped_points, journey.iloc[first_point_not_handled:i, :]])
                 first_point_not_handled = -1
-            time_below_end = perf_counter_ns()
-            time_below.append(time_below_end-time_below_start)
+            # time_below_end = perf_counter_ns()
+            # time_below.append(time_below_end-time_below_start)
 
     if(len(stopped_points) > 0):
         stopped_trajectories.append(stopped_points.copy())
@@ -185,14 +185,14 @@ def traj_splitter(journey: pd.DataFrame, speed_treshold, time_threshold, SOG_lim
     if(len(sailing_points) > 0):
         sailing_trajectories.append(sailing_points.copy())
         sailing_points = sailing_points.iloc[0:0, :]
-    if(len(time_initial) > 0):
-        print(f"{'Initial:':<12}" + str(sum(time_initial)/len(time_initial)))
-    if(len(time_skip) > 0):
-        print(f"{'Skip:':<12}" + str(sum(time_skip)/len(time_skip)))
-    if(len(time_above) > 0):
-        print(f"{'Above:':<12}" + str(sum(time_above)/len(time_above)))
-    if(len(time_below) > 0):
-        print(f"{'Below:':<12}" + str(sum(time_below)/len(time_below)))
+    # if(len(time_initial) > 0):
+    #     print(f"{'Initial:':<12}" + str(sum(time_initial)/len(time_initial)))
+    # if(len(time_skip) > 0):
+    #     print(f"{'Skip:':<12}" + str(sum(time_skip)/len(time_skip)))
+    # if(len(time_above) > 0):
+    #     print(f"{'Above:':<12}" + str(sum(time_above)/len(time_above)))
+    # if(len(time_below) > 0):
+    #     print(f"{'Below:':<12}" + str(sum(time_below)/len(time_below)))
 
     return sailing_trajectories, stopped_trajectories
 
@@ -265,7 +265,7 @@ def create_trajectories(date_to_lookup, config):
     query_get_all_ais_from_date = f'''
         SELECT ship_type_id, eta_time_id, eta_date_id, cargo_type_id, type_of_mobile_id, destination_id, ts_date_id, data_source_type_id, type_of_position_fixing_device_id, ship_id, ts_time_id,
                 audit_id, coordinate, ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat, sog, hour, minute, second, draught
-        FROM fact_ais
+        FROM fact_ais_clean
         INNER JOIN dim_time ON dim_time.time_id = ts_time_id
         WHERE ts_date_id = {date_to_lookup}
         ORDER BY ship_id, ts_time_id ASC
@@ -309,10 +309,10 @@ def create_trajectories(date_to_lookup, config):
         processed_records = processed_records + len(ship)
         sailing, stopped = traj_splitter(ship, speed_treshold=0.5,
                                          time_threshold=300, SOG_limit=200)
-        # for trajectory in sailing:
-        #     inserted_sailing_records += insert_trajectory(trajectory, True)
-        # for trajectory in stopped:
-        #     inserted_stopped_records += insert_trajectory(trajectory, False)
+        for trajectory in sailing:
+            inserted_sailing_records += insert_trajectory(trajectory, True)
+        for trajectory in stopped:
+            inserted_stopped_records += insert_trajectory(trajectory, False)
 
     t_end = perf_counter()
 
