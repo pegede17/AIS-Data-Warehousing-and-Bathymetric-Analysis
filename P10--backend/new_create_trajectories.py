@@ -205,6 +205,20 @@ def traj_splitter(ship):
     #     print(f"{'Above:':<12}" + str(sum(time_above)/len(time_above)))
     # if(len(time_below) > 0):
     #     print(f"{'Below:':<12}" + str(sum(time_below)/len(time_below)))
+    for trajectory in stopped_trajectories:
+        geoSeries = gpd.GeoSeries.from_wkb(
+            trajectory['coordinate'], crs=4326)
+        geoSeries = geoSeries.to_crs("epsg:3034")
+        trajectory = gpd.GeoDataFrame(
+            trajectory, crs='EPSG:3034', geometry=geoSeries)
+
+    for trajectory in sailing_trajectories:
+        geoSeries = gpd.GeoSeries.from_wkb(
+            trajectory['coordinate'], crs=4326)
+        geoSeries = geoSeries.to_crs("epsg:3034")
+        trajectory = gpd.GeoDataFrame(
+            trajectory, crs='EPSG:3034', geometry=geoSeries)
+
     trajectories = {"stopped": stopped_trajectories, "sailing": sailing_points}
     trajectories_per_ship[id] = trajectories
 
@@ -213,12 +227,6 @@ def traj_splitter(ship):
 def create_trajectories(date_to_lookup, config):
 
     def insert_trajectory(trajectory, sailing: bool):
-        geoSeries = gpd.GeoSeries.from_wkb(
-            trajectory['coordinate'], crs=4326)
-        geoSeries = geoSeries.to_crs("epsg:3034")
-        trajectory = gpd.GeoDataFrame(
-            trajectory, crs='EPSG:3034', geometry=geoSeries)
-
         if(len(trajectory) < 2):
             return 0
         linestring = LineString(
