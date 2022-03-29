@@ -8,6 +8,13 @@ from datetime import date, datetime, timedelta
 from helper_functions import create_trajectory_sailing_fact_table, create_trajectory_stopped_fact_table, create_audit_dimension
 from shapely.geometry import LineString
 import geopandas as gpd
+import multiprocessing as mp
+import concurrent.futures
+
+
+def set_global_variables(args):
+    global trajectories_per_ship
+    trajectories_per_ship = args
 
 
 def degrees_to_radians(degrees):
@@ -73,7 +80,8 @@ def skip_point(points: pd.DataFrame, first_point_not_handled: int, i: int, journ
     return stopped_points, first_point_not_handled
 
 
-def traj_splitter(journey: pd.DataFrame, speed_treshold, time_threshold, SOG_limit):
+def traj_splitter(ship, speed_treshold, time_threshold, SOG_limit):
+    id, journey = ship
 
     journey = journey.reset_index(0)
     journey["time"] = journey.apply(lambda row: datetime(year=1, month=1, day=1, hour=row['hour'],
@@ -194,7 +202,7 @@ def traj_splitter(journey: pd.DataFrame, speed_treshold, time_threshold, SOG_lim
     # if(len(time_below) > 0):
     #     print(f"{'Below:':<12}" + str(sum(time_below)/len(time_below)))
 
-    return sailing_trajectories, stopped_trajectories
+    trajectories_per_ship[id] = sailing_trajectories, stopped_trajectories
 
 
 # gets all AIS data from a given day, to create a journey - then calls splitter - and sets trajectories into database
@@ -265,11 +273,11 @@ def create_trajectories(date_to_lookup, config):
     query_get_all_ais_from_date = f'''
         SELECT ship_type_id, eta_time_id, eta_date_id, cargo_type_id, type_of_mobile_id, destination_id, ts_date_id, data_source_type_id, type_of_position_fixing_device_id, ship_id, ts_time_id,
                 audit_id, coordinate, ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat, sog, hour, minute, second, draught
-        FROM fact_ais_clean
+        FROM fact_ais
         INNER JOIN dim_time ON dim_time.time_id = ts_time_id
         WHERE ts_date_id = {date_to_lookup}
         ORDER BY ship_id, ts_time_id ASC
-        limit(1000000)
+        limit(100000)
         '''
 
     # translate query to groupby dataframe on ship id
@@ -305,14 +313,26 @@ def create_trajectories(date_to_lookup, config):
     inserted_sailing_records = 0
     inserted_stopped_records = 0
     t_test_start = perf_counter()
-    for _, ship in all_journeys_as_dataframe:
-        processed_records = processed_records + len(ship)
-        sailing, stopped = traj_splitter(ship, speed_treshold=0.5,
-                                         time_threshold=300, SOG_limit=200)
+
+    trajectories_per_ship = mp.Manager().dict()
+    with concurrent.futures.ProcessPoolExecutor(initializer=set_global_variables, initargs=(trajectories_per_ship)) as executor:
+        executor.map(traj_splitter, all_journeys_as_dataframe)
+
+    for ship in trajectories_per_ship:
+        sailing, stopped = ship
         for trajectory in sailing:
             inserted_sailing_records += insert_trajectory(trajectory, True)
         for trajectory in stopped:
             inserted_stopped_records += insert_trajectory(trajectory, False)
+
+    # for ship in all_journeys_as_dataframe:
+    #     processed_records = processed_records + len(ship)
+    #     sailing, stopped = traj_splitter(ship, speed_treshold=0.5,
+    #                                      time_threshold=300, SOG_limit=200)
+    #     for trajectory in sailing:
+    #         inserted_sailing_records += insert_trajectory(trajectory, True)
+    #     for trajectory in stopped:
+    #         inserted_stopped_records += insert_trajectory(trajectory, False)
 
     t_end = perf_counter()
 
