@@ -219,7 +219,8 @@ def traj_splitter(ship):
         trajectory = gpd.GeoDataFrame(
             trajectory, crs='EPSG:3034', geometry=geoSeries)
 
-    trajectories = {"stopped": stopped_trajectories, "sailing": sailing_points}
+    trajectories = {"stopped": stopped_trajectories,
+                    "sailing": sailing_trajectories}
     trajectories_per_ship[id] = trajectories
 
 
@@ -330,6 +331,8 @@ def create_trajectories(date_to_lookup, config):
     with concurrent.futures.ProcessPoolExecutor(initializer=set_global_variables, initargs=(trajectories_per_ship,)) as executor:
         executor.map(traj_splitter, all_journeys_as_dataframe)
 
+    for ship in all_journeys_as_dataframe:
+        processed_records = processed_records + len(ship)
     for ship in trajectories_per_ship:
         if(len(trajectories_per_ship[ship]["sailing"]) > 0):
             for trajectory in trajectories_per_ship[ship]["sailing"]:
