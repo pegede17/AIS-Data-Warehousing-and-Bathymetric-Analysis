@@ -325,11 +325,12 @@ def create_trajectories(date_to_lookup, config):
     processed_records = 0
     inserted_sailing_records = 0
     inserted_stopped_records = 0
-    t_test_start = perf_counter()
 
     trajectories_per_ship = mp.Manager().dict()
     with concurrent.futures.ProcessPoolExecutor(initializer=set_global_variables, initargs=(trajectories_per_ship,)) as executor:
         executor.map(traj_splitter, all_journeys_as_dataframe)
+
+    t_test_end = perf_counter()
 
     for _, ship in all_journeys_as_dataframe:
         processed_records = processed_records + len(ship)
@@ -353,7 +354,7 @@ def create_trajectories(date_to_lookup, config):
 
     t_end = perf_counter()
 
-    print(timedelta(minutes=(t_end-t_test_start)))
+    print(timedelta(minutes=(t_test_end-t_start)))
 
     sailing_audit_obj['processed_records'] = processed_records
     sailing_audit_obj['inserted_records'] = inserted_sailing_records
