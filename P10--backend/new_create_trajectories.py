@@ -290,7 +290,7 @@ def create_trajectories(date_to_lookup, config):
         INNER JOIN dim_time ON dim_time.time_id = ts_time_id
         WHERE ts_date_id = {date_to_lookup}
         ORDER BY ship_id, ts_time_id ASC
-        limit(100000)
+        limit(1000000)
         '''
 
     # translate query to groupby dataframe on ship id
@@ -331,7 +331,7 @@ def create_trajectories(date_to_lookup, config):
     with concurrent.futures.ProcessPoolExecutor(initializer=set_global_variables, initargs=(trajectories_per_ship,)) as executor:
         executor.map(traj_splitter, all_journeys_as_dataframe)
 
-    for ship in all_journeys_as_dataframe:
+    for _, ship in all_journeys_as_dataframe:
         processed_records = processed_records + len(ship)
     for ship in trajectories_per_ship:
         if(len(trajectories_per_ship[ship]["sailing"]) > 0):
