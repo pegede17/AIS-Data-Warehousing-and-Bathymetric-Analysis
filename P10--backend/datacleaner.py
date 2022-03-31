@@ -20,7 +20,7 @@ def clean_data(config, date_id):
         connection = connect_to_local()
 
     engineString = f"""postgresql://{config["Database"]["dbuser"]}:{config["Database"]["dbpass"]}@{config["Database"]["hostname"]}:5432/{config["Database"]["dbname"]}"""
-    engine = create_engine(engineString)
+    engine = create_engine(engineString, executemany_mode='values_plus_batch')
 
     dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
 
