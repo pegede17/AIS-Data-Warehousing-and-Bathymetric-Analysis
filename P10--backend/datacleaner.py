@@ -143,7 +143,7 @@ def clean_data(config, date_id):
     ais_df['audit_id'] = audit_id
     print("AIS_DF to SQL is being called!!")
     print(datetime.today())
-    ais_df.to_sql('fact_ais_clean_v2', index=False, con=engine, if_exists='append')
+    ais_df.to_sql('fact_ais_clean_v2', index=False, con=engine, if_exists='append', chunksize=10000, method='multi')
     print(datetime.today())
     print("DONE!!! AIS_DF_TO_SQL HAS BEEN CALLED!!")
 
