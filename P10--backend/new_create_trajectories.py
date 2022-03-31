@@ -265,7 +265,7 @@ def traj_splitter(ship):
         geoSeries = geoSeries.to_crs("epsg:3034")
         trajectory = gpd.GeoDataFrame(
             trajectory, crs='EPSG:3034', geometry=geoSeries)
-        trajectory["db_object"] = create_database_object(trajectory)
+        sailing_db_objects.append(create_database_object(trajectory))
 
     trajectories = {"stopped": stopped_trajectories,
                     "stopped_db_objects": stopped_db_objects,
