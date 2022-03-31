@@ -466,7 +466,6 @@ INSERT INTO public.dim_date(
         """,
         """
         CREATE TABLE IF NOT EXISTS fact_ais_clean (
-            fact_id BIGSERIAL NOT NULL PRIMARY KEY,
             eta_date_id INTEGER NOT NULL DEFAULT 0,
             eta_time_id INTEGER NOT NULL DEFAULT 0,
             ship_id INTEGER NOT NULL,
@@ -492,7 +491,9 @@ INSERT INTO public.dim_date(
             cell_id INTEGER DEFAULT NULL,
             trajectory_stopped_id INTEGER DEFAULT NULL,
             trajectory_sailing_id INTEGER DEFAULT NULL,
-
+    
+            PRIMARY KEY (ts_date_id, ship_id, type_of_position_fixing_device_id, type_of_mobile_id, ship_type_id, cargo_type_id, ts_time_id, audit_id, eta_date_id, eta_time_id, data_source_type_id, 
+                destination_id, navigational_status_id, cell_id, junk_id),
             FOREIGN KEY (audit_id)
                 REFERENCES dim_audit (audit_id)
                 ON DELETE CASCADE,
@@ -531,7 +532,60 @@ INSERT INTO public.dim_date(
                 ON DELETE SET DEFAULT,
             FOREIGN KEY (junk_id)
                 REFERENCES junk_ais_clean (junk_id)
-        )
+        ) PARTITION BY RANGE(ts_date_id);
+		CREATE TABLE fact_ais_clean_y2021week1 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210101') TO ('20210108');
+        CREATE TABLE fact_ais_clean_y2021week2 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210108') TO ('20210115');
+        CREATE TABLE fact_ais_clean_y2021week3 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210115') TO ('20210122');
+        CREATE TABLE fact_ais_clean_y2021week4 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210122') TO ('20210129');
+        CREATE TABLE fact_ais_clean_y2021week5 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210129') TO ('20210205');
+        CREATE TABLE fact_ais_clean_y2021week6 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210205') TO ('20210212');
+        CREATE TABLE fact_ais_clean_y2021week7 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210212') TO ('20210219');
+        CREATE TABLE fact_ais_clean_y2021week8 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210219') TO ('20210226');
+        CREATE TABLE fact_ais_clean_y2021week9 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210226') TO ('20210305');
+        CREATE TABLE fact_ais_clean_y2021week10 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210305') TO ('20210312');
+        CREATE TABLE fact_ais_clean_y2021week11 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210312') TO ('20210319');
+        CREATE TABLE fact_ais_clean_y2021week12 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210319') TO ('20210326');
+        CREATE TABLE fact_ais_clean_y2021week13 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210326') TO ('20210402');
+        CREATE TABLE fact_ais_clean_y2021week14 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210402') TO ('20210409');
+        CREATE TABLE fact_ais_clean_y2021week15 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210409') TO ('20210416');
+        CREATE TABLE fact_ais_clean_y2021week16 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210416') TO ('20210423');
+        CREATE TABLE fact_ais_clean_y2021week17 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210423') TO ('20210430');
+        CREATE TABLE fact_ais_clean_y2021week18 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210430') TO ('20210507');
+        CREATE TABLE fact_ais_clean_y2021week19 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210507') TO ('20210514');
+        CREATE TABLE fact_ais_clean_y2021week20 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210514') TO ('20210521');
+        CREATE TABLE fact_ais_clean_y2021week21 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210521') TO ('20210528');
+        CREATE TABLE fact_ais_clean_y2021week22 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210528') TO ('20210604');
+        CREATE TABLE fact_ais_clean_y2021week23 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210604') TO ('20210611');
+        CREATE TABLE fact_ais_clean_y2021week24 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210611') TO ('20210618');
+        CREATE TABLE fact_ais_clean_y2021week25 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210618') TO ('20210625');
+        CREATE TABLE fact_ais_clean_y2021week26 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210625') TO ('20210702');
+        CREATE TABLE fact_ais_clean_y2021week27 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210702') TO ('20210709');
+        CREATE TABLE fact_ais_clean_y2021week28 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210709') TO ('20210716');
+        CREATE TABLE fact_ais_clean_y2021week29 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210716') TO ('20210723');
+        CREATE TABLE fact_ais_clean_y2021week30 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210723') TO ('20210730');
+        CREATE TABLE fact_ais_clean_y2021week31 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210730') TO ('20210806');
+        CREATE TABLE fact_ais_clean_y2021week32 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210806') TO ('20210813');
+        CREATE TABLE fact_ais_clean_y2021week33 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210813') TO ('20210820');
+        CREATE TABLE fact_ais_clean_y2021week34 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210820') TO ('20210827');
+        CREATE TABLE fact_ais_clean_y2021week35 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210827') TO ('20210903');
+        CREATE TABLE fact_ais_clean_y2021week36 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210903') TO ('20210910');
+        CREATE TABLE fact_ais_clean_y2021week37 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210910') TO ('20210917');
+        CREATE TABLE fact_ais_clean_y2021week38 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210917') TO ('20210924');
+        CREATE TABLE fact_ais_clean_y2021week39 PARTITION OF fact_ais_clean FOR VALUES FROM ('20210924') TO ('20211001');
+        CREATE TABLE fact_ais_clean_y2021week40 PARTITION OF fact_ais_clean FOR VALUES FROM ('20211001') TO ('20211008');
+        CREATE TABLE fact_ais_clean_y2021week41 PARTITION OF fact_ais_clean FOR VALUES FROM ('20211008') TO ('20211015');
+        CREATE TABLE fact_ais_clean_y2021week42 PARTITION OF fact_ais_clean FOR VALUES FROM ('20211015') TO ('20211022');
+        CREATE TABLE fact_ais_clean_y2021week43 PARTITION OF fact_ais_clean FOR VALUES FROM ('20211022') TO ('20211029');
+        CREATE TABLE fact_ais_clean_y2021week44 PARTITION OF fact_ais_clean FOR VALUES FROM ('20211029') TO ('20211105');
+        CREATE TABLE fact_ais_clean_y2021week45 PARTITION OF fact_ais_clean FOR VALUES FROM ('20211105') TO ('20211112');
+        CREATE TABLE fact_ais_clean_y2021week46 PARTITION OF fact_ais_clean FOR VALUES FROM ('20211112') TO ('20211119');
+        CREATE TABLE fact_ais_clean_y2021week47 PARTITION OF fact_ais_clean FOR VALUES FROM ('20211119') TO ('20211126');
+        CREATE TABLE fact_ais_clean_y2021week48 PARTITION OF fact_ais_clean FOR VALUES FROM ('20211126') TO ('20211203');
+        CREATE TABLE fact_ais_clean_y2021week49 PARTITION OF fact_ais_clean FOR VALUES FROM ('20211203') TO ('20211210');
+        CREATE TABLE fact_ais_clean_y2021week50 PARTITION OF fact_ais_clean FOR VALUES FROM ('20211210') TO ('20211217');
+        CREATE TABLE fact_ais_clean_y2021week51 PARTITION OF fact_ais_clean FOR VALUES FROM ('20211217') TO ('20211224');
+        CREATE TABLE fact_ais_clean_y2021week52 PARTITION OF fact_ais_clean FOR VALUES FROM ('20211224') TO ('20211231');
+        CREATE TABLE fact_ais_clean_y2021week53 PARTITION OF fact_ais_clean FOR VALUES FROM ('20211231') TO ('20220107');
         """,
         """
         CREATE TABLE raster_50m_test (

@@ -1,14 +1,10 @@
 from datetime import datetime, timedelta
 from math import ceil
-
 import pandas as pd
 import pygrametl
 from pygrametl.datasources import SQLSource
 from sqlalchemy import create_engine
-# import rasterio
 from pyproj import Transformer
-
-
 from database_connection import connect_to_local, connect_via_ssh
 from helper_functions import create_audit_dimension
 
@@ -71,7 +67,6 @@ def clean_data(config, date_id):
             AND mmsi > 99999999
             AND mmsi < 1000000000
             AND ST_Contains(geom ,coordinate::geometry)
-        LIMIT 10000
     """
 
     # Disable triggers during load for efficiency
@@ -80,6 +75,7 @@ def clean_data(config, date_id):
     # Retrieve junk data and save in memory as dataframe for future use
     junk_data = SQLSource(connection=connection, query=JUNK_DATA_QUERY)
     junk_df = pd.DataFrame(junk_data)
+    junk_df.index += 1 # Make index 1-indexed
 
     # Retrieve the points with initial cleaning rules applied directly to where conditions
     cleaned_data = SQLSource(connection=connection, query=INITIAL_CLEAN_QUERY)
@@ -92,9 +88,7 @@ def clean_data(config, date_id):
 
     dict_updated_ships = {}
 
-    # This loop takes approximately ~3 minutes.
     for mmsi, ship_data in ships_grouped:
-        print(len(ship_data))
         if len(ship_data) < 2:  # We need to have at least 2 rows to choose from
             continue
 
@@ -110,19 +104,25 @@ def clean_data(config, date_id):
             'ship_id'].value_counts()
         best_ship_id = seq_ship_type.reset_index(0)['index'][0]
 
-        dict_updated_ships[mmsi] = best_ship_id
+        if (len(mobile_type_count) > 1 or len(seq_ship_type) > 1):
+            dict_updated_ships[mmsi] = best_ship_id
 
     # Assign default value of junk_id to all ships
-    # df[(df["movie"].isin(df.loc[(df.user == 8), "movie"])) & (df.user!=8)]
-    # patchedShipRef, isOutlier
-    ais_df['junk_id'] = junk_df.index[junk_df['patchedShipRef'] == 'false' & junk_df['isOutlier'] == 'false'].tolist()[0]
+    cond_patched = junk_df['patchedshipref'] == False
+    cond_outlier = junk_df['isoutlier'] == False
+    ais_df['junk_id'] = junk_df.index[cond_patched & cond_outlier].tolist()[0]
 
-    # Iterate through all the ships that require an update and update their ship_id and junk_id for the dataframe
+    #TEMP
+    cond_patched_diff = junk_df['patchedshipref'] == True
+
+    # Iterate through all the ships that require an update and update their ship_id for the dataframe
     # TODO-Future: Maybe use dataframe.map(dictionary) instead here?
     for ship in dict_updated_ships:
         print("Changing ship value of: " + str(ship))
         ais_df.loc[ais_df['mmsi'] == ship,
                    'ship_id'] = dict_updated_ships[ship]
+        ais_df.loc[ais_df['mmsi'] == ship,
+                   'junk_id'] = junk_df.index[(cond_patched_diff) & (cond_outlier)].tolist()[0]
     
     # Function to calculate the correct cell_id given (lat, long)
     def calculateCellID(lat, long):
@@ -143,7 +143,7 @@ def clean_data(config, date_id):
     ais_df['audit_id'] = audit_id
     print("AIS_DF to SQL is being called!!")
     print(datetime.today())
-    ais_df.to_sql('fact_ais_clean', index=False, con=engine, if_exists='append')
+    ais_df.to_sql('fact_ais_clean_v2', index=False, con=engine, if_exists='append')
     print(datetime.today())
     print("DONE!!! AIS_DF_TO_SQL HAS BEEN CALLED!!")
 
