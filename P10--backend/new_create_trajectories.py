@@ -273,8 +273,8 @@ def traj_splitter(ship):
 # gets all AIS data from a given day, to create a journey - then calls splitter - and sets trajectories into database
 def create_trajectories(date_to_lookup, config):
 
-    def insert_trajectory(trajectory, sailing: bool):
-        if(trajectory["db_object"] == None):
+    def insert_trajectory(trajectory: pd.DataFrame, sailing: bool):
+        if(trajectory["db_object"].empty):
             return 0
         if (sailing):
             trajectory["db_object"]["audit_id"] = audit_sailing_id
@@ -300,7 +300,7 @@ def create_trajectories(date_to_lookup, config):
         INNER JOIN dim_time ON dim_time.time_id = ts_time_id
         WHERE ts_date_id = {date_to_lookup}
         ORDER BY ship_id, ts_time_id ASC
-        limit(1000000)
+        limit(10000)
         '''
 
     # translate query to groupby dataframe on ship id
