@@ -141,7 +141,7 @@ def traj_splitter(ship):
     sailing_trajectories = []
     stopped_trajectories = []
     time_since_above_threshold = timedelta(minutes=0)
-    last_point_over_threshold = 0
+    last_point_over_threshold_index = 0
     # time_initial = []
     # time_skip = []
     # time_above = []
@@ -188,7 +188,7 @@ def traj_splitter(ship):
         if(speed >= speed_treshold):
             # time_above_start = perf_counter_ns()
             # Reset counters
-            last_point_over_threshold = i
+            last_point_over_threshold_index = i
             # End a "stopped" session and push to stops list
             if(len(stopped_points) > 0):
                 stopped_trajectories.append(stopped_points.copy())
@@ -214,7 +214,7 @@ def traj_splitter(ship):
             # Update time since above threshold
             # timeSinceAboveThreshold = (datetime.strptime(point['timestamp'], '%d-%m-%Y, %H:%M:%S') - datetime.strptime(journey[lastPointOverThreshold]['timestamp'],  '%d-%m-%Y, %H:%M:%S') )
             time_since_above_threshold = point['ts_time_id'] - \
-                journey.at[last_point_over_threshold, 'ts_time_id']
+                journey.at[last_point_over_threshold_index, 'ts_time_id']
 
             if(time_since_above_threshold <= time_threshold):
                 continue
@@ -279,11 +279,14 @@ def create_trajectories(date_to_lookup, config):
 
     def insert_trajectory(trajectory_db_object, sailing: bool):
         if(trajectory_db_object == None):
+            print("None")
             return 0
         if (sailing):
+            print("sailing")
             trajectory_db_object["audit_id"] = audit_sailing_id
             trajectory_sailing_fact_table.insert(trajectory_db_object)
         else:
+            print("stopped")
             trajectory_db_object["audit_id"] = audit_stopped_id
             trajectory_stopped_fact_table.insert(trajectory_db_object)
         return 1
@@ -300,11 +303,11 @@ def create_trajectories(date_to_lookup, config):
     query_get_all_ais_from_date = f'''
         SELECT ship_type_id, eta_time_id, eta_date_id, cargo_type_id, type_of_mobile_id, destination_id, ts_date_id, data_source_type_id, type_of_position_fixing_device_id, ship_id, ts_time_id,
                 audit_id, coordinate, ST_X(coordinate::geometry) as long, ST_Y(coordinate::geometry) as lat, sog, hour, minute, second, draught
-        FROM fact_ais_clean
+        FROM fact_ais
         INNER JOIN dim_time ON dim_time.time_id = ts_time_id
         WHERE ts_date_id = {date_to_lookup}
         ORDER BY ship_id, ts_time_id ASC
-        limit(1000000)
+        limit(100000)
         '''
 
     # translate query to groupby dataframe on ship id
@@ -356,15 +359,6 @@ def create_trajectories(date_to_lookup, config):
             for trajectory in trajectories_per_ship[ship]["stopped_db_objects"]:
                 inserted_stopped_records += insert_trajectory(
                     trajectory, False)
-
-    # for ship in all_journeys_as_dataframe:
-    #     processed_records = processed_records + len(ship)
-    #     sailing, stopped = traj_splitter(ship, speed_treshold=0.5,
-    #                                      time_threshold=300, SOG_limit=200)
-    #     for trajectory in sailing:
-    #         inserted_sailing_records += insert_trajectory(trajectory, True)
-    #     for trajectory in stopped:
-    #         inserted_stopped_records += insert_trajectory(trajectory, False)
 
     t_end = perf_counter()
 
