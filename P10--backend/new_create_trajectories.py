@@ -80,6 +80,50 @@ def skip_point(points: pd.DataFrame, first_point_not_handled: int, i: int, journ
     return stopped_points, first_point_not_handled
 
 
+def create_database_object(trajectory):
+    if(len(trajectory) < 2):
+        return 0
+    linestring = LineString(
+        [p for p in list(zip(trajectory.long, trajectory.lat))])
+    projected_linestring = LineString([p for p in trajectory.geometry])
+    duration = trajectory.time.iat[-1] - trajectory.time.iat[0]
+    if (duration.seconds == 0):
+        return 0
+    draughts = trajectory.draught.value_counts().reset_index(
+        name='Count').sort_values(['Count'], ascending=False)['index'].tolist()
+    if (len(draughts) == 0):
+        draughts = None
+    database_object = {
+        "ship_id": int(trajectory.ship_id.iat[0]),
+        "ship_type_id": int(trajectory.ship_type_id.iat[0]),
+        "type_of_mobile_id": int(trajectory.type_of_mobile_id.iat[0]),
+        "eta_time_id": int(trajectory.eta_time_id.value_counts().reset_index(
+            name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
+        "eta_date_id": int(trajectory.eta_date_id.value_counts().reset_index(
+            name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
+        "time_start_id": int(trajectory.ts_time_id.sort_values(ascending=True).tolist()[0]),
+        "date_start_id": int(trajectory.ts_date_id.sort_values(ascending=True).tolist()[0]),
+        "time_end_id": int(trajectory.ts_time_id.sort_values(ascending=False).tolist()[0]),
+        "date_end_id": int(trajectory.ts_date_id.sort_values(ascending=False).tolist()[0]),
+        "cargo_type_id": int(trajectory.cargo_type_id.value_counts().reset_index(
+            name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
+        "destination_id": int(trajectory.destination_id.value_counts().reset_index(
+            name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
+        "data_source_type_id": int(trajectory.data_source_type_id.value_counts().reset_index(
+            name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
+        "type_of_position_fixing_device_id": int(trajectory.type_of_position_fixing_device_id.value_counts().reset_index(
+            name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
+        "audit_id": -1,
+        "draught": draughts,
+        "duration": duration.seconds,
+        "coordinates": str(linestring.simplify(tolerance=0.0001)),
+        "length_meters": projected_linestring.length,
+        "avg_speed_knots": projected_linestring.length / duration.seconds,  # FIX
+        "total_points": len(trajectory)
+    }
+    return database_object
+
+
 def traj_splitter(ship):
     speed_treshold = 0.5
     time_threshold = 300
@@ -211,6 +255,7 @@ def traj_splitter(ship):
         geoSeries = geoSeries.to_crs("epsg:3034")
         trajectory = gpd.GeoDataFrame(
             trajectory, crs='EPSG:3034', geometry=geoSeries)
+        trajectory["db_object"] = create_database_object(trajectory)
 
     for trajectory in sailing_trajectories:
         geoSeries = gpd.GeoSeries.from_wkb(
@@ -218,6 +263,7 @@ def traj_splitter(ship):
         geoSeries = geoSeries.to_crs("epsg:3034")
         trajectory = gpd.GeoDataFrame(
             trajectory, crs='EPSG:3034', geometry=geoSeries)
+        trajectory["db_object"] = create_database_object(trajectory)
 
     trajectories = {"stopped": stopped_trajectories,
                     "sailing": sailing_trajectories}
@@ -228,50 +274,12 @@ def traj_splitter(ship):
 def create_trajectories(date_to_lookup, config):
 
     def insert_trajectory(trajectory, sailing: bool):
-        if(len(trajectory) < 2):
-            return 0
-        linestring = LineString(
-            [p for p in list(zip(trajectory.long, trajectory.lat))])
-        projected_linestring = LineString([p for p in trajectory.geometry])
-        duration = trajectory.time.iat[-1] - trajectory.time.iat[0]
-        if (duration.seconds == 0):
-            return 0
-        draughts = trajectory.draught.value_counts().reset_index(
-            name='Count').sort_values(['Count'], ascending=False)['index'].tolist()
-        if (len(draughts) == 0):
-            draughts = None
-        database_object = {
-            "ship_id": int(trajectory.ship_id.iat[0]),
-            "ship_type_id": int(trajectory.ship_type_id.iat[0]),
-            "type_of_mobile_id": int(trajectory.type_of_mobile_id.iat[0]),
-            "eta_time_id": int(trajectory.eta_time_id.value_counts().reset_index(
-                name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
-            "eta_date_id": int(trajectory.eta_date_id.value_counts().reset_index(
-                name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
-            "time_start_id": int(trajectory.ts_time_id.sort_values(ascending=True).tolist()[0]),
-            "date_start_id": int(trajectory.ts_date_id.sort_values(ascending=True).tolist()[0]),
-            "time_end_id": int(trajectory.ts_time_id.sort_values(ascending=False).tolist()[0]),
-            "date_end_id": int(trajectory.ts_date_id.sort_values(ascending=False).tolist()[0]),
-            "cargo_type_id": int(trajectory.cargo_type_id.value_counts().reset_index(
-                name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
-            "destination_id": int(trajectory.destination_id.value_counts().reset_index(
-                name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
-            "data_source_type_id": int(trajectory.data_source_type_id.value_counts().reset_index(
-                name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
-            "type_of_position_fixing_device_id": int(trajectory.type_of_position_fixing_device_id.value_counts().reset_index(
-                name='Count').sort_values(['Count'], ascending=False)['index'].tolist()[0]),
-            "audit_id": audit_sailing_id if sailing else audit_stopped_id,
-            "draught": draughts,
-            "duration": duration.seconds,
-            "coordinates": str(linestring.simplify(tolerance=0.0001)),
-            "length_meters": projected_linestring.length,
-            "avg_speed_knots": projected_linestring.length / duration.seconds,  # FIX
-            "total_points": len(trajectory)
-        }
         if (sailing):
-            trajectory_sailing_fact_table.insert(database_object)
+            trajectory["db_object"]["audit_id"] = audit_sailing_id
+            trajectory_sailing_fact_table.insert(trajectory["db_object"])
         else:
-            trajectory_stopped_fact_table.insert(database_object)
+            trajectory["db_object"]["audit_id"] = audit_stopped_id
+            trajectory_stopped_fact_table.insert(trajectory["db_object"])
         return 1
 
     t_start = perf_counter()
