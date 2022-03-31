@@ -82,13 +82,13 @@ def skip_point(points: pd.DataFrame, first_point_not_handled: int, i: int, journ
 
 def create_database_object(trajectory):
     if(len(trajectory) < 2):
-        return 0
+        return None
     linestring = LineString(
         [p for p in list(zip(trajectory.long, trajectory.lat))])
     projected_linestring = LineString([p for p in trajectory.geometry])
     duration = trajectory.time.iat[-1] - trajectory.time.iat[0]
     if (duration.seconds == 0):
-        return 0
+        return None
     draughts = trajectory.draught.value_counts().reset_index(
         name='Count').sort_values(['Count'], ascending=False)['index'].tolist()
     if (len(draughts) == 0):
@@ -274,6 +274,8 @@ def traj_splitter(ship):
 def create_trajectories(date_to_lookup, config):
 
     def insert_trajectory(trajectory, sailing: bool):
+        if(trajectory["db_object"]) == None:
+            return 0
         if (sailing):
             trajectory["db_object"]["audit_id"] = audit_sailing_id
             trajectory_sailing_fact_table.insert(trajectory["db_object"])
