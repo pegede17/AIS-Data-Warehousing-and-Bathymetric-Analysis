@@ -249,14 +249,16 @@ def traj_splitter(ship):
     #     print(f"{'Above:':<12}" + str(sum(time_above)/len(time_above)))
     # if(len(time_below) > 0):
     #     print(f"{'Below:':<12}" + str(sum(time_below)/len(time_below)))
+    stopped_db_objects = []
     for trajectory in stopped_trajectories:
         geoSeries = gpd.GeoSeries.from_wkb(
             trajectory['coordinate'], crs=4326)
         geoSeries = geoSeries.to_crs("epsg:3034")
         trajectory = gpd.GeoDataFrame(
             trajectory, crs='EPSG:3034', geometry=geoSeries)
-        trajectory["db_object"] = create_database_object(trajectory)
+        stopped_db_objects.append(create_database_object(trajectory))
 
+    sailing_db_objects = []
     for trajectory in sailing_trajectories:
         geoSeries = gpd.GeoSeries.from_wkb(
             trajectory['coordinate'], crs=4326)
@@ -266,22 +268,24 @@ def traj_splitter(ship):
         trajectory["db_object"] = create_database_object(trajectory)
 
     trajectories = {"stopped": stopped_trajectories,
-                    "sailing": sailing_trajectories}
+                    "stopped_db_objects": stopped_db_objects,
+                    "sailing": sailing_trajectories,
+                    "sailing_db_objects": sailing_db_objects}
     trajectories_per_ship[id] = trajectories
 
 
 # gets all AIS data from a given day, to create a journey - then calls splitter - and sets trajectories into database
 def create_trajectories(date_to_lookup, config):
 
-    def insert_trajectory(trajectory: pd.DataFrame, sailing: bool):
-        if(trajectory["db_object"].empty):
+    def insert_trajectory(trajectory_db_object, sailing: bool):
+        if(trajectory_db_object == None):
             return 0
         if (sailing):
-            trajectory["db_object"]["audit_id"] = audit_sailing_id
-            trajectory_sailing_fact_table.insert(trajectory["db_object"])
+            trajectory_db_object["audit_id"] = audit_sailing_id
+            trajectory_sailing_fact_table.insert(trajectory_db_object)
         else:
-            trajectory["db_object"]["audit_id"] = audit_stopped_id
-            trajectory_stopped_fact_table.insert(trajectory["db_object"])
+            trajectory_db_object["audit_id"] = audit_stopped_id
+            trajectory_stopped_fact_table.insert(trajectory_db_object)
         return 1
 
     t_start = perf_counter()
@@ -345,11 +349,11 @@ def create_trajectories(date_to_lookup, config):
     for _, ship in all_journeys_as_dataframe:
         processed_records = processed_records + len(ship)
     for ship in trajectories_per_ship:
-        if(len(trajectories_per_ship[ship]["sailing"]) > 0):
-            for trajectory in trajectories_per_ship[ship]["sailing"]:
+        if(len(trajectories_per_ship[ship]["sailing_db_objects"]) > 0):
+            for trajectory in trajectories_per_ship[ship]["sailing_db_objects"]:
                 inserted_sailing_records += insert_trajectory(trajectory, True)
-        if(len(trajectories_per_ship[ship]["stopped"]) > 0):
-            for trajectory in trajectories_per_ship[ship]["stopped"]:
+        if(len(trajectories_per_ship[ship]["stopped_db_objects"]) > 0):
+            for trajectory in trajectories_per_ship[ship]["stopped_db_objects"]:
                 inserted_stopped_records += insert_trajectory(
                     trajectory, False)
 
