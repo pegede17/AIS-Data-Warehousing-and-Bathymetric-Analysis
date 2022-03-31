@@ -274,7 +274,7 @@ def traj_splitter(ship):
 def create_trajectories(date_to_lookup, config):
 
     def insert_trajectory(trajectory, sailing: bool):
-        if(trajectory["db_object"]) == None:
+        if(trajectory["db_object"] == None):
             return 0
         if (sailing):
             trajectory["db_object"]["audit_id"] = audit_sailing_id
