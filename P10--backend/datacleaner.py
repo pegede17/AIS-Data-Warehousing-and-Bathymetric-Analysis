@@ -143,16 +143,16 @@ def clean_data(config, date_id):
     
     # Create a new column and apply a function that calculates the cell_id based on row coordinates
     print("Applying cell_id calculations to all rows")
-    # ais_df['cell_id'] = ais_df.apply(lambda row: calculateCellID(row['latitude'], row['longitude']), axis=1)
+    ais_df['cell_id'] = ais_df.apply(lambda row: calculateCellID(row['latitude'], row['longitude']), axis=1)
+    # ais_df['cell_id'] = 0
 
     # Remove mmsi column. It was only required during computation
     del ais_df['mmsi']
-    del ais_df['fact_id']
 
     ais_df['audit_id'] = audit_id
     print("AIS_DF to SQL is being called!!")
     print(datetime.today())
-    ais_df.to_sql('fact_ais_clean_v2', index=False, con=engine, if_exists='append', chunksize=1000000)
+    ais_df.to_sql('fact_ais_clean_v4', index=False, con=engine, if_exists='append', chunksize=1000000)
     print(datetime.today())
     print("DONE!!! AIS_DF_TO_SQL HAS BEEN CALLED!!")
 

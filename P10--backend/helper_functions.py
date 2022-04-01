@@ -466,6 +466,7 @@ INSERT INTO public.dim_date(
         """,
         """
         CREATE TABLE IF NOT EXISTS fact_ais_clean (
+            fact_id BIGINT NOT NULL,
             eta_date_id INTEGER NOT NULL DEFAULT 0,
             eta_time_id INTEGER NOT NULL DEFAULT 0,
             ship_id INTEGER NOT NULL,
@@ -492,7 +493,7 @@ INSERT INTO public.dim_date(
             trajectory_stopped_id INTEGER DEFAULT NULL,
             trajectory_sailing_id INTEGER DEFAULT NULL,
     
-            PRIMARY KEY (ts_date_id, ship_id, type_of_position_fixing_device_id, type_of_mobile_id, ship_type_id, cargo_type_id, ts_time_id, audit_id, eta_date_id, eta_time_id, data_source_type_id, 
+            PRIMARY KEY (fact_id, ts_date_id, ship_id, type_of_position_fixing_device_id, type_of_mobile_id, ship_type_id, cargo_type_id, ts_time_id, audit_id, eta_date_id, eta_time_id, data_source_type_id, 
                 destination_id, navigational_status_id, cell_id, junk_id),
             FOREIGN KEY (audit_id)
                 REFERENCES dim_audit (audit_id)
