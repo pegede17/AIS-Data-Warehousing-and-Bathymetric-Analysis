@@ -279,14 +279,11 @@ def create_trajectories(date_to_lookup, config):
 
     def insert_trajectory(trajectory_db_object, sailing: bool):
         if(trajectory_db_object == None):
-            print("None")
             return 0
         if (sailing):
-            print("sailing")
             trajectory_db_object["audit_id"] = audit_sailing_id
             trajectory_sailing_fact_table.insert(trajectory_db_object)
         else:
-            print("stopped")
             trajectory_db_object["audit_id"] = audit_stopped_id
             trajectory_stopped_fact_table.insert(trajectory_db_object)
         return 1
