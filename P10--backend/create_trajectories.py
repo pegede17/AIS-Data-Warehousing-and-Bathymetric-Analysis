@@ -175,7 +175,7 @@ def create_trajectories(date_to_lookup, config):
 
     # Multiprocessing
     trajectories_per_ship = mp.Manager().dict()
-    with concurrent.futures.ProcessPoolExecutor(initializer=set_global_variables, initargs=(trajectories_per_ship,)) as executor:
+    with concurrent.futures.ProcessPoolExecutor(initializer=set_global_variables, initargs=(trajectories_per_ship)) as executor:
         executor.map(apply_trajectory_manipulation, gdf_grouped)
 
     t_multiprocessing_stop = perf_counter()
