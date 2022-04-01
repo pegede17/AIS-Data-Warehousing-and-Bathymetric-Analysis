@@ -1,0 +1,19 @@
+INPUT complete_journey_for_ship, time_threshold
+OUTPUT ship_sailing_trajectories, ship_stopped_trajectories
+
+Begin
+    sailing_points = list
+    stopped_points = list
+    ship_sailing_trajectories = list
+    ship_stopped_trajectories = list
+
+    time_since_above_threshold = 0
+    last_point_over_threshold_index = 0
+
+    for each point in complete_journey_for_ship do
+
+        time_since_last_point, distance_to_last_point = get_distance_and_time_since_last_point(point, last_point)
+        speed = get_speed(distance_to_last_point, time_since_last_point, point, i)
+        
+        if(time_since_last_point > time_threshold) then
+            
