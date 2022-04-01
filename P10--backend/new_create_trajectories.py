@@ -38,21 +38,21 @@ def distance_in_km_between_earth_coordinates(lat1, lon1, lat2, lon2):
 def get_distance_and_time_since_last_point(point, previous_point, i):
     if(i != 0):
         time_since_last_point = point.time - previous_point.time
-        distance_to_last_point = distance_in_km_between_earth_coordinates(
+        meters_to_last_point = distance_in_km_between_earth_coordinates(
             point.lat, point.long, previous_point.lat, previous_point.long) * 1000
     else:
         time_since_last_point = timedelta(0)
-        distance_to_last_point = 0
-    return time_since_last_point, distance_to_last_point
+        meters_to_last_point = 0
+    return time_since_last_point, meters_to_last_point
 
 
-def get_speed(distance_to_last_point, time_since_last_point, point, i):
+def get_speed_in_knots(meters_to_last_point, time_since_last_point, point, i):
     sog = float(point.sog)
-    if (i == 0 or distance_to_last_point == 0 or time_since_last_point.seconds == 0):
+    if (i == 0 or meters_to_last_point == 0 or time_since_last_point.seconds == 0):
         return sog
     else:
         # TODO fix enhed så det er i knob
-        calculated_speed = distance_to_last_point/time_since_last_point.seconds
+        calculated_speed = meters_to_last_point/time_since_last_point.seconds * 1.94
         if(abs(calculated_speed-sog) > 2):
             return calculated_speed
         else:
@@ -71,13 +71,13 @@ def handle_time_gap(points: pd.DataFrame, trajectories: list, first_point_not_ha
 
 def skip_point(points: pd.DataFrame, first_point_not_handled: int, i: int, journey: pd.DataFrame):
     # time_skip_start = perf_counter_ns()
-    stopped_points = pd.concat(
-        [stopped_points, journey.iloc[first_point_not_handled:i - 1, :]])
+    points = pd.concat(
+        [points, journey.iloc[first_point_not_handled:i - 1, :]])
     first_point_not_handled = -1
     # time_skip_end = perf_counter_ns()
     # timer.append(time_skip_end-time_skip_start)
 
-    return stopped_points, first_point_not_handled
+    return points, first_point_not_handled
 
 
 def create_database_object(trajectory):
@@ -152,12 +152,12 @@ def traj_splitter(ship):
         point = journey.iloc[i, :]
 
         # Determine time since last point or set to 0 if it is the first point
-        time_since_last_point, distance_to_last_point = get_distance_and_time_since_last_point(
+        time_since_last_point, meters_to_last_point = get_distance_and_time_since_last_point(
             point, journey.iloc[i-1, :], i)
 
         # Set speed depending on if time has passed since last point/if we have a previous point
-        speed = get_speed(distance_to_last_point,
-                          time_since_last_point, point, i)
+        speed = get_speed_in_knots(meters_to_last_point,
+                                   time_since_last_point, point, i)
 
         # TODO lav switch på de 4 cases
         # Split trajectories if it has been too long since last point
