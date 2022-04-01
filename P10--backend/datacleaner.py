@@ -123,8 +123,10 @@ def clean_data(config, date_id):
         shipValue = dict_updated_ships[ship]
         print("Changing ship value of: " + str(ship))
 
-        ais_df.loc[ais_df[(ais_df['mmsi'] == ship) & (ais_df['ship_id'] != shipValue)], 'ship_id'] = shipValue;
-        ais_df.loc[ais_df[(ais_df['mmsi'] == ship) & (ais_df['ship_id'] != shipValue)], 'ship_id'] = junk_df.index[(cond_patched_diff) & (cond_outlier)].tolist()[0];
+        # df.loc[(df['col1'] == 3) & (df['col2'] != 2.0), 'col4'] = "123"
+
+        ais_df.loc[(ais_df['mmsi'] == ship) & (ais_df['ship_id'] != shipValue), 'ship_id'] = shipValue;
+        ais_df.loc[(ais_df['mmsi'] == ship) & (ais_df['ship_id'] != shipValue), 'ship_id'] = junk_df.index[(cond_patched_diff) & (cond_outlier)].tolist()[0];
         # ais_df.loc[ais_df['mmsi'] == ship,
         #            'ship_id'] = dict_updated_ships[ship]
         # ais_df.loc[ais_df['mmsi'] == ship,
