@@ -105,6 +105,8 @@ def clean_data(config, date_id):
         best_ship_id = seq_ship_type.reset_index(0)['index'][0]
 
         if (len(mobile_type_count) > 1 or len(seq_ship_type) > 1):
+            # Find which indexies needs to be updated
+
             dict_updated_ships[mmsi] = best_ship_id
 
     # Assign default value of junk_id to all ships
@@ -118,11 +120,15 @@ def clean_data(config, date_id):
     # Iterate through all the ships that require an update and update their ship_id for the dataframe
     # TODO-Future: Maybe use dataframe.map(dictionary) instead here?
     for ship in dict_updated_ships:
+        shipValue = dict_updated_ships[ship]
         print("Changing ship value of: " + str(ship))
-        ais_df.loc[ais_df['mmsi'] == ship,
-                   'ship_id'] = dict_updated_ships[ship]
-        ais_df.loc[ais_df['mmsi'] == ship,
-                   'junk_id'] = junk_df.index[(cond_patched_diff) & (cond_outlier)].tolist()[0]
+
+        ais_df.loc[ais_df[(ais_df['mmsi'] == ship) & (ais_df['ship_id'] != shipValue)], 'ship_id'] = shipValue;
+        ais_df.loc[ais_df[(ais_df['mmsi'] == ship) & (ais_df['ship_id'] != shipValue)], 'ship_id'] = junk_df.index[(cond_patched_diff) & (cond_outlier)].tolist()[0];
+        # ais_df.loc[ais_df['mmsi'] == ship,
+        #            'ship_id'] = dict_updated_ships[ship]
+        # ais_df.loc[ais_df['mmsi'] == ship,
+        #            'junk_id'] = junk_df.index[(cond_patched_diff) & (cond_outlier)].tolist()[0]
     
     # Function to calculate the correct cell_id given (lat, long)
     def calculateCellID(lat, long):
@@ -135,10 +141,11 @@ def clean_data(config, date_id):
     
     # Create a new column and apply a function that calculates the cell_id based on row coordinates
     print("Applying cell_id calculations to all rows")
-    ais_df['cell_id'] = ais_df.apply(lambda row: calculateCellID(row['latitude'], row['longitude']), axis=1)
+    # ais_df['cell_id'] = ais_df.apply(lambda row: calculateCellID(row['latitude'], row['longitude']), axis=1)
 
     # Remove mmsi column. It was only required during computation
     del ais_df['mmsi']
+    del ais_df['fact_id']
 
     ais_df['audit_id'] = audit_id
     print("AIS_DF to SQL is being called!!")
