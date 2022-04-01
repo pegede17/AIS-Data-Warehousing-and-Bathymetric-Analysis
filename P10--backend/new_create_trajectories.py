@@ -81,7 +81,7 @@ def skip_point(points: pd.DataFrame, first_point_not_handled: int, i: int, journ
 
 
 def create_database_object(trajectory):
-    if(len(trajectory) < 2):
+    if(len(trajectory) <= 2):
         return None
     linestring = LineString(
         [p for p in list(zip(trajectory.long, trajectory.lat))])
@@ -127,7 +127,7 @@ def create_database_object(trajectory):
 def traj_splitter(ship):
     speed_treshold = 0.5
     time_threshold = 300
-    SOG_limit = 200
+    SOG_limit = 100
     id, journey = ship
     print(id)
 
