@@ -25,6 +25,7 @@ MAX_COLUMNS = 22000
 MAX_ROWS = 16000
 TRANSFORMER = Transformer.from_crs("epsg:4326", "epsg:32632")
 
+
 def set_global_variables(args):
     global trajectories_per_ship
     trajectories_per_ship = args
@@ -135,6 +136,7 @@ def create_database_object(trajectory):
         "total_points": len(trajectory)
     }
     return database_object
+
 
 def traj_splitter(ship):
     speed_treshold = 0.5
@@ -268,7 +270,11 @@ def traj_splitter(ship):
         geoSeries = geoSeries.to_crs("epsg:3034")
         trajectory = gpd.GeoDataFrame(
             trajectory, crs='EPSG:3034', geometry=geoSeries)
-        stopped_db_objects.append(create_database_object(trajectory))
+        db_object = create_database_object(trajectory)
+        stopped_db_objects.append(db_object)
+        trajectory["stopped_traj_identifier"] = str(
+            db_object["ship_id"]) + str(db_object["time_start_id"]) + "stopped"
+        trajectory["sailing_traj_identifier"] = None
 
     sailing_db_objects = []
     for trajectory in sailing_trajectories:
@@ -277,7 +283,11 @@ def traj_splitter(ship):
         geoSeries = geoSeries.to_crs("epsg:3034")
         trajectory = gpd.GeoDataFrame(
             trajectory, crs='EPSG:3034', geometry=geoSeries)
-        sailing_db_objects.append(create_database_object(trajectory))
+        db_object = create_database_object(trajectory)
+        sailing_db_objects.append(db_object)
+        trajectory["sailing_traj_identifier"] = str(
+            db_object["ship_id"]) + str(db_object["time_start_id"]) + "sailing"
+        trajectory["stopped_traj_identifier"] = None
 
     trajectories = {"stopped": stopped_trajectories,
                     "stopped_db_objects": stopped_db_objects,
@@ -286,7 +296,7 @@ def traj_splitter(ship):
     trajectories_per_ship[id] = trajectories
 
 
-def clean_and_reconstruct(config, date_to_lookup):    
+def clean_and_reconstruct(config, date_to_lookup):
     if (config["Environment"]["development"] == "True"):
         connection = connect_via_ssh()
     else:
@@ -352,13 +362,13 @@ def clean_and_reconstruct(config, date_to_lookup):
     # Retrieve junk data and save in memory as dataframe for future use
     junk_data = SQLSource(connection=connection, query=JUNK_DATA_QUERY)
     junk_df = pd.DataFrame(junk_data)
-    junk_df.index += 1 # Make index 1-indexed
+    junk_df.index += 1  # Make index 1-indexed
 
     # Retrieve the points with initial cleaning rules applied directly to where conditions
     cleaned_data = SQLSource(connection=connection, query=INITIAL_CLEAN_QUERY)
 
     ais_df = pd.DataFrame(cleaned_data)
-    
+
     connection.commit()  # Required in order to release locks
     ships_grouped = ais_df.groupby(by=['mmsi'])
 
@@ -392,7 +402,7 @@ def clean_and_reconstruct(config, date_to_lookup):
     cond_outlier = junk_df['isoutlier'] == False
     ais_df['junk_id'] = junk_df.index[cond_patched & cond_outlier].tolist()[0]
 
-    #TEMP
+    # TEMP
     cond_patched_diff = junk_df['patchedshipref'] == True
 
     # Iterate through all the ships that require an update and update their ship_id for the dataframe
@@ -403,13 +413,15 @@ def clean_and_reconstruct(config, date_to_lookup):
 
         # df.loc[(df['col1'] == 3) & (df['col2'] != 2.0), 'col4'] = "123"
 
-        ais_df.loc[(ais_df['mmsi'] == ship) & (ais_df['ship_id'] != shipValue), 'ship_id'] = shipValue;
-        ais_df.loc[(ais_df['mmsi'] == ship) & (ais_df['ship_id'] != shipValue), 'ship_id'] = junk_df.index[(cond_patched_diff) & (cond_outlier)].tolist()[0];
+        ais_df.loc[(ais_df['mmsi'] == ship) & (
+            ais_df['ship_id'] != shipValue), 'ship_id'] = shipValue
+        ais_df.loc[(ais_df['mmsi'] == ship) & (ais_df['ship_id'] != shipValue),
+                   'ship_id'] = junk_df.index[(cond_patched_diff) & (cond_outlier)].tolist()[0]
         # ais_df.loc[ais_df['mmsi'] == ship,
         #            'ship_id'] = dict_updated_ships[ship]
         # ais_df.loc[ais_df['mmsi'] == ship,
         #            'junk_id'] = junk_df.index[(cond_patched_diff) & (cond_outlier)].tolist()[0]
-    
+
     # Function to calculate the correct cell_id given (lat, long)
     def calculateCellID(lat, long):
         x, y = TRANSFORMER.transform(long, lat)
@@ -418,14 +430,15 @@ def clean_and_reconstruct(config, date_to_lookup):
                              50), ceil((y - 5900000) / 50)
         cell_id = ((rowy - 1) * MAX_COLUMNS) + columnx
         return cell_id
-    
+
     # Create a new column and apply a function that calculates the cell_id based on row coordinates
     print("Applying cell_id calculations to all rows")
-    ais_df['cell_id'] = ais_df.apply(lambda row: calculateCellID(row['latitude'], row['longitude']), axis=1)
+    ais_df['cell_id'] = ais_df.apply(lambda row: calculateCellID(
+        row['latitude'], row['longitude']), axis=1)
     # ais_df['cell_id'] = 0
 
     # Remove mmsi column. It was only required during computation
-    ## TODO: Remove if not necessary
+    # TODO: Remove if not necessary
     # del ais_df['mmsi']
 
     trajectory_df = ais_df.copy().groupby(['ship_id'])
@@ -444,13 +457,16 @@ def clean_and_reconstruct(config, date_to_lookup):
             return 0
         if (sailing):
             trajectory_db_object["audit_id"] = audit_sailing_id
-            trajectory_sailing_fact_table.insert(trajectory_db_object)
+            trajectory_db_object["trajectory_sailing_id"] = trajectory_sailing_fact_table.insert(
+                trajectory_db_object)
+            trajectory_db_object["trajectory_stopped_id"] = None
         else:
             trajectory_db_object["audit_id"] = audit_stopped_id
-            trajectory_stopped_fact_table.insert(trajectory_db_object)
+            trajectory_db_object["trajectory_stopped_id"] = trajectory_stopped_fact_table.insert(
+                trajectory_db_object)
+            trajectory_db_object["trajectory_sailing_id"] = None
         return 1
 
-    
     sailing_audit_obj = {'timestamp': datetime.now(),
                          'processed_records': 0,
                          'inserted_records': 0,
@@ -509,7 +525,8 @@ def clean_and_reconstruct(config, date_to_lookup):
     ais_df['audit_id'] = audit_id
     print("AIS_DF to SQL is being called!!")
     print(datetime.today())
-    ais_df.to_sql('fact_ais_clean', index=False, con=engine, if_exists='append', chunksize=1000000)
+    ais_df.to_sql('fact_ais_clean', index=False, con=engine,
+                  if_exists='append', chunksize=1000000)
     print(datetime.today())
     print("DONE!!! AIS_DF_TO_SQL HAS BEEN CALLED!!")
 
