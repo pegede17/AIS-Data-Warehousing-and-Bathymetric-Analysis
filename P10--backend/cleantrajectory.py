@@ -53,7 +53,7 @@ def get_distance_and_time_since_last_point(point, previous_point, i):
     if(i != 0):
         time_since_last_point = point.time - previous_point.time
         meters_to_last_point = distance_in_km_between_earth_coordinates(
-            point.lat, point.long, previous_point.lat, previous_point.long) * 1000
+            point.latitude, point.longitude, previous_point.latitude, previous_point.longitude) * 1000
     else:
         time_since_last_point = timedelta(0)
         meters_to_last_point = 0
@@ -98,7 +98,7 @@ def create_database_object(trajectory):
     if(len(trajectory) <= 2):
         return None
     linestring = LineString(
-        [p for p in list(zip(trajectory.long, trajectory.lat))])
+        [p for p in list(zip(trajectory.longitude, trajectory.latitude))])
     projected_linestring = LineString([p for p in trajectory.geometry])
     duration = trajectory.time.iat[-1] - trajectory.time.iat[0]
     if (duration.seconds == 0):
@@ -339,7 +339,7 @@ def clean_and_reconstruct(config, date_to_lookup):
     INITIAL_CLEAN_QUERY = f"""
     SELECT DISTINCT ON (eta_date_id, eta_time_id, ship_id, ts_date_id, ts_time_id, data_source_type_id, destination_id, 
                     navigational_status_id, cargo_type_id, coordinate, draught, rot, sog, cog, heading)
-            hour, minute, second, latitude, longitude, mmsi, fact_ais.type_of_mobile_id, fact_id, eta_date_id, eta_time_id, fact_ais.ship_id, ts_date_id, ts_time_id, data_source_type_id, destination_id, navigational_status_id, cargo_type_id, coordinate, draught, rot, sog, cog, heading
+            hour, minute, second, fact_ais.ship_type_id, latitude, longitude, mmsi, fact_ais.type_of_mobile_id, fact_id, eta_date_id, eta_time_id, fact_ais.ship_id, ts_date_id, ts_time_id, data_source_type_id, destination_id, navigational_status_id, cargo_type_id, coordinate, draught, rot, sog, cog, heading
         FROM fact_ais 
         INNER JOIN public.dim_ship on fact_ais.ship_id = dim_ship.ship_id
         INNER JOIN public.dim_time on dim_time.time_id = ts_time_id, public.danish_waters
@@ -352,6 +352,7 @@ def clean_and_reconstruct(config, date_to_lookup):
             AND mmsi < 1000000000
             AND ST_Contains(geom ,coordinate::geometry)
         ORDER BY ship_id, ts_time_id ASC
+        LIMIT 10000
     """
 
     START_TIME = datetime.today()
@@ -442,11 +443,13 @@ def clean_and_reconstruct(config, date_to_lookup):
     # del ais_df['mmsi']
 
     trajectory_df = ais_df.copy().groupby(['ship_id'])
+    print(len(trajectory_df))
 
     del ais_df['mmsi']
     del ais_df['second']
     del ais_df['minute']
     del ais_df['hour']
+    del ais_df['ship_type_id']
 
     trajectory_sailing_fact_table = create_trajectory_sailing_fact_table()
     trajectory_stopped_fact_table = create_trajectory_stopped_fact_table()
@@ -499,6 +502,7 @@ def clean_and_reconstruct(config, date_to_lookup):
     for _, ship in trajectory_df:
         processed_records = processed_records + len(ship)
     for ship in trajectories_per_ship:
+        print("Ship " + str(ship))
         if(len(trajectories_per_ship[ship]["sailing_db_objects"]) > 0):
             for trajectory in trajectories_per_ship[ship]["sailing_db_objects"]:
                 inserted_sailing_records += insert_trajectory(trajectory, True)
@@ -506,6 +510,11 @@ def clean_and_reconstruct(config, date_to_lookup):
             for trajectory in trajectories_per_ship[ship]["stopped_db_objects"]:
                 inserted_stopped_records += insert_trajectory(
                     trajectory, False)
+
+    
+    t_start = perf_counter()
+    t_test_end = perf_counter()
+    t_end = perf_counter()
 
     print(timedelta(minutes=(t_test_end-t_start)))
 

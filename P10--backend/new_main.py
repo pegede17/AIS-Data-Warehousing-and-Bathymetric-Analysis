@@ -5,6 +5,7 @@ from logging import log
 
 from pandas import date_range
 from datacleaner import clean_data
+from cleantrajectory import clean_and_reconstruct
 from ais_loader import load_data_into_db
 # from create_trajectories import create_trajectories
 import configparser
@@ -63,7 +64,7 @@ def main(argv):
 
         if args.c:
             print("Cleaning " + str(current_date))
-            clean_data(config=config, date_id=current_date)
+            clean_and_reconstruct(config=config, date_to_lookup=current_date)
 
         if args.r:
             print("Reconstructing trajectories " + str(current_date))
