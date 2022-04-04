@@ -271,11 +271,13 @@ def traj_splitter(ship):
         trajectory = gpd.GeoDataFrame(
             trajectory, crs='EPSG:3034', geometry=geoSeries)
         db_object = create_database_object(trajectory)
+        if (db_object == None):
+            continue
         stopped_db_objects.append(db_object)
         trajectory["stopped_traj_identifier"] = str(
             db_object["ship_id"]) + str(db_object["time_start_id"]) + "stopped"
         trajectory["sailing_traj_identifier"] = None
-
+        
     sailing_db_objects = []
     for trajectory in sailing_trajectories:
         geoSeries = gpd.GeoSeries.from_wkb(
@@ -284,6 +286,8 @@ def traj_splitter(ship):
         trajectory = gpd.GeoDataFrame(
             trajectory, crs='EPSG:3034', geometry=geoSeries)
         db_object = create_database_object(trajectory)
+        if (db_object == None):
+            continue
         sailing_db_objects.append(db_object)
         trajectory["sailing_traj_identifier"] = str(
             db_object["ship_id"]) + str(db_object["time_start_id"]) + "sailing"
@@ -339,7 +343,7 @@ def clean_and_reconstruct(config, date_to_lookup):
     INITIAL_CLEAN_QUERY = f"""
     SELECT DISTINCT ON (eta_date_id, eta_time_id, ship_id, ts_date_id, ts_time_id, data_source_type_id, destination_id, 
                     navigational_status_id, cargo_type_id, coordinate, draught, rot, sog, cog, heading)
-            hour, minute, second, fact_ais.ship_type_id, latitude, longitude, mmsi, fact_ais.type_of_mobile_id, fact_id, eta_date_id, eta_time_id, fact_ais.ship_id, ts_date_id, ts_time_id, data_source_type_id, destination_id, navigational_status_id, cargo_type_id, coordinate, draught, rot, sog, cog, heading
+            fact_ais.type_of_position_fixing_device_id, hour, minute, second, fact_ais.ship_type_id, latitude, longitude, mmsi, fact_ais.type_of_mobile_id, fact_id, eta_date_id, eta_time_id, fact_ais.ship_id, ts_date_id, ts_time_id, data_source_type_id, destination_id, navigational_status_id, cargo_type_id, coordinate, draught, rot, sog, cog, heading
         FROM fact_ais 
         INNER JOIN public.dim_ship on fact_ais.ship_id = dim_ship.ship_id
         INNER JOIN public.dim_time on dim_time.time_id = ts_time_id, public.danish_waters
@@ -450,6 +454,7 @@ def clean_and_reconstruct(config, date_to_lookup):
     del ais_df['minute']
     del ais_df['hour']
     del ais_df['ship_type_id']
+    del ais_df['type_of_position_fixing_device_id']
 
     trajectory_sailing_fact_table = create_trajectory_sailing_fact_table()
     trajectory_stopped_fact_table = create_trajectory_stopped_fact_table()
