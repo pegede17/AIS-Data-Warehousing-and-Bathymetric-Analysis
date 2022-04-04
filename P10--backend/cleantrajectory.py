@@ -435,7 +435,7 @@ def clean_and_reconstruct(config, date_to_lookup):
                              50), ceil((y - 5900000) / 50)
         cell_id = ((rowy - 1) * MAX_COLUMNS) + columnx
 
-        return 0  # TODO: Make this return cell_id
+        return cell_id
 
     # Create a new column and apply a function that calculates the cell_id based on row coordinates
     print("Applying cell_id calculations to all rows")
