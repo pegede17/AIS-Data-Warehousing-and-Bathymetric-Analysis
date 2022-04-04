@@ -143,8 +143,8 @@ def clean_data(config, date_id):
     
     # Create a new column and apply a function that calculates the cell_id based on row coordinates
     print("Applying cell_id calculations to all rows")
-    ais_df['cell_id'] = ais_df.apply(lambda row: calculateCellID(row['latitude'], row['longitude']), axis=1)
-    # ais_df['cell_id'] = 0
+    # ais_df['cell_id'] = ais_df.apply(lambda row: calculateCellID(row['latitude'], row['longitude']), axis=1)
+    ais_df['cell_id'] = 0
 
     # Remove mmsi column. It was only required during computation
     del ais_df['mmsi']

@@ -356,10 +356,10 @@ def clean_and_reconstruct(config, date_to_lookup):
             AND mmsi < 1000000000
             AND ST_Contains(geom ,coordinate::geometry)
         ORDER BY ship_id, ts_time_id ASC
-        LIMIT 10000
+        LIMIT 100000
     """
 
-    START_TIME = datetime.today()
+    FULL_START_TIME = perf_counter()
 
     # Disable triggers during load for efficiency
     cur.execute(DISABLE_TRIGGERS)
@@ -429,18 +429,18 @@ def clean_and_reconstruct(config, date_to_lookup):
 
     # Function to calculate the correct cell_id given (lat, long)
     def calculateCellID(lat, long):
-        x, y = TRANSFORMER.transform(long, lat)
+        x, y = TRANSFORMER.transform(lat, long)
 
         columnx, rowy = ceil((x - 0) /
                              50), ceil((y - 5900000) / 50)
         cell_id = ((rowy - 1) * MAX_COLUMNS) + columnx
-        return cell_id
+
+        return 0 # TODO: Make this return cell_id
 
     # Create a new column and apply a function that calculates the cell_id based on row coordinates
     print("Applying cell_id calculations to all rows")
-    ais_df['cell_id'] = ais_df.apply(lambda row: calculateCellID(
-        row['latitude'], row['longitude']), axis=1)
-    # ais_df['cell_id'] = 0
+    ais_df['cell_id'] = ais_df.apply(lambda row: calculateCellID(row['latitude'], row['longitude']), axis=1)
+    #ais_df['cell_id'] = 0
 
     # Remove mmsi column. It was only required during computation
     # TODO: Remove if not necessary
@@ -496,6 +496,8 @@ def clean_and_reconstruct(config, date_to_lookup):
     audit_sailing_id = audit_dimension.insert(sailing_audit_obj)
     audit_stopped_id = audit_dimension.insert(stopped_audit_obj)
 
+    START_TRAJ_TIME = perf_counter()
+
     processed_records = 0
     inserted_sailing_records = 0
     inserted_stopped_records = 0
@@ -516,6 +518,7 @@ def clean_and_reconstruct(config, date_to_lookup):
                 inserted_stopped_records += insert_trajectory(
                     trajectory, False)
 
+    END_TRAJ_TIME = perf_counter()
     
     t_start = perf_counter()
     t_test_end = perf_counter()
@@ -525,12 +528,12 @@ def clean_and_reconstruct(config, date_to_lookup):
 
     sailing_audit_obj['processed_records'] = processed_records
     sailing_audit_obj['inserted_records'] = inserted_sailing_records
-    sailing_audit_obj['etl_duration'] = timedelta(seconds=(t_end - t_start))
+    sailing_audit_obj['etl_duration'] = timedelta(seconds=(END_TRAJ_TIME - START_TRAJ_TIME))
     sailing_audit_obj['audit_id'] = audit_sailing_id
 
     stopped_audit_obj['processed_records'] = processed_records
     stopped_audit_obj['inserted_records'] = inserted_stopped_records
-    stopped_audit_obj['etl_duration'] = timedelta(seconds=(t_end - t_start))
+    stopped_audit_obj['etl_duration'] = timedelta(seconds=(END_TRAJ_TIME - START_TRAJ_TIME))
     stopped_audit_obj['audit_id'] = audit_stopped_id
 
     audit_dimension.update(sailing_audit_obj)
@@ -539,16 +542,16 @@ def clean_and_reconstruct(config, date_to_lookup):
     ais_df['audit_id'] = audit_id
     print("AIS_DF to SQL is being called!!")
     print(datetime.today())
-    ais_df.to_sql('fact_ais_clean', index=False, con=engine,
+    ais_df.to_sql('fact_ais_clean_v2', index=False, con=engine,
                   if_exists='append', chunksize=1000000)
     print(datetime.today())
     print("DONE!!! AIS_DF_TO_SQL HAS BEEN CALLED!!")
 
-    END_TIME = datetime.today()
+    FULL_END_TIME = perf_counter()
 
     audit_obj['processed_records'] = len(ais_df)
     audit_obj['inserted_records'] = len(ais_df)
-    audit_obj['etl_duration'] = END_TIME - START_TIME
+    audit_obj['etl_duration'] = timedelta(seconds=(FULL_END_TIME - FULL_START_TIME))
     audit_obj['audit_id'] = audit_id
     audit_dimension.update(audit_obj)
 
