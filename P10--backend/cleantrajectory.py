@@ -19,6 +19,7 @@ from sqlalchemy import create_engine
 from pyproj import Transformer
 from database_connection import connect_to_local, connect_via_ssh
 from helper_functions import create_audit_dimension
+from haversine import haversine
 
 # Global variables
 MAX_COLUMNS = 22000
@@ -52,8 +53,8 @@ def distance_in_km_between_earth_coordinates(lat1, lon1, lat2, lon2):
 def get_distance_and_time_since_last_point(point, previous_point, i):
     if(i != 0):
         time_since_last_point = point.time - previous_point.time
-        meters_to_last_point = distance_in_km_between_earth_coordinates(
-            point.latitude, point.longitude, previous_point.latitude, previous_point.longitude) * 1000
+        meters_to_last_point = haversine(
+            (point.lat, point.long), (previous_point.lat, previous_point.long)) * 1000
     else:
         time_since_last_point = timedelta(0)
         meters_to_last_point = 0
@@ -212,8 +213,8 @@ def traj_splitter(ship):
                 sailing_points = pd.concat(
                     [sailing_points, journey.iloc[first_point_not_handled:i, :]])
             else:
-                sailing_points.loc[len(
-                    sailing_points.index)] = journey.iloc[i]
+                sailing_points = pd.concat(
+                    [sailing_points, journey.iloc[i:i+1]])
             time_since_above_threshold = timedelta(minutes=0)
             first_point_not_handled = -1
             # time_above_end = perf_counter_ns()
@@ -240,8 +241,8 @@ def traj_splitter(ship):
                     sailing_points = sailing_points.iloc[0:0]
                 # Add points to current stop session
                 if(i == first_point_not_handled or first_point_not_handled == -1):
-                    stopped_points.loc[len(
-                        stopped_points.index)] = journey.iloc[i]
+                    stopped_points = pd.concat(
+                        [stopped_points, journey.iloc[i:i+1]])
                 else:
                     stopped_points = pd.concat(
                         [stopped_points, journey.iloc[first_point_not_handled:i, :]])
@@ -277,7 +278,7 @@ def traj_splitter(ship):
         trajectory["stopped_traj_identifier"] = str(
             db_object["ship_id"]) + str(db_object["time_start_id"]) + "stopped"
         trajectory["sailing_traj_identifier"] = None
-        
+
     sailing_db_objects = []
     for trajectory in sailing_trajectories:
         geoSeries = gpd.GeoSeries.from_wkb(
@@ -434,11 +435,12 @@ def clean_and_reconstruct(config, date_to_lookup):
                              50), ceil((y - 5900000) / 50)
         cell_id = ((rowy - 1) * MAX_COLUMNS) + columnx
 
-        return 0 # TODO: Make this return cell_id
+        return 0  # TODO: Make this return cell_id
 
     # Create a new column and apply a function that calculates the cell_id based on row coordinates
     print("Applying cell_id calculations to all rows")
-    ais_df['cell_id'] = ais_df.apply(lambda row: calculateCellID(row['latitude'], row['longitude']), axis=1)
+    ais_df['cell_id'] = ais_df.apply(lambda row: calculateCellID(
+        row['latitude'], row['longitude']), axis=1)
     #ais_df['cell_id'] = 0
 
     # Remove mmsi column. It was only required during computation
@@ -518,7 +520,7 @@ def clean_and_reconstruct(config, date_to_lookup):
                     trajectory, False)
 
     END_TRAJ_TIME = perf_counter()
-    
+
     t_start = perf_counter()
     t_test_end = perf_counter()
     t_end = perf_counter()
@@ -527,12 +529,14 @@ def clean_and_reconstruct(config, date_to_lookup):
 
     sailing_audit_obj['processed_records'] = processed_records
     sailing_audit_obj['inserted_records'] = inserted_sailing_records
-    sailing_audit_obj['etl_duration'] = timedelta(seconds=(END_TRAJ_TIME - START_TRAJ_TIME))
+    sailing_audit_obj['etl_duration'] = timedelta(
+        seconds=(END_TRAJ_TIME - START_TRAJ_TIME))
     sailing_audit_obj['audit_id'] = audit_sailing_id
 
     stopped_audit_obj['processed_records'] = processed_records
     stopped_audit_obj['inserted_records'] = inserted_stopped_records
-    stopped_audit_obj['etl_duration'] = timedelta(seconds=(END_TRAJ_TIME - START_TRAJ_TIME))
+    stopped_audit_obj['etl_duration'] = timedelta(
+        seconds=(END_TRAJ_TIME - START_TRAJ_TIME))
     stopped_audit_obj['audit_id'] = audit_stopped_id
 
     audit_dimension.update(sailing_audit_obj)
@@ -550,7 +554,8 @@ def clean_and_reconstruct(config, date_to_lookup):
 
     audit_obj['processed_records'] = len(ais_df)
     audit_obj['inserted_records'] = len(ais_df)
-    audit_obj['etl_duration'] = timedelta(seconds=(FULL_END_TIME - FULL_START_TIME))
+    audit_obj['etl_duration'] = timedelta(
+        seconds=(FULL_END_TIME - FULL_START_TIME))
     audit_obj['audit_id'] = audit_id
     audit_dimension.update(audit_obj)
 

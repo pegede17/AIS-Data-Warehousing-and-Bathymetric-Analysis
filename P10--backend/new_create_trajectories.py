@@ -10,6 +10,7 @@ from shapely.geometry import LineString
 import geopandas as gpd
 import multiprocessing as mp
 import concurrent.futures
+from haversine import haversine
 
 
 def set_global_variables(args):
@@ -38,8 +39,8 @@ def distance_in_km_between_earth_coordinates(lat1, lon1, lat2, lon2):
 def get_distance_and_time_since_last_point(point, previous_point, i):
     if(i != 0):
         time_since_last_point = point.time - previous_point.time
-        meters_to_last_point = distance_in_km_between_earth_coordinates(
-            point.lat, point.long, previous_point.lat, previous_point.long) * 1000
+        meters_to_last_point = haversine(
+            (point.lat, point.long), (previous_point.lat, previous_point.long)) * 1000
     else:
         time_since_last_point = timedelta(0)
         meters_to_last_point = 0
@@ -198,8 +199,10 @@ def traj_splitter(ship):
                 sailing_points = pd.concat(
                     [sailing_points, journey.iloc[first_point_not_handled:i, :]])
             else:
-                sailing_points.loc[len(
-                    sailing_points.index)] = journey.iloc[i]
+                # sailing_points.loc[len(sailing_points.index)] = journey.iloc[i]
+                # sailing_points.append(journey.iloc[i])
+                sailing_points = pd.concat(
+                    [sailing_points, journey.iloc[i:i+1]])
             time_since_above_threshold = timedelta(minutes=0)
             first_point_not_handled = -1
             # time_above_end = perf_counter_ns()
@@ -226,8 +229,8 @@ def traj_splitter(ship):
                     sailing_points = sailing_points.iloc[0:0]
                 # Add points to current stop session
                 if(i == first_point_not_handled or first_point_not_handled == -1):
-                    stopped_points.loc[len(
-                        stopped_points.index)] = journey.iloc[i]
+                    stopped_points = pd.concat(
+                        [stopped_points, journey.iloc[i:i+1]])
                 else:
                     stopped_points = pd.concat(
                         [stopped_points, journey.iloc[first_point_not_handled:i, :]])
