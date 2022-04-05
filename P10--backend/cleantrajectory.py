@@ -146,7 +146,8 @@ def traj_splitter(ship):
     id, journey = ship
     print("Ship" + id)
 
-    journey = journey.reset_index(0).sort_values(['ts_time_id'])
+    journey = journey.reset_index(0).sort_values(
+        ['ts_time_id'], ascending=True)
     journey["time"] = journey.apply(lambda row: datetime(year=1, month=1, day=1, hour=row['hour'],
                                                          minute=row['minute'], second=row['second']), axis=1)
 
