@@ -63,8 +63,12 @@ def main(argv):
             load_data_into_db(config=config, date_id=current_date)
 
         if args.c:
-            print("Cleaning " + str(current_date))
-            clean_and_reconstruct(config=config, date_to_lookup=current_date)
+            try:
+                print("Cleaning " + str(current_date))
+                clean_and_reconstruct(
+                    config=config, date_to_lookup=current_date)
+            except Exception as e:
+                print(str(e))
 
         if args.r:
             print("Reconstructing trajectories " + str(current_date))

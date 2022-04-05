@@ -358,7 +358,7 @@ def clean_and_reconstruct(config, date_to_lookup):
             AND NOT (mmsi > 111000000 and mmsi < 112000000)
             AND ST_Contains(geom ,coordinate::geometry)
         ORDER BY ship_id, ts_time_id ASC
-        LIMIT 100000
+        LIMIT 1000000
     """
 
     FULL_START_TIME = perf_counter()
