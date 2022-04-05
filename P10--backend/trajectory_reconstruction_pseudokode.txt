@@ -1,4 +1,4 @@
-INPUT complete_journey_for_ship, time_threshold
+INPUT complete_journey_for_ship as journey, time_threshold
 OUTPUT ship_sailing_trajectories, ship_stopped_trajectories
 
 Begin
@@ -7,13 +7,67 @@ Begin
     ship_sailing_trajectories = list
     ship_stopped_trajectories = list
 
+
     time_since_above_threshold = 0
     last_point_over_threshold_index = 0
+    first_point_not_handled = -1
 
-    for each point in complete_journey_for_ship do
+    for each point in journey do
 
         time_since_last_point, distance_to_last_point = get_distance_and_time_since_last_point(point, last_point)
-        speed = get_speed(distance_to_last_point, time_since_last_point, point, i)
+        speed = get_speed(distance_to_last_point, time_since_last_point, point, point.index)
         
+        // Handle large time gap between points by ending current trajectory
         if(time_since_last_point > time_threshold) then
+            if(sailing_points.length > 0) then
+                if(first_point_not_handled != -1) then
+                    sailing_points.append(journey.slice(first_point_not_handled, point.index - 1))
+                    first_point_not_handled = -1
+                ship_sailing_trajectories.add(sailing_points)
+                sailing_points.clear()
+            else if(stopped_points.length > 0) then
+                if(first_point_not_handled != -1) then
+                    stopped_points.append(journey.slice(first_point_not_handled, point.index - 1))
+                    first_point_not_handled = -1
+                ship_stopped_trajectories.add(stopped_points)
+                stopped_points.clear()
+
+        if(speed > speed_limit) then
+            skip point //TODO explain
+            continue
+        
+        if(speed >= speed_threshold) then
+            last_point_over_threshold_index = point.index
+            if(stopped_points.length > 0) then
+                ship_stopped_trajectories.add(stopped_points)
+                stopped_points.clear()
+            if(first_point_not_handled != -1) then
+                sailing_points.append(journey.slice(first_point_not_handled, point.index))
+            else 
+                sailing_points.append(point)
+            time_since_above_threshold = 0
+            first_point_not_handled = -1
+        
+        else if(speed < speed_threshold) then
+            if(first_point_not_handled == -1) then
+                first_point_not_handled = point.index
+            time_since_above_threshold = point.time - journey[last_point_over_threshold_index].time
+
+            if(time_since_above_threshold <= time_threshold) then
+                continue
             
+            else if(time_since_above_threshold > time_threshold) then
+                if(sailing_points.length > 0) then
+                    sailing_points.add(sailing_points)
+                    sailing_points.clear()
+                if(point.index == first_point_not_handled or first_point_not_handled == -1) then
+                    stopped_points.append(point)
+                else
+                    stopped_points.append(journey.slice(first_point_not_handled, point.index))
+    
+    if(stopped_points.length > 0) then
+        ship_stopped_trajectories.add(stopped_points)
+    else if(sailing_points.length > 0) then
+        ship_sailing_trajectories.add(sailing_points)
+
+END
