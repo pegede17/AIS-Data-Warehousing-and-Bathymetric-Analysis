@@ -153,7 +153,8 @@ def traj_splitter(ship):
     id, journey = ship
     print("Ship" + str(id))
 
-    journey = journey.reset_index(0)
+    journey = journey.reset_index(0).sort_values(
+        ['ts_time_id'], ascending=True)
     journey["time"] = journey.apply(lambda row: datetime(year=1, month=1, day=1, hour=row['hour'],
                                                          minute=row['minute'], second=row['second']), axis=1)
 
@@ -365,7 +366,7 @@ def clean_and_reconstruct(config, date_to_lookup):
             AND NOT (mmsi > 111000000 and mmsi < 112000000)
             AND ST_Contains(geom ,coordinate::geometry)
         ORDER BY ship_id, ts_time_id ASC
-        LIMIT 1000000
+        LIMIT 100000
     """
 
     FULL_START_TIME = perf_counter()
