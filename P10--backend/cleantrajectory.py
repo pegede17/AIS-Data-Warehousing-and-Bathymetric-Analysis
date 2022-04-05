@@ -139,12 +139,19 @@ def create_database_object(trajectory):
     return database_object
 
 
+def traj_splitter_except_catch(ship):
+    try:
+        traj_splitter(ship)
+    except Exception as e:
+        print(str(e))
+
+
 def traj_splitter(ship):
     speed_treshold = 0.5
     time_threshold = 300
     SOG_limit = 100
     id, journey = ship
-    print("Ship" + id)
+    print("Ship" + str(id))
 
     journey = journey.reset_index(0)
     journey["time"] = journey.apply(lambda row: datetime(year=1, month=1, day=1, hour=row['hour'],
@@ -509,7 +516,7 @@ def clean_and_reconstruct(config, date_to_lookup):
 
     trajectories_per_ship = mp.Manager().dict()
     with concurrent.futures.ProcessPoolExecutor(initializer=set_global_variables, initargs=(trajectories_per_ship,)) as executor:
-        executor.map(traj_splitter, trajectory_df)
+        executor.map(traj_splitter_except_catch, trajectory_df)
 
     print("Inserting trajectories")
     for _, ship in trajectory_df:
