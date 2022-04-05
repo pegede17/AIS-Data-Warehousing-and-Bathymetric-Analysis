@@ -366,7 +366,6 @@ def clean_and_reconstruct(config, date_to_lookup):
             AND NOT (mmsi > 111000000 and mmsi < 112000000)
             AND ST_Contains(geom ,coordinate::geometry)
         ORDER BY ship_id, ts_time_id ASC
-        LIMIT 100000
     """
 
     FULL_START_TIME = perf_counter()
@@ -467,15 +466,8 @@ def clean_and_reconstruct(config, date_to_lookup):
     del ais_df['ship_type_id']
     del ais_df['type_of_position_fixing_device_id']
 
-    def pgbulkloader(name, attributes, fieldsep, rowsep, nullval, filehandle):
-        cursor = connection.cursor()
-        cursor.copy_from(file=filehandle, table=name, sep=fieldsep, null=str(nullval),
-                         columns=attributes)
-
-    trajectory_sailing_fact_table = create_trajectory_sailing_fact_table(
-        pgbulkloader)
-    trajectory_stopped_fact_table = create_trajectory_stopped_fact_table(
-        pgbulkloader)
+    trajectory_sailing_fact_table = create_trajectory_sailing_fact_table()
+    trajectory_stopped_fact_table = create_trajectory_stopped_fact_table()
     audit_dimension = create_audit_dimension()
 
     def insert_trajectory(trajectory_db_object, sailing: bool):
