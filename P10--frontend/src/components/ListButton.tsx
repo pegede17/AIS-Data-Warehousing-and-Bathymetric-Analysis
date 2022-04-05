@@ -12,7 +12,7 @@ import Collapse from '@mui/material/Collapse';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 interface Props {
-    listItems: string[];
+    listItems: string[] | number[];
     listName: string;
 }
 
@@ -32,17 +32,23 @@ const ListButton: React.FC<Props> = ({ listItems , listName }) => {
         }
 
         setChecked(newChecked);
+        console.log(checked)
     };
 
     // Handles the open and close click for the list
     const handleExpandClick = () => {
         setOpen(!open);
     };
+    const listStyle = {
+        background: "#FF8C21",
+        margin: 0,
+        
+    }
 
     return (
         <div>
             <List>
-                <ListItemButton className="list-button" sx={{background: "#FF8C21"}} onClick={handleExpandClick}>
+                <ListItemButton className="list-button" sx={listStyle} onClick={handleExpandClick}>
                     <ListItemText primary={listName} />
                     {open ? <ExpandLess /> : <ExpandMore />}
                 </ListItemButton>

@@ -6,22 +6,26 @@ import ListButton from './ListButton';
 
 const Sidebar: React.FC = () => {
     const {isShown, handleSidebar} = React.useContext(SidebarContext);
-    const shipList = ["Sailing", "Pleasure", "Cargo", "Passenger", "Military"]
-    const shipListName = "Ship Types"
+    const shipListName = "Ship Types";
+    const shipList = ["Sailing", "Pleasure", "Cargo", "Passenger", "Military"];
+    
+    const aisListName = "AIS Transponder Type";
+    const aisTypes = ["Type A", "Type B"];
+
+    const gridListName = "Grid Size";
+    const gridList = [50, 100, 500, 1000];
 
     return (
         <SidebarContainer className={'bg-dark text-white sidebar'}>
-            <button className={'chart_type'} onClick={() => handleSidebar()}>Hide sidebar</button>
+            <button className={'chart-type'} onClick={() => handleSidebar()}>Hide sidebar</button>
 
-            <p>Sidebar content</p>
             <p>Round choose list with trajectorioes or Depth charts</p>
 
-            <p>Choose starting and end date</p>
-            <p>Ship types - expandable list</p>
+            <p>Starting date</p>
+            <p>End date</p>
             <ListButton listItems={shipList} listName={shipListName}/>
-            <p>AIS type - expandable list</p>
-            <p>Grid Size - expandable list. 50, 100, 500, 1000</p>
-            <p>Checkbox include null values</p>
+            <ListButton listItems={aisTypes} listName={aisListName}/>
+            <ListButton listItems={gridList} listName={gridListName}/>
 
             <p>Fetch button</p>
 
