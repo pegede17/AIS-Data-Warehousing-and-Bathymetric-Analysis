@@ -144,9 +144,9 @@ def traj_splitter(ship):
     time_threshold = 300
     SOG_limit = 100
     id, journey = ship
-    print(id)
+    print("Ship" + id)
 
-    journey = journey.reset_index(0)
+    journey = journey.reset_index(0).sort_values(['ts_time_id'])
     journey["time"] = journey.apply(lambda row: datetime(year=1, month=1, day=1, hour=row['hour'],
                                                          minute=row['minute'], second=row['second']), axis=1)
 
@@ -307,6 +307,11 @@ def clean_and_reconstruct(config, date_to_lookup):
     else:
         connection = connect_to_local()
 
+    def pgbulkloader(name, attributes, fieldsep, rowsep, nullval, filehandle):
+        cursor = connection.cursor()
+        cursor.copy_from(file=filehandle, table=name, sep=fieldsep, null=str(nullval),
+                         columns=attributes)
+
     # Create engine for to_sql method in pandas
     engineString = f"""postgresql://{config["Database"]["dbuser"]}:{config["Database"]["dbpass"]}@{config["Database"]["hostname"]}:5432/{config["Database"]["dbname"]}"""
     engine = create_engine(engineString, executemany_mode='values_plus_batch')
@@ -354,7 +359,8 @@ def clean_and_reconstruct(config, date_to_lookup):
             AND width < 75
             AND length < 488
             AND mmsi > 99999999
-            AND mmsi < 1000000000
+            AND mmsi < 990000000
+            AND NOT (mmsi > 111000000 and mmsi < 112000000)
             AND ST_Contains(geom ,coordinate::geometry)
         ORDER BY ship_id, ts_time_id ASC
     """
@@ -457,8 +463,10 @@ def clean_and_reconstruct(config, date_to_lookup):
     del ais_df['ship_type_id']
     del ais_df['type_of_position_fixing_device_id']
 
-    trajectory_sailing_fact_table = create_trajectory_sailing_fact_table()
-    trajectory_stopped_fact_table = create_trajectory_stopped_fact_table()
+    trajectory_sailing_fact_table = create_trajectory_sailing_fact_table(
+        pgbulkloader)
+    trajectory_stopped_fact_table = create_trajectory_stopped_fact_table(
+        pgbulkloader)
     audit_dimension = create_audit_dimension()
 
     def insert_trajectory(trajectory_db_object, sailing: bool):
@@ -503,10 +511,13 @@ def clean_and_reconstruct(config, date_to_lookup):
     inserted_sailing_records = 0
     inserted_stopped_records = 0
 
+    print("Splitting trajectories")
+
     trajectories_per_ship = mp.Manager().dict()
     with concurrent.futures.ProcessPoolExecutor(initializer=set_global_variables, initargs=(trajectories_per_ship,)) as executor:
         executor.map(traj_splitter, trajectory_df)
 
+    print("Inserting trajectories")
     for _, ship in trajectory_df:
         processed_records = processed_records + len(ship)
     for ship in trajectories_per_ship:
@@ -520,12 +531,6 @@ def clean_and_reconstruct(config, date_to_lookup):
                     trajectory, False)
 
     END_TRAJ_TIME = perf_counter()
-
-    t_start = perf_counter()
-    t_test_end = perf_counter()
-    t_end = perf_counter()
-
-    print(timedelta(minutes=(t_test_end-t_start)))
 
     sailing_audit_obj['processed_records'] = processed_records
     sailing_audit_obj['inserted_records'] = inserted_sailing_records
