@@ -467,8 +467,15 @@ def clean_and_reconstruct(config, date_to_lookup):
     del ais_df['ship_type_id']
     del ais_df['type_of_position_fixing_device_id']
 
-    trajectory_sailing_fact_table = create_trajectory_sailing_fact_table()
-    trajectory_stopped_fact_table = create_trajectory_stopped_fact_table()
+    def pgbulkloader(name, attributes, fieldsep, rowsep, nullval, filehandle):
+        cursor = connection.cursor()
+        cursor.copy_from(file=filehandle, table=name, sep=fieldsep, null=str(nullval),
+                         columns=attributes)
+
+    trajectory_sailing_fact_table = create_trajectory_sailing_fact_table(
+        pgbulkloader)
+    trajectory_stopped_fact_table = create_trajectory_stopped_fact_table(
+        pgbulkloader)
     audit_dimension = create_audit_dimension()
 
     def insert_trajectory(trajectory_db_object, sailing: bool):
