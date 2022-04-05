@@ -754,7 +754,7 @@ def create_date_dimension():
 
 
 def create_trajectory_sailing_fact_table():
-    return BulkFactTable(
+    return FactTable(
         name='fact_trajectory_sailing',
         keyrefs=['ship_id', 'time_start_id', 'date_start_id', 'time_end_id', 'date_end_id',
                  'audit_id', 'ship_type_id', 'eta_time_id', 'eta_date_id', 'data_source_type_id',
@@ -765,7 +765,7 @@ def create_trajectory_sailing_fact_table():
 
 
 def create_trajectory_stopped_fact_table():
-    return BulkFactTable(
+    return FactTable(
         name='fact_trajectory_stopped',
         keyrefs=['ship_id', 'time_start_id', 'date_start_id', 'time_end_id', 'date_end_id',
                  'audit_id', 'ship_type_id', 'eta_time_id', 'eta_date_id', 'data_source_type_id',
