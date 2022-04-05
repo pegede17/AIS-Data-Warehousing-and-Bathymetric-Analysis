@@ -753,35 +753,23 @@ def create_date_dimension():
     )
 
 
-def create_trajectory_sailing_fact_table(bulkloader):
-    return BulkFactTable(
+def create_trajectory_sailing_fact_table():
+    return FactTable(
         name='fact_trajectory_sailing',
         keyrefs=['ship_id', 'time_start_id', 'date_start_id', 'time_end_id', 'date_end_id',
                  'audit_id', 'ship_type_id', 'eta_time_id', 'eta_date_id', 'data_source_type_id',
                  'type_of_position_fixing_device_id', 'destination_id', 'type_of_mobile_id', 'cargo_type_id'],
         measures=['coordinates', 'duration', 'length_meters',
-                  'draught', 'total_points', 'avg_speed_knots'],
-        bulkloader=bulkloader,
-        fieldsep=',',
-        rowsep='\\r\n',
-        nullsubst=str(None),
-        bulksize=500000,
-        usefilename=False,
+                  'draught', 'total_points', 'avg_speed_knots']
     )
 
 
-def create_trajectory_stopped_fact_table(bulkloader):
-    return BulkFactTable(
+def create_trajectory_stopped_fact_table():
+    return FactTable(
         name='fact_trajectory_stopped',
         keyrefs=['ship_id', 'time_start_id', 'date_start_id', 'time_end_id', 'date_end_id',
                  'audit_id', 'ship_type_id', 'eta_time_id', 'eta_date_id', 'data_source_type_id',
                  'type_of_position_fixing_device_id', 'destination_id', 'type_of_mobile_id', 'cargo_type_id'],
         measures=['coordinates', 'duration', 'length_meters',
-                  'draught', 'total_points', 'avg_speed_knots'],
-        bulkloader=bulkloader,
-        fieldsep=',',
-        rowsep='\\r\n',
-        nullsubst=str(None),
-        bulksize=500000,
-        usefilename=False,
+                  'draught', 'total_points', 'avg_speed_knots']
     )

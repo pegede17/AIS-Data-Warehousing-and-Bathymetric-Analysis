@@ -307,11 +307,6 @@ def clean_and_reconstruct(config, date_to_lookup):
     else:
         connection = connect_to_local()
 
-    def pgbulkloader(name, attributes, fieldsep, rowsep, nullval, filehandle):
-        cursor = connection.cursor()
-        cursor.copy_from(file=filehandle, table=name, sep=fieldsep, null=str(nullval),
-                         columns=attributes)
-
     # Create engine for to_sql method in pandas
     engineString = f"""postgresql://{config["Database"]["dbuser"]}:{config["Database"]["dbpass"]}@{config["Database"]["hostname"]}:5432/{config["Database"]["dbname"]}"""
     engine = create_engine(engineString, executemany_mode='values_plus_batch')
@@ -464,10 +459,8 @@ def clean_and_reconstruct(config, date_to_lookup):
     del ais_df['ship_type_id']
     del ais_df['type_of_position_fixing_device_id']
 
-    trajectory_sailing_fact_table = create_trajectory_sailing_fact_table(
-        pgbulkloader)
-    trajectory_stopped_fact_table = create_trajectory_stopped_fact_table(
-        pgbulkloader)
+    trajectory_sailing_fact_table = create_trajectory_sailing_fact_table()
+    trajectory_stopped_fact_table = create_trajectory_stopped_fact_table()
     audit_dimension = create_audit_dimension()
 
     def insert_trajectory(trajectory_db_object, sailing: bool):
