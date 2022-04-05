@@ -54,7 +54,7 @@ def get_distance_and_time_since_last_point(point, previous_point, i):
     if(i != 0):
         time_since_last_point = point.time - previous_point.time
         meters_to_last_point = haversine(
-            (point.lat, point.long), (previous_point.lat, previous_point.long)) * 1000
+            (point.latitude, point.longitude), (previous_point.latitude, previous_point.longitude)) * 1000
     else:
         time_since_last_point = timedelta(0)
         meters_to_last_point = 0
