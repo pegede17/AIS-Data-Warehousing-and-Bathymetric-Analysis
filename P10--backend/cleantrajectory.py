@@ -202,10 +202,12 @@ def traj_splitter(ship):
             if(len(stopped_points) > 0):
                 stopped_points, first_point_not_handled = skip_point(
                     stopped_points, first_point_not_handled, i, journey)
+                first_point_not_handled = -1
                 continue
             elif (len(sailing_points) > 0):
                 sailing_points, first_point_not_handled = skip_point(
                     sailing_points, first_point_not_handled, i, journey)
+                first_point_not_handled = -1
                 continue
 
         elif(speed >= speed_treshold):
