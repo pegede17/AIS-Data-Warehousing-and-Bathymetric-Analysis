@@ -355,7 +355,7 @@ def clean_and_reconstruct(config, date_to_lookup):
             AND length < 488
             AND mmsi > 99999999
             AND mmsi < 990000000
-            AND NOT (mmsi > 111000000 and mmsi < 112000000)
+            -- AND NOT (mmsi > 111000000 and mmsi < 112000000)
             AND ST_Contains(geom ,coordinate::geometry)
         ORDER BY ship_id, ts_time_id ASC
         LIMIT 100000
