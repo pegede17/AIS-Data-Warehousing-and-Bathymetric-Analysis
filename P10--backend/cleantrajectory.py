@@ -208,7 +208,7 @@ def traj_splitter(ship):
                     sailing_points, first_point_not_handled, i, journey)
                 continue
 
-        if(speed >= speed_treshold):
+        elif(speed >= speed_treshold):
             # time_above_start = perf_counter_ns()
             # Reset counters
             last_point_over_threshold_index = i
@@ -229,7 +229,7 @@ def traj_splitter(ship):
             # time_above.append(time_above_end-time_above_start)
             continue
 
-        if(speed < speed_treshold):
+        elif(speed < speed_treshold):
             # time_below_start = perf_counter_ns()
             # Keep track of the first point with a low speed
             if(first_point_not_handled == -1):
