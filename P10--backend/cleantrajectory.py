@@ -77,7 +77,7 @@ def get_speed_in_knots(meters_to_last_point, time_since_last_point, point, i):
 def handle_time_gap(points: pd.DataFrame, trajectories: list, first_point_not_handled: int, i: int, journey: pd.DataFrame):
     if(first_point_not_handled != -1):
         points = pd.concat(
-            [points, journey.iloc[first_point_not_handled:i - 1, :]])
+            [points, journey.iloc[first_point_not_handled:i, :]])
         first_point_not_handled = -1
     trajectories.append(points.copy())
     points = points.iloc[0:0, :]
@@ -87,7 +87,7 @@ def handle_time_gap(points: pd.DataFrame, trajectories: list, first_point_not_ha
 def skip_point(points: pd.DataFrame, first_point_not_handled: int, i: int, journey: pd.DataFrame):
     # time_skip_start = perf_counter_ns()
     points = pd.concat(
-        [points, journey.iloc[first_point_not_handled:i - 1, :]])
+        [points, journey.iloc[first_point_not_handled:i, :]])
     first_point_not_handled = -1
     # time_skip_end = perf_counter_ns()
     # timer.append(time_skip_end-time_skip_start)
@@ -153,10 +153,10 @@ def traj_splitter(ship):
     id, journey = ship
     print("Ship" + str(id))
 
-    journey = journey.reset_index(0).sort_values(
-        ['ts_time_id'], ascending=True)
     journey["time"] = journey.apply(lambda row: datetime(year=1, month=1, day=1, hour=row['hour'],
                                                          minute=row['minute'], second=row['second']), axis=1)
+    journey = journey.reset_index(0).sort_values(
+        ['time'], ascending=True)
 
     first_point_not_handled = -1
     sailing_points = pd.DataFrame(columns=journey.columns)
@@ -219,7 +219,7 @@ def traj_splitter(ship):
             # Add points to current trajectory
             if(first_point_not_handled != -1):
                 sailing_points = pd.concat(
-                    [sailing_points, journey.iloc[first_point_not_handled:i, :]])
+                    [sailing_points, journey.iloc[first_point_not_handled:i+1, :]])
             else:
                 sailing_points = pd.concat(
                     [sailing_points, journey.iloc[i:i+1]])
@@ -253,7 +253,7 @@ def traj_splitter(ship):
                         [stopped_points, journey.iloc[i:i+1]])
                 else:
                     stopped_points = pd.concat(
-                        [stopped_points, journey.iloc[first_point_not_handled:i, :]])
+                        [stopped_points, journey.iloc[first_point_not_handled:i+1, :]])
                 first_point_not_handled = -1
             # time_below_end = perf_counter_ns()
             # time_below.append(time_below_end-time_below_start)
