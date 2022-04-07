@@ -14,7 +14,7 @@ const Sidebar: React.FC = () => {
     const aisTypes = ["Type A", "Type B"];
 
     const gridListName = "Grid Size";
-    const gridList = ["50", "100", "500", "1000"];
+    const gridList = ["50 Meters", "100 Meters", "500 Meters", "1000 Meters"];
 
     // Old classname 'bg-black text-white sidebar
     return (

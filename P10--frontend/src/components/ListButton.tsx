@@ -18,7 +18,7 @@ interface Props {
 
 const ListButton: React.FC<Props> = ({ listItems , listName }) => {
     const [checked, setChecked] = React.useState([""]);
-    const [open, setOpen] = React.useState(true);
+    const [open, setOpen] = React.useState(false);
 
     // Handles the checkmark in the list
     const handleToggle = (value: string ) => () => {
