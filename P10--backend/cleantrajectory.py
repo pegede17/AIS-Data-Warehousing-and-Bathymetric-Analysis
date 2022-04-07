@@ -330,7 +330,7 @@ def clean_and_reconstruct(config, date_to_lookup):
         connection = connect_to_local()
 
     # Create engine for to_sql method in pandas
-    engineString = f"""postgresql://{config["Database"]["dbuser"]}:{config["Database"]["dbpass"]}@{config["Database"]["hostname"]}:6543/{config["Database"]["dbname"]}"""
+    engineString = f"""postgresql://{config["Database"]["dbuser"]}:{config["Database"]["dbpass"]}@{config["Database"]["hostname"]}:5432/{config["Database"]["dbname"]}"""
     engine = create_engine(engineString, executemany_mode='values_plus_batch')
 
     dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
