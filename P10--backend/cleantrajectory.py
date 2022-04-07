@@ -155,8 +155,7 @@ def traj_splitter(ship):
 
     journey["time"] = journey.apply(lambda row: datetime(year=1, month=1, day=1, hour=row['hour'],
                                                          minute=row['minute'], second=row['second']), axis=1)
-    journey = journey.reset_index(0).sort_values(
-        ['time'], ascending=True)
+    journey = journey.reset_index(0)
 
     first_point_not_handled = -1
     sailing_points = pd.DataFrame(columns=journey.columns)
