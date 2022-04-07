@@ -204,7 +204,7 @@ def traj_splitter(ship):
         if(speed > SOG_limit):
             if(first_point_not_handled == -1):
                 continue
-            if(len(stopped_points) > 0):
+            elif(len(stopped_points) > 0):
                 stopped_points, first_point_not_handled = skip_point(
                     stopped_points, first_point_not_handled, i, journey)
                 first_point_not_handled = -1
