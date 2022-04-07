@@ -65,7 +65,7 @@ def get_speed_in_knots(meters_to_last_point, time_since_last_point, point, i):
     sog = float(point.sog)
     if (i == 0 or meters_to_last_point == 0):
         return sog
-    elif (time_since_last_point.seconds == 0):
+    elif (time_since_last_point == timedelta(0)):
         return 999
     else:
         # TODO fix enhed så det er i knob
