@@ -81,7 +81,8 @@ def handle_time_gap(points: pd.DataFrame, trajectories: list, first_point_not_ha
         points = pd.concat(
             [points, journey.iloc[first_point_not_handled:i, :]])
         first_point_not_handled = -1
-    trajectories.append(points.copy())
+    if(len(points) > 2):
+        trajectories.append(points.copy())
     points = points.iloc[0:0, :]
     return trajectories, points, first_point_not_handled
 
@@ -157,12 +158,12 @@ def traj_splitter(ship):
 
     journey["time"] = journey.apply(lambda row: datetime(year=1, month=1, day=1, hour=row['hour'],
                                                          minute=row['minute'], second=row['second']), axis=1)
-    journey = journey.reset_index(0)
     journey = journey.sort_values(
-        by=['ts_time_id'], ascending=True)
+        by=['ts_time_id'], ascending=True).reset_index(0)
 
     print("done sorting")
 
+    last_point_not_skipped = 0
     first_point_not_handled = -1
     sailing_points = pd.DataFrame(columns=journey.columns)
     stopped_points = pd.DataFrame(columns=journey.columns)
@@ -181,7 +182,7 @@ def traj_splitter(ship):
 
         # Determine time since last point or set to 0 if it is the first point
         time_since_last_point, meters_to_last_point = get_distance_and_time_since_last_point(
-            point, journey.iloc[i-1, :], i)
+            point, journey.iloc[last_point_not_skipped-1, :], i)
 
         # Set speed depending on if time has passed since last point/if we have a previous point
         speed = get_speed_in_knots(meters_to_last_point,
@@ -224,7 +225,8 @@ def traj_splitter(ship):
             last_point_over_threshold_index = i
             # End a "stopped" session and push to stops list
             if(len(stopped_points) > 0):
-                stopped_trajectories.append(stopped_points.copy())
+                if(len(stopped_trajectories) > 2):
+                    stopped_trajectories.append(stopped_points.copy())
                 stopped_points = stopped_points.iloc[0:0]
             # Add points to current trajectory
             if(first_point_not_handled != -1):
@@ -255,7 +257,8 @@ def traj_splitter(ship):
             if(time_since_above_threshold > time_threshold):
                 # End "sailing session and push to trajectory list
                 if(len(sailing_points) > 0):
-                    sailing_trajectories.append(sailing_points.copy())
+                    if(len(sailing_trajectories) > 2):
+                        sailing_trajectories.append(sailing_points.copy())
                     sailing_points = sailing_points.iloc[0:0]
                 # Add points to current stop session
                 if(i == first_point_not_handled or first_point_not_handled == -1):
@@ -267,11 +270,12 @@ def traj_splitter(ship):
                 first_point_not_handled = -1
             # time_below_end = perf_counter_ns()
             # time_below.append(time_below_end-time_below_start)
+        last_point_not_skipped = i
 
-    if(len(stopped_points) > 0):
+    if(len(stopped_points) > 2):
         stopped_trajectories.append(stopped_points.copy())
         stopped_points = stopped_points.iloc[0:0, :]
-    if(len(sailing_points) > 0):
+    if(len(sailing_points) > 2):
         sailing_trajectories.append(sailing_points.copy())
         sailing_points = sailing_points.iloc[0:0, :]
     # if(len(time_initial) > 0):
@@ -326,7 +330,7 @@ def clean_and_reconstruct(config, date_to_lookup):
         connection = connect_to_local()
 
     # Create engine for to_sql method in pandas
-    engineString = f"""postgresql://{config["Database"]["dbuser"]}:{config["Database"]["dbpass"]}@{config["Database"]["hostname"]}:5432/{config["Database"]["dbname"]}"""
+    engineString = f"""postgresql://{config["Database"]["dbuser"]}:{config["Database"]["dbpass"]}@{config["Database"]["hostname"]}:6543/{config["Database"]["dbname"]}"""
     engine = create_engine(engineString, executemany_mode='values_plus_batch')
 
     dw_conn_wrapper = pygrametl.ConnectionWrapper(connection=connection)
@@ -371,7 +375,6 @@ def clean_and_reconstruct(config, date_to_lookup):
             AND (draught < 28.5 OR draught IS NULL)
             AND width < 75
             AND length < 488
-            AND mmsi = 331569000
             AND mmsi > 99999999
             AND mmsi < 990000000
             AND NOT (mmsi > 111000000 and mmsi < 112000000)
