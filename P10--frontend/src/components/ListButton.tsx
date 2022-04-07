@@ -7,7 +7,7 @@ import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
-import Checkbox from "@mui/material/Checkbox";
+import Checkbox, { checkboxClasses } from "@mui/material/Checkbox";
 import Collapse from '@mui/material/Collapse';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
@@ -65,10 +65,11 @@ const ListButton: React.FC<Props> = ({ listItems , listName }) => {
     }
 
     const checkboxStyle = {
-        color: "#FF8C21",
-        fill: "#FF8C21",
         paddingTop: 1,
-        // background: "#FF8C21",
+        // Changes checkbox color
+        [`&, &.${checkboxClasses.checked}`]: {
+            color: '#FF8C21',
+        },
     }
 
     return (
@@ -98,7 +99,7 @@ const ListButton: React.FC<Props> = ({ listItems , listName }) => {
                                                 tabIndex={-1}
                                                 disableRipple
                                                 inputProps={{ "aria-labelledby": labelId }}
-                                                sx={checkboxStyle}
+                                                sx={checkboxStyle}  
                                             />
                                         </ListItemIcon>
 
