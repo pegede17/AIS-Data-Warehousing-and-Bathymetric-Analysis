@@ -41,13 +41,11 @@ const ListButton: React.FC<Props> = ({ listItems , listName }) => {
     const outerListStyle = {
         display: 'flex',
         backgroundColor: '#FF8C21',
-        margin: 0,
-        gap: 1,
         padding: 1,
-        color: "#000000",
-        fontWeight: 3,
         border: '1px solid black',
-        
+        '&:hover': { 
+            bgcolor: '#e87307' // slighty darker orange
+        },
     }
 
     const innerListStyle = {
@@ -62,7 +60,9 @@ const ListButton: React.FC<Props> = ({ listItems , listName }) => {
         background: "#ffffff",
         margin: 0,
         padding: 0,
-        borderRadius: 1,
+        '&:hover': { 
+            bgcolor: 'transparent' // no on-hover color
+        },
     }
 
     const checkboxStyle = {
