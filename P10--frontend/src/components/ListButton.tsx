@@ -61,7 +61,8 @@ const ListButton: React.FC<Props> = ({ listItems , listName }) => {
     const itemStyle = {
         background: "#ffffff",
         margin: 0,
-        padding: 0
+        padding: 0,
+        borderRadius: 1,
     }
 
     const checkboxStyle = {
@@ -70,6 +71,8 @@ const ListButton: React.FC<Props> = ({ listItems , listName }) => {
         [`&, &.${checkboxClasses.checked}`]: {
             color: '#FF8C21',
         },
+        // Checkmark icon size
+        '& .MuiSvgIcon-root': { fontSize: 30,  }
     }
 
     return (
