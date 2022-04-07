@@ -159,7 +159,7 @@ def traj_splitter(ship):
                                                          minute=row['minute'], second=row['second']), axis=1)
     journey = journey.reset_index(0)
     journey = journey.sort_values(
-        ['ts_date_id'], ascending=True)
+        by=['ts_time_id'], ascending=True)
 
     print("done sorting")
 
