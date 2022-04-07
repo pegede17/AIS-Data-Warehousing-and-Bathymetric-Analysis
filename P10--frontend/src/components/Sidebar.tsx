@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from 'react-bootstrap';
 import styled from "styled-components";
 import {SidebarContext} from "../contexts/sidebarContext";
 import '../styles/chartType.scss';
@@ -13,13 +14,13 @@ const Sidebar: React.FC = () => {
     const aisTypes = ["Type A", "Type B"];
 
     const gridListName = "Grid Size";
-    const gridList = [50, 100, 500, 1000];
+    const gridList = ["50", "100", "500", "1000"];
 
+    // Old classname 'bg-black text-white sidebar
     return (
-        <SidebarContainer className={'bg-dark text-white sidebar'}>
+        <SidebarContainer className={'bg-white text-black sidebar'}>
             <button className={'chart-type'} onClick={() => handleSidebar()}>Hide sidebar</button>
-
-            <p>Round choose list with trajectorioes or Depth charts</p>
+            <Button style={{background: "#FF8C21", color: "black"}}>Chart Type</Button>
 
             <p>Starting date</p>
             <p>End date</p>
@@ -27,8 +28,7 @@ const Sidebar: React.FC = () => {
             <ListButton listItems={aisTypes} listName={aisListName}/>
             <ListButton listItems={gridList} listName={gridListName}/>
 
-            <p>Fetch button</p>
-
+            <Button style={{background: "#FF8C21", color: "black",}}>Update Map</Button>
         </SidebarContainer>
     );
 };
