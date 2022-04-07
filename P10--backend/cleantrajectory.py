@@ -155,8 +155,7 @@ def traj_splitter(ship):
 
     journey["time"] = journey.apply(lambda row: datetime(year=1, month=1, day=1, hour=row['hour'],
                                                          minute=row['minute'], second=row['second']), axis=1)
-    journey = journey.reset_index(0).sort_values(
-        ['time'], ascending=True)
+    journey = journey.reset_index(0)
 
     first_point_not_handled = -1
     sailing_points = pd.DataFrame(columns=journey.columns)
@@ -363,6 +362,7 @@ def clean_and_reconstruct(config, date_to_lookup):
             AND (draught < 28.5 OR draught IS NULL)
             AND width < 75
             AND length < 488
+            AND mmsi = 331569000
             AND mmsi > 99999999
             AND mmsi < 990000000
             AND NOT (mmsi > 111000000 and mmsi < 112000000)
