@@ -171,6 +171,8 @@ def traj_splitter(ship):
     last_point_over_threshold_index = 0
     points_with_same_time = 0
     points_with_high_speed = 0
+    short_trajectories = 0
+
     # time_initial = []
     # time_skip = []
     # time_above = []
@@ -279,21 +281,13 @@ def traj_splitter(ship):
             # time_below_end = perf_counter_ns()
             # time_below.append(time_below_end-time_below_start)
 
-    short_trajectories = 0
     if(len(stopped_points) > 2):
         stopped_trajectories.append(stopped_points.copy())
         stopped_points = stopped_points.iloc[0:0, :]
-    else:
-        short_trajectories += 1
     if(len(sailing_points) > 2):
         sailing_trajectories.append(sailing_points.copy())
         sailing_points = sailing_points.iloc[0:0, :]
-    else:
-        short_trajectories += 1
 
-    print("Points with same time: " + str(points_with_same_time))
-    print("Points with high speed: " + str(points_with_high_speed))
-    print("Short trajectories: " + str(short_trajectories))
     # if(len(time_initial) > 0):
     #     print(f"{'Initial:':<12}" + str(sum(time_initial)/len(time_initial)))
     # if(len(time_skip) > 0):
@@ -311,6 +305,7 @@ def traj_splitter(ship):
             trajectory, crs='EPSG:3034', geometry=geoSeries)
         db_object = create_database_object(trajectory)
         if (db_object == None):
+            short_trajectories += 1
             continue
         stopped_db_objects.append(db_object)
         trajectory["stopped_traj_identifier"] = str(
@@ -326,6 +321,7 @@ def traj_splitter(ship):
             trajectory, crs='EPSG:3034', geometry=geoSeries)
         db_object = create_database_object(trajectory)
         if (db_object == None):
+            short_trajectories += 1
             continue
         sailing_db_objects.append(db_object)
         trajectory["sailing_traj_identifier"] = str(
@@ -337,6 +333,10 @@ def traj_splitter(ship):
                     "sailing": sailing_trajectories,
                     "sailing_db_objects": sailing_db_objects}
     trajectories_per_ship[id] = trajectories
+
+    print("Points with same time: " + str(points_with_same_time))
+    print("Points with high speed: " + str(points_with_high_speed))
+    print("Short trajectories: " + str(short_trajectories))
 
 
 def clean_and_reconstruct(config, date_to_lookup):
