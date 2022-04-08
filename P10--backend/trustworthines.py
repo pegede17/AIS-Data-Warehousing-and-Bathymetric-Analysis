@@ -20,9 +20,17 @@ def give_trustscore_to_ships(config):
     all_ships = ships_to_dataframe(connection)
     print("test")
 
-    for i, ship in all_ships.iterrows():
-        trust_result = score_for_one_ship(ship)
-        update_database(ship["mmsi"], trust_result)
+    #top should be called bottom 
+    top_5_procent = all_ships.quantile(q=.05, axis=0)["max_draught"]
+    top_95_procent = all_ships.quantile(q=.95, axis=0)["max_draught"]
+
+    top_5_procent_relation = all_ships.quantile(q=.05, axis=0)["relation"]
+    top_95_procent_relation = all_ships.quantile(q=.95, axis=0)["relation"]
+    print(top_5_procent)
+
+    # for i, ship in all_ships.iterrows():
+    #     trust_result = score_for_one_ship(ship)
+    #     update_database(ship["mmsi"], trust_result)
 
     return 0 
 
@@ -33,9 +41,12 @@ def give_trustscore_to_ships(config):
 def ships_to_dataframe(connection):
 
     query_all_ships = f''' 
-            SELECT ship_id, mmsi, imo, name, width, length, callsign, size_a, size_b, size_c, size_d, ship_type_id, type_of_position_fixing_device_id, type_of_mobile_id, trust_id
-            FROM dim_ship
-            limit(100)
+            SELECT dim_ship.ship_id, max(draught) as max_draught, ((width+length)/max(draught)) as relation, mmsi, name, width, length, dim_ship.ship_type_id, dim_ship.type_of_position_fixing_device_id, dim_ship.type_of_mobile_id, trust_id
+            FROM fact_ais
+            inner join dim_ship
+            on fact_ais.ship_id = dim_ship.ship_id
+            group by dim_ship.ship_id
+            limit(10000)
             '''
 
     result_df = pd.DataFrame(SQLSource(connection=connection, query=query_all_ships))
@@ -62,6 +73,8 @@ def score_for_one_ship(ship):
 
     if(not ship['ship_type_id'] in type_of_ship_bad):
         result += 0.1 
+
+    
 
     result = round(result, 1)
     return result
