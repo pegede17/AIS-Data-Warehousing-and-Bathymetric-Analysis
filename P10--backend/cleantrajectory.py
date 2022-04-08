@@ -63,8 +63,10 @@ def get_distance_and_time_since_last_point(point, previous_point, i):
 
 def get_speed_in_knots(meters_to_last_point, time_since_last_point, point, i):
     sog = float(point.sog)
-    if (i == 0 or meters_to_last_point == 0 or time_since_last_point == timedelta(0)):
+    if (i == 0 or meters_to_last_point == 0):
         return sog
+    elif(time_since_last_point == timedelta(0)):
+        return 999
     else:
         # TODO fix enhed så det er i knob
         calculated_speed = meters_to_last_point/time_since_last_point.seconds * 1.94
@@ -354,22 +356,22 @@ def clean_and_reconstruct(config, date_to_lookup):
     """
 
     ENABLE_TRIGGERS = f"""
-        ALTER TABLE fact_ais_clean ENABLE TRIGGER ALL;	
+        ALTER TABLE fact_ais_clean ENABLE TRIGGER ALL;
     """
 
     JUNK_DATA_QUERY = f"""
         SELECT patchedShipRef, isOutlier
-        FROM junk_ais_clean    
+        FROM junk_ais_clean
     """
 
     INITIAL_CLEAN_QUERY = f"""
-    SELECT DISTINCT ON (eta_date_id, eta_time_id, ship_id, ts_date_id, ts_time_id, data_source_type_id, destination_id, 
+    SELECT DISTINCT ON (eta_date_id, eta_time_id, ship_id, ts_date_id, ts_time_id, data_source_type_id, destination_id,
                     navigational_status_id, cargo_type_id, coordinate, draught, rot, sog, cog, heading)
             fact_ais.type_of_position_fixing_device_id, hour, minute, second, fact_ais.ship_type_id, latitude, longitude, mmsi, fact_ais.type_of_mobile_id, fact_id, eta_date_id, eta_time_id, fact_ais.ship_id, ts_date_id, ts_time_id, data_source_type_id, destination_id, navigational_status_id, cargo_type_id, coordinate, draught, rot, sog, cog, heading
-        FROM fact_ais 
+        FROM fact_ais
         INNER JOIN public.dim_ship on fact_ais.ship_id = dim_ship.ship_id
         INNER JOIN public.dim_time on dim_time.time_id = ts_time_id, public.danish_waters
-        WHERE 
+        WHERE
             ts_date_id = {date_to_lookup}
             AND (draught < 28.5 OR draught IS NULL)
             AND width < 75
@@ -464,7 +466,7 @@ def clean_and_reconstruct(config, date_to_lookup):
     print("Applying cell_id calculations to all rows")
     ais_df['cell_id'] = ais_df.apply(lambda row: calculateCellID(
         row['latitude'], row['longitude']), axis=1)
-    #ais_df['cell_id'] = 0
+    # ais_df['cell_id'] = 0
 
     # Remove mmsi column. It was only required during computation
     # TODO: Remove if not necessary
