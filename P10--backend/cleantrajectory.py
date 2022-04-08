@@ -64,16 +64,16 @@ def get_distance_and_time_since_last_point(point, previous_point, i):
 def get_speed_in_knots(meters_to_last_point, time_since_last_point, point, i):
     sog = float(point.sog)
     if (i == 0 or meters_to_last_point == 0):
-        return sog
+        return sog, False
     elif(time_since_last_point == timedelta(0)):
-        return 999
+        return 999, True
     else:
         # TODO fix enhed så det er i knob
         calculated_speed = meters_to_last_point/time_since_last_point.seconds * 1.94
         if(abs(calculated_speed-sog) > 2):
-            return calculated_speed
+            return calculated_speed, False
         else:
-            return sog
+            return sog, False
 
 
 def handle_time_gap(points: pd.DataFrame, trajectories: list, first_point_not_handled: int, i: int, journey: pd.DataFrame):
@@ -169,6 +169,8 @@ def traj_splitter(ship):
     stopped_trajectories = []
     time_since_above_threshold = timedelta(minutes=0)
     last_point_over_threshold_index = 0
+    points_with_same_time = 0
+    points_with_high_speed = 0
     # time_initial = []
     # time_skip = []
     # time_above = []
@@ -183,8 +185,12 @@ def traj_splitter(ship):
             point, journey.iloc[last_point_not_skipped, :], i)
 
         # Set speed depending on if time has passed since last point/if we have a previous point
-        speed = get_speed_in_knots(meters_to_last_point,
-                                   time_since_last_point, point, i)
+        speed, same_time = get_speed_in_knots(meters_to_last_point,
+                                              time_since_last_point, point, i)
+        if(same_time):
+            points_with_same_time += 1
+        elif(speed > SOG_limit):
+            points_with_high_speed += 1
 
         # TODO lav switch på de 4 cases
         # Split trajectories if it has been too long since last point
@@ -272,6 +278,9 @@ def traj_splitter(ship):
                 first_point_not_handled = -1
             # time_below_end = perf_counter_ns()
             # time_below.append(time_below_end-time_below_start)
+
+    print("Points with same time: " + str(points_with_same_time))
+    print("Points with high speed: " + str(points_with_high_speed))
 
     if(len(stopped_points) > 2):
         stopped_trajectories.append(stopped_points.copy())
