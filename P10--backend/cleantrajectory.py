@@ -77,7 +77,7 @@ def get_speed_in_knots(meters_to_last_point, time_since_last_point, point, i):
 def handle_time_gap(points: pd.DataFrame, trajectories: list, first_point_not_handled: int, i: int, journey: pd.DataFrame):
     if(first_point_not_handled != -1):
         points = pd.concat(
-            [points, journey.iloc[first_point_not_handled:i - 1, :]])
+            [points, journey.iloc[first_point_not_handled:i, :]])
         first_point_not_handled = -1
     if(len(points) > 2):
         trajectories.append(points.copy())
@@ -227,7 +227,7 @@ def traj_splitter(ship):
             # Add points to current trajectory
             if(first_point_not_handled != -1):
                 sailing_points = pd.concat(
-                    [sailing_points, journey.iloc[first_point_not_handled:i, :]])
+                    [sailing_points, journey.iloc[first_point_not_handled:i+1, :]])
                 last_point_not_skipped = i
             else:
                 sailing_points = pd.concat(
@@ -265,7 +265,7 @@ def traj_splitter(ship):
                     last_point_not_skipped = i
                 else:
                     stopped_points = pd.concat(
-                        [stopped_points, journey.iloc[first_point_not_handled:i, :]])
+                        [stopped_points, journey.iloc[first_point_not_handled:i+1, :]])
                     last_point_not_skipped = i
                 first_point_not_handled = -1
             # time_below_end = perf_counter_ns()
