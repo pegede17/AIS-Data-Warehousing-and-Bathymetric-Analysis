@@ -83,8 +83,6 @@ def handle_time_gap(points: pd.DataFrame, trajectories: list, first_point_not_ha
         first_point_not_handled = -1
     if(len(points) > 2):
         trajectories.append(points.copy())
-    else:
-        print("Small traj")
     points = points.iloc[0:0, :]
     return trajectories, points, first_point_not_handled
 
@@ -233,10 +231,8 @@ def traj_splitter(ship):
             last_point_over_threshold_index = i
             # End a "stopped" session and push to stops list
             if(len(stopped_points) > 0):
-                if(len(stopped_trajectories) > 2):
+                if(len(stopped_points) > 2):
                     stopped_trajectories.append(stopped_points.copy())
-                else:
-                    print("small traj")
                 stopped_points = stopped_points.iloc[0:0]
             # Add points to current trajectory
             if(first_point_not_handled != -1):
@@ -269,10 +265,8 @@ def traj_splitter(ship):
             if(time_since_above_threshold > time_threshold):
                 # End "sailing session and push to trajectory list
                 if(len(sailing_points) > 0):
-                    if(len(sailing_trajectories) > 2):
+                    if(len(sailing_points) > 2):
                         sailing_trajectories.append(sailing_points.copy())
-                    else:
-                        print("small traj")
                     sailing_points = sailing_points.iloc[0:0]
                 # Add points to current stop session
                 if(i == first_point_not_handled or first_point_not_handled == -1):
