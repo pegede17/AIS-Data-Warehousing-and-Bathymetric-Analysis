@@ -63,10 +63,8 @@ def get_distance_and_time_since_last_point(point, previous_point, i):
 
 def get_speed_in_knots(meters_to_last_point, time_since_last_point, point, i):
     sog = float(point.sog)
-    if (i == 0 or meters_to_last_point == 0):
+    if (i == 0 or meters_to_last_point == 0 or time_since_last_point == timedelta(0)):
         return sog
-    elif (time_since_last_point == timedelta(0)):
-        return 999
     else:
         # TODO fix enhed så det er i knob
         calculated_speed = meters_to_last_point/time_since_last_point.seconds * 1.94
@@ -79,7 +77,7 @@ def get_speed_in_knots(meters_to_last_point, time_since_last_point, point, i):
 def handle_time_gap(points: pd.DataFrame, trajectories: list, first_point_not_handled: int, i: int, journey: pd.DataFrame):
     if(first_point_not_handled != -1):
         points = pd.concat(
-            [points, journey.iloc[first_point_not_handled:i, :]])
+            [points, journey.iloc[first_point_not_handled:i - 1, :]])
         first_point_not_handled = -1
     if(len(points) > 2):
         trajectories.append(points.copy())
@@ -161,8 +159,6 @@ def traj_splitter(ship):
     journey = journey.sort_values(
         by=['ts_time_id'], ascending=True).reset_index(0)
 
-    print("done sorting")
-
     last_point_not_skipped = 0
     first_point_not_handled = -1
     sailing_points = pd.DataFrame(columns=journey.columns)
@@ -182,7 +178,7 @@ def traj_splitter(ship):
 
         # Determine time since last point or set to 0 if it is the first point
         time_since_last_point, meters_to_last_point = get_distance_and_time_since_last_point(
-            point, journey.iloc[last_point_not_skipped-1, :], i)
+            point, journey.iloc[last_point_not_skipped, :], i)
 
         # Set speed depending on if time has passed since last point/if we have a previous point
         speed = get_speed_in_knots(meters_to_last_point,
@@ -219,7 +215,7 @@ def traj_splitter(ship):
                 first_point_not_handled = -1
                 continue
 
-        elif(speed >= speed_treshold):
+        if(speed >= speed_treshold):
             # time_above_start = perf_counter_ns()
             # Reset counters
             last_point_over_threshold_index = i
@@ -231,17 +227,19 @@ def traj_splitter(ship):
             # Add points to current trajectory
             if(first_point_not_handled != -1):
                 sailing_points = pd.concat(
-                    [sailing_points, journey.iloc[first_point_not_handled:i+1, :]])
+                    [sailing_points, journey.iloc[first_point_not_handled:i, :]])
+                last_point_not_skipped = i
             else:
                 sailing_points = pd.concat(
                     [sailing_points, journey.iloc[i:i+1]])
+                last_point_not_skipped = i
             time_since_above_threshold = timedelta(minutes=0)
             first_point_not_handled = -1
             # time_above_end = perf_counter_ns()
             # time_above.append(time_above_end-time_above_start)
             continue
 
-        elif(speed < speed_treshold):
+        if(speed < speed_treshold):
             # time_below_start = perf_counter_ns()
             # Keep track of the first point with a low speed
             if(first_point_not_handled == -1):
@@ -264,13 +262,14 @@ def traj_splitter(ship):
                 if(i == first_point_not_handled or first_point_not_handled == -1):
                     stopped_points = pd.concat(
                         [stopped_points, journey.iloc[i:i+1]])
+                    last_point_not_skipped = i
                 else:
                     stopped_points = pd.concat(
-                        [stopped_points, journey.iloc[first_point_not_handled:i+1, :]])
+                        [stopped_points, journey.iloc[first_point_not_handled:i, :]])
+                    last_point_not_skipped = i
                 first_point_not_handled = -1
             # time_below_end = perf_counter_ns()
             # time_below.append(time_below_end-time_below_start)
-        last_point_not_skipped = i
 
     if(len(stopped_points) > 2):
         stopped_trajectories.append(stopped_points.copy())
@@ -375,6 +374,7 @@ def clean_and_reconstruct(config, date_to_lookup):
             AND (draught < 28.5 OR draught IS NULL)
             AND width < 75
             AND length < 488
+            AND (mmsi = 245046000 OR mmsi = 331569000)
             AND mmsi > 99999999
             AND mmsi < 990000000
             AND NOT (mmsi > 111000000 and mmsi < 112000000)
