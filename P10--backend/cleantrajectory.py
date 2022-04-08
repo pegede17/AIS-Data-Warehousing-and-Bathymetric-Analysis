@@ -64,16 +64,16 @@ def get_distance_and_time_since_last_point(point, previous_point, i):
 def get_speed_in_knots(meters_to_last_point, time_since_last_point, point, i):
     sog = float(point.sog)
     if (i == 0 or meters_to_last_point == 0):
-        return sog, False
+        return sog
     elif(time_since_last_point == timedelta(0)):
-        return 999, True
+        return 999
     else:
         # TODO fix enhed så det er i knob
         calculated_speed = meters_to_last_point/time_since_last_point.seconds * 1.94
         if(abs(calculated_speed-sog) > 2):
-            return calculated_speed, False
+            return calculated_speed
         else:
-            return sog, False
+            return sog
 
 
 def handle_time_gap(points: pd.DataFrame, trajectories: list, first_point_not_handled: int, i: int, journey: pd.DataFrame):
@@ -169,9 +169,6 @@ def traj_splitter(ship):
     stopped_trajectories = []
     time_since_above_threshold = timedelta(minutes=0)
     last_point_over_threshold_index = 0
-    points_with_same_time = 0
-    points_with_high_speed = 0
-    short_trajectories = 0
 
     # time_initial = []
     # time_skip = []
@@ -187,12 +184,8 @@ def traj_splitter(ship):
             point, journey.iloc[last_point_not_skipped, :], i)
 
         # Set speed depending on if time has passed since last point/if we have a previous point
-        speed, same_time = get_speed_in_knots(meters_to_last_point,
-                                              time_since_last_point, point, i)
-        if(same_time):
-            points_with_same_time += 1
-        elif(speed > SOG_limit):
-            points_with_high_speed += 1
+        speed = get_speed_in_knots(meters_to_last_point,
+                                   time_since_last_point, point, i)
 
         # TODO lav switch på de 4 cases
         # Split trajectories if it has been too long since last point
@@ -288,14 +281,6 @@ def traj_splitter(ship):
         sailing_trajectories.append(sailing_points.copy())
         sailing_points = sailing_points.iloc[0:0, :]
 
-    # if(len(time_initial) > 0):
-    #     print(f"{'Initial:':<12}" + str(sum(time_initial)/len(time_initial)))
-    # if(len(time_skip) > 0):
-    #     print(f"{'Skip:':<12}" + str(sum(time_skip)/len(time_skip)))
-    # if(len(time_above) > 0):
-    #     print(f"{'Above:':<12}" + str(sum(time_above)/len(time_above)))
-    # if(len(time_below) > 0):
-    #     print(f"{'Below:':<12}" + str(sum(time_below)/len(time_below)))
     stopped_db_objects = []
     for trajectory in stopped_trajectories:
         geoSeries = gpd.GeoSeries.from_wkb(
@@ -305,7 +290,6 @@ def traj_splitter(ship):
             trajectory, crs='EPSG:3034', geometry=geoSeries)
         db_object = create_database_object(trajectory)
         if (db_object == None):
-            short_trajectories += 1
             continue
         stopped_db_objects.append(db_object)
         trajectory["stopped_traj_identifier"] = str(
@@ -321,7 +305,6 @@ def traj_splitter(ship):
             trajectory, crs='EPSG:3034', geometry=geoSeries)
         db_object = create_database_object(trajectory)
         if (db_object == None):
-            short_trajectories += 1
             continue
         sailing_db_objects.append(db_object)
         trajectory["sailing_traj_identifier"] = str(
@@ -333,10 +316,6 @@ def traj_splitter(ship):
                     "sailing": sailing_trajectories,
                     "sailing_db_objects": sailing_db_objects}
     trajectories_per_ship[id] = trajectories
-
-    print("Points with same time: " + str(points_with_same_time))
-    print("Points with high speed: " + str(points_with_high_speed))
-    print("Short trajectories: " + str(short_trajectories))
 
 
 def clean_and_reconstruct(config, date_to_lookup):
@@ -396,7 +375,6 @@ def clean_and_reconstruct(config, date_to_lookup):
             AND NOT (mmsi > 111000000 and mmsi < 112000000)
             AND ST_Contains(geom ,coordinate::geometry)
         ORDER BY ship_id, ts_time_id ASC
-        LIMIT 1000000
     """
 
     FULL_START_TIME = perf_counter()
