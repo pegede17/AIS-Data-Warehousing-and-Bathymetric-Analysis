@@ -279,15 +279,21 @@ def traj_splitter(ship):
             # time_below_end = perf_counter_ns()
             # time_below.append(time_below_end-time_below_start)
 
-    print("Points with same time: " + str(points_with_same_time))
-    print("Points with high speed: " + str(points_with_high_speed))
-
+    short_trajectories = 0
     if(len(stopped_points) > 2):
         stopped_trajectories.append(stopped_points.copy())
         stopped_points = stopped_points.iloc[0:0, :]
+    else:
+        short_trajectories += 1
     if(len(sailing_points) > 2):
         sailing_trajectories.append(sailing_points.copy())
         sailing_points = sailing_points.iloc[0:0, :]
+    else:
+        short_trajectories += 1
+
+    print("Points with same time: " + str(points_with_same_time))
+    print("Points with high speed: " + str(points_with_high_speed))
+    print("Short trajectories: " + str(short_trajectories))
     # if(len(time_initial) > 0):
     #     print(f"{'Initial:':<12}" + str(sum(time_initial)/len(time_initial)))
     # if(len(time_skip) > 0):
