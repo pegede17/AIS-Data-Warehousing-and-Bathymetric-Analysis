@@ -1,6 +1,4 @@
 import React from "react";
-import { Button } from "react-bootstrap";
-import '../styles/listButton.scss';
 
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
@@ -11,6 +9,8 @@ import Checkbox, { checkboxClasses } from "@mui/material/Checkbox";
 import Collapse from '@mui/material/Collapse';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
+import * as ListStyles from '../styles/sidebarStyling';
+
 interface Props {
     listItems: string[];
     listName: string;
@@ -38,52 +38,17 @@ const ListButton: React.FC<Props> = ({ listItems , listName }) => {
         setOpen(!open);
     };
     
-    const outerListStyle = {
-        display: 'flex',
-        backgroundColor: '#FF8C21',
-        padding: 1,
-        border: '1px solid black',
-        '&:hover': { 
-            bgcolor: '#e87307' // slighty darker orange
-        },
-    }
-
-    const innerListStyle = {
-        display: 'flex-row',
-        background: '#ffffff',
-        color: "#000000",
-        border: '1px solid white',
-        py: 0,
-    }
-
-    const itemStyle = {
-        background: "#ffffff",
-        margin: 0,
-        padding: 0,
-        '&:hover': { 
-            bgcolor: 'transparent' // no on-hover color
-        },
-    }
-
-    const checkboxStyle = {
-        paddingTop: 1,
-        // Changes checkbox color
-        [`&, &.${checkboxClasses.checked}`]: {
-            color: '#FF8C21',
-        },
-        // Checkmark icon size
-        '& .MuiSvgIcon-root': { fontSize: 30,  }
-    }
+    
 
     return (
         <div>
             <List>
-                <ListItemButton sx={outerListStyle} onClick={handleExpandClick}>
+                <ListItemButton sx={ListStyles.outerListStyle} onClick={handleExpandClick}>
                     <ListItemText primary={listName} />
                     {open ? <ExpandLess /> : <ExpandMore />}
                 </ListItemButton>
                 <Collapse in={open} timeout="auto" unmountOnExit>
-                    <List component="div" disablePadding sx={innerListStyle}>
+                    <List component="div" disablePadding sx={ListStyles.innerListStyle}>
                         {listItems.map((value) => {
                             const labelId = `checkbox-list-label-${value}`;
 
@@ -93,7 +58,7 @@ const ListButton: React.FC<Props> = ({ listItems , listName }) => {
                                         role={undefined}
                                         onClick={handleToggle(value)}
                                         dense
-                                        sx={itemStyle}
+                                        sx={ListStyles.itemStyle}
                                     >
                                         <ListItemIcon>
                                             <Checkbox
@@ -102,11 +67,11 @@ const ListButton: React.FC<Props> = ({ listItems , listName }) => {
                                                 tabIndex={-1}
                                                 disableRipple
                                                 inputProps={{ "aria-labelledby": labelId }}
-                                                sx={checkboxStyle}  
+                                                sx={ListStyles.checkboxStyle}  
                                             />
                                         </ListItemIcon>
 
-                                        <ListItemText id={labelId} primary={value} />
+                                        <ListItemText id={labelId} primary={value} sx={ListStyles.textStyle}/>
                                     </ListItemButton>
                                 </ListItem>
                             );

@@ -1,9 +1,10 @@
 import React from 'react';
-import { Button } from 'react-bootstrap';
+import Button from '@mui/material/Button';
 import styled from "styled-components";
 import {SidebarContext} from "../contexts/sidebarContext";
 import '../styles/chartType.scss';
 import ListButton from './ListButton';
+import * as SidebarStyling from '../styles/sidebarStyling';
 
 const Sidebar: React.FC = () => {
     const {isShown, handleSidebar} = React.useContext(SidebarContext);
@@ -28,7 +29,10 @@ const Sidebar: React.FC = () => {
             <ListButton listItems={aisTypes} listName={aisListName}/>
             <ListButton listItems={gridList} listName={gridListName}/>
 
-            <Button style={{background: "#FF8C21", color: "black",}}>Update Map</Button>
+            <div>
+                <Button sx={SidebarStyling.buttonRevertStyle}>Revert</Button>
+                <Button sx={SidebarStyling.buttonApplyStyle}>Apply</Button>
+            </div>
         </SidebarContainer>
     );
 };
