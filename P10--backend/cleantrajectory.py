@@ -83,6 +83,8 @@ def handle_time_gap(points: pd.DataFrame, trajectories: list, first_point_not_ha
         first_point_not_handled = -1
     if(len(points) > 2):
         trajectories.append(points.copy())
+    else:
+        print("Small traj")
     points = points.iloc[0:0, :]
     return trajectories, points, first_point_not_handled
 
