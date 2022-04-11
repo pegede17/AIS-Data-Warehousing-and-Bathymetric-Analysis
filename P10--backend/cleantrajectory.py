@@ -411,8 +411,13 @@ def clean_and_reconstruct(config, date_to_lookup):
 
         # Define the ship_id that have been reported with the previously defined mobile type
         seq_ship_type = ship_data[ship_data['type_of_mobile_id'] == best_type].squeeze()[
-            'ship_id'].value_counts()
-        best_ship_id = seq_ship_type.reset_index(0)['index'][0]
+            'ship_id']
+
+        if (len(ship_data[ship_data['type_of_mobile_id'] == best_type]) > 1):
+            seq_ship_type = seq_ship_type.value_counts()
+            best_ship_id = seq_ship_type.reset_index(0)['index'][0]
+        else:
+            best_ship_id = seq_ship_type
 
         if (len(mobile_type_count) > 1 or len(seq_ship_type) > 1):
             # Find which indexies needs to be updated
