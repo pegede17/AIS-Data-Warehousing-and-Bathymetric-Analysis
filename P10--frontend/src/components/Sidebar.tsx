@@ -5,9 +5,20 @@ import {SidebarContext} from "../contexts/sidebarContext";
 import '../styles/chartType.scss';
 import ListButton from './ListButton';
 import * as SidebarStyling from '../styles/sidebarStyling';
+import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DesktopDatePicker } from '@mui/x-date-pickers/DesktopDatePicker';
+import TextField from '@mui/material/TextField';
 
 const Sidebar: React.FC = () => {
     const {isShown, handleSidebar} = React.useContext(SidebarContext);
+    const [fromDate, setFromDate] = React.useState<Date | null>(
+        new Date('2014-08-18T21:11:54'),
+      );
+    const [toDate, setToDate] = React.useState<Date | null>(
+    new Date('2014-08-20T21:11:54'),
+    );
+
     const shipListName = "Ship Types";
     const shipList = ["Sailing", "Pleasure", "Cargo", "Passenger", "Military"];
     
@@ -17,13 +28,37 @@ const Sidebar: React.FC = () => {
     const gridListName = "Grid Size";
     const gridList = ["50 Meters", "100 Meters", "500 Meters", "1000 Meters"];
 
+    const handleFromDate = (newValue: Date | null) => {
+        setFromDate(newValue);
+      };
+      const handleToDate = (newValue: Date | null) => {
+        setToDate(newValue);
+      };
+
     // Old classname 'bg-black text-white sidebar
     return (
         <SidebarContainer className={'bg-white text-black sidebar'}>
-            <button className={'chart-type'} onClick={() => handleSidebar()}>Hide sidebar</button>
-            <Button style={{background: "#FF8C21", color: "black"}}>Chart Type</Button>
+            <Button className={'chart-type'} onClick={() => handleSidebar()}>Hide sidebar</Button>
 
+            <LocalizationProvider dateAdapter={AdapterMoment}>
+                <DesktopDatePicker
+                    label="From date"
+                    inputFormat="DD/MM/yyyy"
+                    value={fromDate}
+                    onChange={handleFromDate}
+                    renderInput={(params) => <TextField {...params} />}
+                />
+                <DesktopDatePicker
+                    label="To date"
+                    inputFormat="DD/MM/yyyy"
+                    value={toDate}
+                    onChange={handleToDate}
+                    renderInput={(params) => <TextField {...params} />}
+                />
+
+            </LocalizationProvider>
             <p>Starting date</p>
+
             <p>End date</p>
             <ListButton listItems={shipList} listName={shipListName}/>
             <ListButton listItems={aisTypes} listName={aisListName}/>

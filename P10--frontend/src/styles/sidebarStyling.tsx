@@ -19,7 +19,7 @@ export const outerListStyle = {
     padding: 1,
     border: '1px solid black',
     '&:hover': { 
-        bgcolor: hoverBlue // slighty darker orange
+        bgcolor: hoverBlue 
     },
     color: textWhite,
 }
@@ -61,7 +61,7 @@ export const buttonRevertStyle = {
     color: textWhite,
     backgroundColor: textGray,
     '&:hover': { 
-        bgcolor: revertHover // no on-hover color
+        bgcolor: revertHover 
     },
 }
 
@@ -69,6 +69,6 @@ export const buttonApplyStyle = {
     color: textWhite,
     backgroundColor: applyGreen,
     '&:hover': { 
-        bgcolor: applyHover // no on-hover color
+        bgcolor: applyHover 
     },
 }
