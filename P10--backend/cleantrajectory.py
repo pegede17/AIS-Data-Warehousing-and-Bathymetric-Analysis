@@ -154,7 +154,6 @@ def traj_splitter(ship):
     time_threshold = 300
     SOG_limit = 100
     id, journey = ship
-    print("Ship" + str(id))
 
     journey["time"] = journey.apply(lambda row: datetime(year=1, month=1, day=1, hour=row['hour'],
                                                          minute=row['minute'], second=row['second']), axis=1)
@@ -432,7 +431,6 @@ def clean_and_reconstruct(config, date_to_lookup):
     # TODO-Future: Maybe use dataframe.map(dictionary) instead here?
     for ship in dict_updated_ships:
         shipValue = dict_updated_ships[ship]
-        print("Changing ship value of: " + str(ship))
 
         # df.loc[(df['col1'] == 3) & (df['col2'] != 2.0), 'col4'] = "123"
 
@@ -531,7 +529,6 @@ def clean_and_reconstruct(config, date_to_lookup):
     for _, ship in trajectory_df:
         processed_records = processed_records + len(ship)
     for ship in trajectories_per_ship:
-        print("Ship " + str(ship))
         if(len(trajectories_per_ship[ship]["sailing_db_objects"]) > 0):
             for trajectory in trajectories_per_ship[ship]["sailing_db_objects"]:
                 inserted_sailing_records += insert_trajectory(trajectory, True)
