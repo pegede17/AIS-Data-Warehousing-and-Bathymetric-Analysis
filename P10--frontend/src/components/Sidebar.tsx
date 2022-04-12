@@ -2,7 +2,8 @@ import React from 'react';
 import Button from '@mui/material/Button';
 import styled from "styled-components";
 import {SidebarContext} from "../contexts/sidebarContext";
-import '../styles/chartType.scss';
+import '../styles/hideOrShowSidebar.scss';
+import '../styles/datePicker.scss';
 import ListButton from './ListButton';
 import * as SidebarStyling from '../styles/sidebarStyling';
 import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
@@ -13,10 +14,10 @@ import TextField from '@mui/material/TextField';
 const Sidebar: React.FC = () => {
     const {isShown, handleSidebar} = React.useContext(SidebarContext);
     const [fromDate, setFromDate] = React.useState<Date | null>(
-        new Date('2014-08-18T21:11:54'),
-      );
+      new Date('2021-01-01T12:00:00'),
+    );
     const [toDate, setToDate] = React.useState<Date | null>(
-    new Date('2014-08-20T21:11:54'),
+      new Date('2021-01-07T12:00:00'),
     );
 
     const shipListName = "Ship Types";
@@ -31,35 +32,37 @@ const Sidebar: React.FC = () => {
     const handleFromDate = (newValue: Date | null) => {
         setFromDate(newValue);
       };
-      const handleToDate = (newValue: Date | null) => {
-        setToDate(newValue);
-      };
+    const handleToDate = (newValue: Date | null) => {
+      setToDate(newValue);
+    };
 
     // Old classname 'bg-black text-white sidebar
     return (
         <SidebarContainer className={'bg-white text-black sidebar'}>
-            <Button className={'chart-type'} onClick={() => handleSidebar()}>Hide sidebar</Button>
+            <div className={'hide-or-show-sidebar'}>
+              <Button onClick={() => handleSidebar()}>Hide sidebar</Button>
+            {/* React icons for << iconnet */}
+            </div>
 
-            <LocalizationProvider dateAdapter={AdapterMoment}>
-                <DesktopDatePicker
-                    label="From date"
-                    inputFormat="DD/MM/yyyy"
-                    value={fromDate}
-                    onChange={handleFromDate}
-                    renderInput={(params) => <TextField {...params} />}
-                />
-                <DesktopDatePicker
-                    label="To date"
-                    inputFormat="DD/MM/yyyy"
-                    value={toDate}
-                    onChange={handleToDate}
-                    renderInput={(params) => <TextField {...params} />}
-                />
+            <div className='date-picker'>
+              <LocalizationProvider dateAdapter={AdapterMoment}>
+                  <DesktopDatePicker
+                      label="From date"
+                      inputFormat="DD/MM/yyyy"
+                      value={fromDate}
+                      onChange={handleFromDate}
+                      renderInput={(params) => <TextField {...params} />}
+                      />
+                  <DesktopDatePicker
+                      label="To date"
+                      inputFormat="DD/MM/yyyy"
+                      value={toDate}
+                      onChange={handleToDate}
+                      renderInput={(params) => <TextField {...params} />}
+                      />
+              </LocalizationProvider>
+            </div>
 
-            </LocalizationProvider>
-            <p>Starting date</p>
-
-            <p>End date</p>
             <ListButton listItems={shipList} listName={shipListName}/>
             <ListButton listItems={aisTypes} listName={aisListName}/>
             <ListButton listItems={gridList} listName={gridListName}/>
