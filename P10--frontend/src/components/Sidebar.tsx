@@ -42,39 +42,39 @@ const Sidebar: React.FC = () => {
     return (
         <SidebarContainer className={'bg-white text-black sidebar'}>
             <div className={'hide-or-show-sidebar'}>
-            {/* <Button >Hide sidebar</Button> */}
-            {/* React icons for << iconnet, use StartIcon={}, hedder MdDoubleArrow */}
-            <IconButton sx={muiSidebarStyling.ExpandButtonStyle}>
-              <DoubleArrowIcon onClick={() => handleSidebar()}/> 
-            </IconButton>
+              <IconButton sx={muiSidebarStyling.ExpandButtonStyle}>
+                <DoubleArrowIcon onClick={() => handleSidebar()}/> 
+              </IconButton>
             </div>
+            <div style={{margin: '1.2rem'}}>
+              <h2 style={{color: '#4f7ffe', textAlign: 'center'}}>Draught Overview</h2>
+              <div className='date-picker'>
+                <LocalizationProvider dateAdapter={AdapterMoment}>
+                    <DesktopDatePicker
+                        label="From:"
+                        inputFormat="DD/MM/yyyy"
+                        value={fromDate}
+                        onChange={handleFromDate}
+                        renderInput={(params) => <TextField {...params} />}
+                        />
+                    <DesktopDatePicker
+                        label="To:"
+                        inputFormat="DD/MM/yyyy"
+                        value={toDate}
+                        onChange={handleToDate}
+                        renderInput={(params) => <TextField {...params} />}
+                        />
+                </LocalizationProvider>
+              </div>
 
-            <div className='date-picker'>
-              <LocalizationProvider dateAdapter={AdapterMoment}>
-                  <DesktopDatePicker
-                      label="From date"
-                      inputFormat="DD/MM/yyyy"
-                      value={fromDate}
-                      onChange={handleFromDate}
-                      renderInput={(params) => <TextField {...params} />}
-                      />
-                  <DesktopDatePicker
-                      label="To date"
-                      inputFormat="DD/MM/yyyy"
-                      value={toDate}
-                      onChange={handleToDate}
-                      renderInput={(params) => <TextField {...params} />}
-                      />
-              </LocalizationProvider>
-            </div>
+              <ListButton listItems={shipList} listName={shipListName}/>
+              <ListButton listItems={aisTypes} listName={aisListName}/>
+              <ListButton listItems={gridList} listName={gridListName}/>
 
-            <ListButton listItems={shipList} listName={shipListName}/>
-            <ListButton listItems={aisTypes} listName={aisListName}/>
-            <ListButton listItems={gridList} listName={gridListName}/>
-
-            <div>
-                <Button sx={muiSidebarStyling.buttonRevertStyle}>Revert</Button>
-                <Button sx={muiSidebarStyling.buttonApplyStyle}>Apply</Button>
+              <div style={{display: "flex", justifyContent: "space-evenly"}}>
+                  <Button sx={{py: 1.5, px: 3, ...muiSidebarStyling.buttonRevertStyle}}>Revert</Button>
+                  <Button sx={{py: 1.5, px: 3, ...muiSidebarStyling.buttonApplyStyle}}>Apply</Button>
+              </div>
             </div>
         </SidebarContainer>
     );

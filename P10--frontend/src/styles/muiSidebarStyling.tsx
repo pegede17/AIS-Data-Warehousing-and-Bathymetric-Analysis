@@ -67,13 +67,18 @@ export const buttonRevertStyle = {
 
 export const buttonApplyStyle = {
     color: textWhite,
-    backgroundColor: applyGreen,
+    backgroundColor: defaultBlue,
     '&:hover': { 
-        bgcolor: applyHover 
+        bgcolor: hoverBlue 
     },
 }
 
 export const ExpandButtonStyle = {
     color: ExpandCompressIcon, 
     transform: 'rotate(180deg)'
+}
+
+export const titleText = {
+    color: defaultBlue, 
+    textAlign: 'center'
 }
