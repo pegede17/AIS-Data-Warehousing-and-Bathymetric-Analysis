@@ -30,7 +30,6 @@ const ListButton: React.FC<Props> = ({listItems, listName}) => {
             newChecked.splice(currentIndex, 1);
         }
         setChecked(newChecked);
-        console.log(checked)
     };
 
     // Handles the open and close click for the list

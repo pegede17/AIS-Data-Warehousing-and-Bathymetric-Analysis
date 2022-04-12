@@ -9,7 +9,6 @@ export const useSidebar = () => {
     const [isShown, setShown] = React.useState<boolean>(true);
 
     const handleSidebar = (bool?: boolean) => {
-        console.log("Handling sidebar")
         bool ? setShown(bool) : setShown(!isShown);
     };
 

@@ -16,6 +16,7 @@ const DRAWER_WIDTH = 325;
 
 const Sidebar: React.FC = () => {
     const {isShown, handleSidebar} = React.useContext(SidebarContext);
+
     const [fromDate, setFromDate] = React.useState<Date | null>(
         new Date('2021-01-01T12:00:00'),
     );
@@ -39,9 +40,6 @@ const Sidebar: React.FC = () => {
         setToDate(newValue);
     };
 
-    // <SidebarContainer className={'bg-white text-black sidebar'}>
-
-    // Old classname 'bg-black text-white sidebar
     return (
         <Drawer
             sx={{

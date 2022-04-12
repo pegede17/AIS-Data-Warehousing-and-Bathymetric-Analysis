@@ -9,7 +9,8 @@ const SidebarFloatingButton: React.FC = () => {
     if (!isShown) {
         return (
             <div className={'position-absolute top-0'}>
-                <IconButton size={"large"} sx={{ml: 4, mt: 3, color: '#4f7ffe', border: 1, borderColor: '#4f7ffe', boxShadow: 1 }}
+                <IconButton size={"large"}
+                            sx={{ml: 4, mt: 3, color: '#4f7ffe', border: 1, borderColor: '#4f7ffe', boxShadow: 1}}
                             style={{zIndex: '9999'}}
                             onClick={() => handleSidebar()}>
                     <MenuIcon/>

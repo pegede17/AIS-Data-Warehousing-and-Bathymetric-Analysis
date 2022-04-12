@@ -23,7 +23,7 @@ const MapExample: React.FC = () => {
       </Marker>
       <FeatureGroup pathOptions={ { color: 'purple' } }>
          {data.map((point) => {
-          console.log(point.polygon.coordinates.toString())
+          // console.log(point.polygon.coordinates.toString())
           return <Rectangle key={point.polygon.coordinates.toString()} bounds={new LatLngBounds(
             new LatLng(point.polygon.coordinates[0][0][1] ?? 0, point.polygon.coordinates[0][0][0] ?? 0),
             new LatLng(point.polygon.coordinates[0][2][1] ?? 0, point.polygon.coordinates[0][2][0] ?? 0))}><Popup>Max: {point.max} Count: {point.count}</Popup></Rectangle>
