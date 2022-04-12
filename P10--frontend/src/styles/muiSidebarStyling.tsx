@@ -1,16 +1,14 @@
-import { checkboxClasses } from "@mui/material/Checkbox";
+import {checkboxClasses} from "@mui/material/Checkbox";
+
 const defaultBlue = '#4f7ffe';
 const backgroundWhite = '#fefefe';
 const innerListBackground = '#fafbff'
 const hoverBlue = '#0075e3';
 const textGray = '#526579';
 const checkmarkGray = '#D3D8E3';
-const applyGreen = '#3ad3a7';
-const applyHover = '#1ed38c';
 const revertHover = '#52616c';
 const ExpandCompressIcon = '#d3d8e3';
 const textWhite = '#FFFFFF';
-
 
 
 export const outerListStyle = {
@@ -52,7 +50,7 @@ export const checkboxStyle = {
         color: checkmarkGray,
     },
     // Checkmark icon size
-    '& .MuiSvgIcon-root': { fontSize: 30,  }
+    '& .MuiSvgIcon-root': {fontSize: 30,}
 }
 
 export const buttonRevertStyle = {

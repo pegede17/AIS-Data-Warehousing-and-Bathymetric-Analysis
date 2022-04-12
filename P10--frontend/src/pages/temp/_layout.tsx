@@ -1,10 +1,9 @@
 import React from 'react';
 import Container from "react-bootstrap/Container";
 import styled from "styled-components";
-import MapExample from "./MapExample";
 import Sidebar from "../../components/Sidebar";
-import {SidebarContext} from "../../contexts/sidebarContext";
 import SidebarFloatingButton from "../../components/SidebarFloatingButton";
+import MapGeojson from "./maps/MapGeojson";
 
 const MainLayout = () => {
 
@@ -15,7 +14,7 @@ const MainLayout = () => {
                 <Sidebar/>
 
                 <div className={'p-0 m-0 w-100 h-100'}>
-                    <MapExample/>
+                    <MapGeojson/>
                 </div>
             </Container>
 
