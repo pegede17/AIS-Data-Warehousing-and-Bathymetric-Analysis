@@ -11,6 +11,8 @@ import {DesktopDatePicker} from '@mui/x-date-pickers/DesktopDatePicker';
 import TextField from '@mui/material/TextField';
 import DoubleArrowIcon from '@mui/icons-material/DoubleArrow';
 import {Box, Container, Drawer, Grid, IconButton, InputLabel, Typography} from '@mui/material';
+import daLocale from 'date-fns/locale/da';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
 const DRAWER_WIDTH = 325;
 
@@ -76,17 +78,19 @@ const Sidebar: React.FC = () => {
 
             <Container>
                 <div className='date-picker'>
-                    <LocalizationProvider dateAdapter={AdapterMoment}>
+                    <LocalizationProvider dateAdapter={AdapterDateFns} locale={daLocale}>
                         <DesktopDatePicker
                             label="From:"
-                            inputFormat="DD/MM/yyyy"
+                            mask="__-__-____"
+                            inputFormat="dd-MM-yyyy"
                             value={fromDate}
                             onChange={handleFromDate}
                             renderInput={(params) => <TextField {...params} />}
                         />
                         <DesktopDatePicker
                             label="To:"
-                            inputFormat="DD/MM/yyyy"
+                            mask="__-__-____"
+                            inputFormat="dd-MM-yyyy"
                             value={toDate}
                             onChange={handleToDate}
                             renderInput={(params) => <TextField {...params} />}

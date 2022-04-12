@@ -1,7 +1,7 @@
 import React from 'react';
 import {GeoJSON, MapContainer, Marker, Popup, TileLayer, ZoomControl} from 'react-leaflet';
 import {Layer, LeafletMouseEvent} from "leaflet";
-import data from '../../../data/87000boxes_geojson.json';
+import data from '../../../data/15000boxes_geojson.json';
 import {FeatureCollection} from "geojson";
 
 const MapGeojson: React.FC = () => {
