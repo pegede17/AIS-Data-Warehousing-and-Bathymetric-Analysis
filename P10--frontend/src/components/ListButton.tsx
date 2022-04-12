@@ -9,7 +9,7 @@ import Checkbox, { checkboxClasses } from "@mui/material/Checkbox";
 import Collapse from '@mui/material/Collapse';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
-import * as ListStyles from '../styles/sidebarStyling';
+import * as ListStyles from '../styles/muiSidebarStyling';
 
 interface Props {
     listItems: string[];
