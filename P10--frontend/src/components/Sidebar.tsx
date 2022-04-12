@@ -5,11 +5,13 @@ import {SidebarContext} from "../contexts/sidebarContext";
 import '../styles/hideOrShowSidebar.scss';
 import '../styles/datePicker.scss';
 import ListButton from './ListButton';
-import * as SidebarStyling from '../styles/sidebarStyling';
+import * as muiSidebarStyling from '../styles/muiSidebarStyling';
 import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DesktopDatePicker } from '@mui/x-date-pickers/DesktopDatePicker';
 import TextField from '@mui/material/TextField';
+import DoubleArrowIcon from '@mui/icons-material/DoubleArrow';
+import { IconButton } from '@mui/material';
 
 const Sidebar: React.FC = () => {
     const {isShown, handleSidebar} = React.useContext(SidebarContext);
@@ -40,8 +42,11 @@ const Sidebar: React.FC = () => {
     return (
         <SidebarContainer className={'bg-white text-black sidebar'}>
             <div className={'hide-or-show-sidebar'}>
-              <Button onClick={() => handleSidebar()}>Hide sidebar</Button>
-            {/* React icons for << iconnet */}
+            {/* <Button >Hide sidebar</Button> */}
+            {/* React icons for << iconnet, use StartIcon={}, hedder MdDoubleArrow */}
+            <IconButton sx={muiSidebarStyling.ExpandButtonStyle}>
+              <DoubleArrowIcon onClick={() => handleSidebar()}/> 
+            </IconButton>
             </div>
 
             <div className='date-picker'>
@@ -68,8 +73,8 @@ const Sidebar: React.FC = () => {
             <ListButton listItems={gridList} listName={gridListName}/>
 
             <div>
-                <Button sx={SidebarStyling.buttonRevertStyle}>Revert</Button>
-                <Button sx={SidebarStyling.buttonApplyStyle}>Apply</Button>
+                <Button sx={muiSidebarStyling.buttonRevertStyle}>Revert</Button>
+                <Button sx={muiSidebarStyling.buttonApplyStyle}>Apply</Button>
             </div>
         </SidebarContainer>
     );
