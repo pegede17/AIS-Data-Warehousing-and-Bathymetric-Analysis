@@ -4,6 +4,8 @@ import styled from "styled-components";
 import MapExample from "./MapExample";
 import Sidebar from "../../components/Sidebar";
 import {SidebarContext} from "../../contexts/sidebarContext";
+import DoubleArrowIcon from '@mui/icons-material/DoubleArrow';
+import { IconButton } from '@mui/material';
 
 const MainLayout = () => {
     const {isShown, handleSidebar} = React.useContext(SidebarContext);
@@ -24,8 +26,10 @@ const MainLayout = () => {
             </Container>
 
             {!isShown &&
-                <button className={'p-2 position-absolute top-0'} style={{zIndex: '9999'}}
-                        onClick={() => handleSidebar()}>Show sidebar</button>
+                <IconButton className={'p-0 position-absolute top-0'} style={{zIndex: '9999'}}
+                onClick={() => handleSidebar()}>
+                    <DoubleArrowIcon sx={{color: '#201513'}}/>
+                </IconButton>
             }
         </OnePageContainer>
     );
