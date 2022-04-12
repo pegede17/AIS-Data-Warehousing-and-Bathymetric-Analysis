@@ -16,10 +16,8 @@ const textWhite = '#FFFFFF';
 export const outerListStyle = {
     display: 'flex',
     backgroundColor: defaultBlue,
-    padding: 1,
-    border: '1px solid black',
-    '&:hover': { 
-        bgcolor: hoverBlue 
+    '&:hover': {
+        bgcolor: hoverBlue
     },
     color: textWhite,
 }
@@ -36,7 +34,7 @@ export const itemStyle = {
     background: backgroundWhite,
     margin: 0,
     padding: 0,
-    '&:hover': { 
+    '&:hover': {
         bgcolor: 'transparent' // no on-hover color
     },
 }
@@ -60,25 +58,25 @@ export const checkboxStyle = {
 export const buttonRevertStyle = {
     color: textWhite,
     backgroundColor: textGray,
-    '&:hover': { 
-        bgcolor: revertHover 
+    '&:hover': {
+        bgcolor: revertHover
     },
 }
 
 export const buttonApplyStyle = {
     color: textWhite,
     backgroundColor: defaultBlue,
-    '&:hover': { 
-        bgcolor: hoverBlue 
+    '&:hover': {
+        bgcolor: hoverBlue
     },
 }
 
 export const ExpandButtonStyle = {
-    color: ExpandCompressIcon, 
+    color: ExpandCompressIcon,
     transform: 'rotate(180deg)'
 }
 
 export const titleText = {
-    color: defaultBlue, 
+    color: defaultBlue,
     textAlign: 'center'
 }

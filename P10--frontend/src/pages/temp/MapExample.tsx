@@ -1,5 +1,5 @@
 import React from 'react';
-import {MapContainer, Marker, Popup, TileLayer, Rectangle, FeatureGroup} from 'react-leaflet';
+import {MapContainer, Marker, Popup, TileLayer, Rectangle, FeatureGroup, ZoomControl} from 'react-leaflet';
 import data from '../../json/constraints.json';
 import {LatLng, LatLngBounds} from "leaflet";
 
@@ -8,11 +8,13 @@ const MapExample: React.FC = () => {
     <MapContainer
       center={[57.01228, 9.9917]}
       zoom={13}
+      zoomControl={false}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+      <ZoomControl position={"bottomright"} />
       <Marker position={[57.01228, 9.9917]}>
         <Popup>
           Aalborg Universitet, Cassiopeia - House of Computer Science <br />

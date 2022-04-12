@@ -1,6 +1,5 @@
 import React from 'react';
 import Button from '@mui/material/Button';
-import styled from "styled-components";
 import {SidebarContext} from "../contexts/sidebarContext";
 import '../styles/hideOrShowSidebar.scss';
 import '../styles/datePicker.scss';
@@ -11,7 +10,9 @@ import {LocalizationProvider} from '@mui/x-date-pickers/LocalizationProvider';
 import {DesktopDatePicker} from '@mui/x-date-pickers/DesktopDatePicker';
 import TextField from '@mui/material/TextField';
 import DoubleArrowIcon from '@mui/icons-material/DoubleArrow';
-import {Container, Grid, IconButton, Typography} from '@mui/material';
+import {Box, Container, Drawer, Grid, IconButton, InputLabel, Typography} from '@mui/material';
+
+const DRAWER_WIDTH = 325;
 
 const Sidebar: React.FC = () => {
     const {isShown, handleSidebar} = React.useContext(SidebarContext);
@@ -38,9 +39,28 @@ const Sidebar: React.FC = () => {
         setToDate(newValue);
     };
 
+    // <SidebarContainer className={'bg-white text-black sidebar'}>
+
     // Old classname 'bg-black text-white sidebar
     return (
-        <SidebarContainer className={'bg-white text-black sidebar'}>
+        <Drawer
+            sx={{
+                width: DRAWER_WIDTH,
+                flexShrink: 0,
+                '& .MuiDrawer-paper': {
+                    width: DRAWER_WIDTH,
+                    boxSizing: 'border-box',
+
+                    backdropFilter: 'blur(6px)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                    boxShadow: '5px 0px 50px rgba(0, 0, 0, 0.15)',
+                    borderRadius: '0px 15px 15px 0px',
+                },
+            }}
+            variant="persistent"
+            anchor="left"
+            open={isShown}
+        >
 
             <Container>
                 <Grid container spacing={2}>
@@ -49,8 +69,8 @@ const Sidebar: React.FC = () => {
                             Overview</Typography>
                     </Grid>
                     <Grid item xs={2} sx={{mt: 1}}>
-                        <IconButton sx={muiSidebarStyling.ExpandButtonStyle}>
-                            <DoubleArrowIcon onClick={() => handleSidebar()}/>
+                        <IconButton sx={muiSidebarStyling.ExpandButtonStyle} onClick={() => handleSidebar()}>
+                            <DoubleArrowIcon/>
                         </IconButton>
                     </Grid>
                 </Grid>
@@ -76,22 +96,20 @@ const Sidebar: React.FC = () => {
                     </LocalizationProvider>
                 </div>
 
-                <ListButton listItems={shipList} listName={shipListName}/>
-                <ListButton listItems={aisTypes} listName={aisListName}/>
-                <ListButton listItems={gridList} listName={gridListName}/>
+                <Box sx={{py: 4}}>
+                    <InputLabel sx={{mb: 1, fontWeight: 'bold'}}>Filters</InputLabel>
+                    <ListButton listItems={shipList} listName={shipListName}/>
+                    <ListButton listItems={aisTypes} listName={aisListName}/>
+                    <ListButton listItems={gridList} listName={gridListName}/>
+                </Box>
 
-                <div style={{display: "flex", justifyContent: "space-evenly"}}>
-                    <Button sx={{py: 1.5, px: 3, ...muiSidebarStyling.buttonRevertStyle}}>Revert</Button>
-                    <Button sx={{py: 1.5, px: 3, ...muiSidebarStyling.buttonApplyStyle}}>Apply</Button>
-                </div>
+                <Box style={{display: "flex", justifyContent: "space-evenly"}} sx={{mb: 3}}>
+                    <Button sx={{py: 1, px: 3, ...muiSidebarStyling.buttonRevertStyle}}>Revert</Button>
+                    <Button sx={{py: 1, px: 3, ...muiSidebarStyling.buttonApplyStyle}}>Apply</Button>
+                </Box>
             </Container>
-        </SidebarContainer>
+        </Drawer>
     );
 };
-
-const SidebarContainer = styled.div`
-  height: 100%;
-  width: 100%;
-`
 
 export default Sidebar;
