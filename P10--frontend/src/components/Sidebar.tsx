@@ -5,19 +5,20 @@ import '../styles/hideOrShowSidebar.scss';
 import '../styles/datePicker.scss';
 import ListButton from './ListButton';
 import * as muiSidebarStyling from '../styles/muiSidebarStyling';
-import {AdapterMoment} from '@mui/x-date-pickers/AdapterMoment';
 import {LocalizationProvider} from '@mui/x-date-pickers/LocalizationProvider';
 import {DesktopDatePicker} from '@mui/x-date-pickers/DesktopDatePicker';
 import TextField from '@mui/material/TextField';
 import DoubleArrowIcon from '@mui/icons-material/DoubleArrow';
 import {Box, Container, Drawer, Grid, IconButton, InputLabel, Typography} from '@mui/material';
 import daLocale from 'date-fns/locale/da';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import {AdapterDateFns} from '@mui/x-date-pickers/AdapterDateFns';
+import {useSnackbar} from "notistack";
 
 const DRAWER_WIDTH = 325;
 
 const Sidebar: React.FC = () => {
     const {isShown, handleSidebar} = React.useContext(SidebarContext);
+    const {enqueueSnackbar} = useSnackbar();
 
     const [fromDate, setFromDate] = React.useState<Date | null>(
         new Date('2021-01-01T12:00:00'),
@@ -107,7 +108,9 @@ const Sidebar: React.FC = () => {
 
                 <Box style={{display: "flex", justifyContent: "space-evenly"}} sx={{mb: 3}}>
                     <Button sx={{py: 1, px: 3, ...muiSidebarStyling.buttonRevertStyle}}>Revert</Button>
-                    <Button sx={{py: 1, px: 3, ...muiSidebarStyling.buttonApplyStyle}}>Apply</Button>
+                    <Button sx={{py: 1, px: 3, ...muiSidebarStyling.buttonApplyStyle}} onClick={() => {
+                        enqueueSnackbar('This is a toast example!', {variant: 'success'});
+                    }}>Apply</Button>
                 </Box>
             </Container>
         </Drawer>

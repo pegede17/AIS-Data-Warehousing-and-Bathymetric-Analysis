@@ -24,6 +24,7 @@
     "leaflet": "^1.7.1",
     "moment": "^2.29.2",
     "mui-date-picker": "^0.1.10",
+    "notistack": "^2.0.4",
     "proj4": "^2.8.0",
     "proj4leaflet": "^1.0.2",
     "react": "^17.0.2",
