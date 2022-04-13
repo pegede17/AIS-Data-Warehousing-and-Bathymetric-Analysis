@@ -4,17 +4,20 @@ import {BrowserRouter as Router, Route, Routes} from "react-router-dom";
 import MainLayout from "./temp/_layout";
 import {SidebarProvider} from "../contexts/sidebarContext";
 import {SnackbarProvider} from 'notistack';
+import {MapDetailsProvider} from "../contexts/mapDetailsContext";
 
 function App() {
     return (
         <Router>
-            <SnackbarProvider>
-                <SidebarProvider>
-                    <Routes>
-                        <Route path={'/'} element={<MainLayout/>}/>
-                    </Routes>
-                </SidebarProvider>
-            </SnackbarProvider>
+            <MapDetailsProvider>
+                <SnackbarProvider>
+                    <SidebarProvider>
+                        <Routes>
+                            <Route path={'/'} element={<MainLayout/>}/>
+                        </Routes>
+                    </SidebarProvider>
+                </SnackbarProvider>
+            </MapDetailsProvider>
         </Router>
     );
 }

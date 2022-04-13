@@ -1,8 +1,9 @@
 import React from 'react';
 import {GeoJSON, MapContainer, Marker, Popup, TileLayer, ZoomControl} from 'react-leaflet';
-import {Layer, LeafletMouseEvent} from "leaflet";
+import {Layer, LeafletMouseEvent, Map} from "leaflet";
 import data from '../../../data/15000boxes_geojson.json';
 import {FeatureCollection} from "geojson";
+import MapEventHandler from "../../../components/MapEventHandler";
 
 const MapGeojson: React.FC = () => {
     // const [selectedProperties, setSelectedProperties] = React.useState(undefined);
@@ -93,6 +94,7 @@ const MapGeojson: React.FC = () => {
                 url="https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png"
             />
             <ZoomControl position={"bottomright"}/>
+            <MapEventHandler />
             <Marker position={[57.01228, 9.9917]}>
                 <Popup>
                     Aalborg Universitet, Cassiopeia - House of Computer Science <br/>
