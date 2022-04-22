@@ -1,18 +1,19 @@
 import React from 'react';
 import {GeoJSON, MapContainer, Marker, Popup, TileLayer, ZoomControl} from 'react-leaflet';
 import {Layer, LeafletMouseEvent, Map} from "leaflet";
-import data from '../../../data/15000boxes_geojson.json';
+import data from '../../../data/more_real_data.json';
 import {FeatureCollection} from "geojson";
 import MapEventHandler from "../../../components/MapEventHandler";
 
 const MapGeojson: React.FC = () => {
     // const [selectedProperties, setSelectedProperties] = React.useState(undefined);
 
-    const defaultFeatureStyle = () => {
+    const defaultFeatureStyle = (e: LeafletMouseEvent) => {
+
         return ({
-            fillColor: '#fff',
+            fillColor: '#000',
             weight: 1,
-            opacity: 1,
+            opacity: e?.target?.feature ? e.target.feature.properties?.max ? 1 / e.target.feature.properties?.max : 1 : 1,
             color: '#526579',
             dashArray: '2',
             fillOpacity: 0.5
@@ -21,8 +22,8 @@ const MapGeojson: React.FC = () => {
 
     const selectRegion = (e: LeafletMouseEvent) => {
         // setSelectedProperties(e.target.feature.properties);
-
-        console.log(e.target.feature.properties);
+        console.log("test");
+        console.log(e.target.feature.properties?.max);
 
         e.target.setStyle({
             weight: 1,
@@ -33,7 +34,7 @@ const MapGeojson: React.FC = () => {
 
     const resetSelectedRegion = (e: LeafletMouseEvent) => {
         // setSelectedProperties(undefined);
-        e.target.setStyle(defaultFeatureStyle());
+        e.target.setStyle(defaultFeatureStyle(e));
     }
 
     const onEachAction = (feature: any, layer: Layer) => {
