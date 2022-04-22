@@ -1,29 +1,38 @@
 import React from 'react';
 import {GeoJSON, MapContainer, Marker, Popup, TileLayer, ZoomControl} from 'react-leaflet';
-import {Layer, LeafletMouseEvent, Map} from "leaflet";
-import data from '../../../data/more_real_data.json';
+import {Layer, LeafletMouseEvent} from "leaflet";
+import data from '../../../data/some_real_data.json';
+import * as geojson from "geojson";
 import {FeatureCollection} from "geojson";
 import MapEventHandler from "../../../components/MapEventHandler";
 
 const MapGeojson: React.FC = () => {
     // const [selectedProperties, setSelectedProperties] = React.useState(undefined);
 
-    const defaultFeatureStyle = (e: LeafletMouseEvent) => {
+    const defaultFeatureStyle = (feature?: geojson.Feature) => {
+        const draught = feature?.properties?.max;
+        const bgColor = draught ? '#000' : '#e440ea';
+        const opacity = draught ? 1 - (1 / draught) : 1;
+
+        /*
+        console.log(feature);
+        console.log("Opacity: " + opacity);
+        console.log("Draught: " + draught);
+
+         */
 
         return ({
-            fillColor: '#000',
+            fillColor: bgColor,
             weight: 1,
-            opacity: e?.target?.feature ? e.target.feature.properties?.max ? 1 / e.target.feature.properties?.max : 1 : 1,
+            opacity: opacity,
             color: '#526579',
             dashArray: '2',
-            fillOpacity: 0.5
+            fillOpacity: opacity
         });
     }
 
     const selectRegion = (e: LeafletMouseEvent) => {
         // setSelectedProperties(e.target.feature.properties);
-        console.log("test");
-        console.log(e.target.feature.properties?.max);
 
         e.target.setStyle({
             weight: 1,
@@ -34,7 +43,7 @@ const MapGeojson: React.FC = () => {
 
     const resetSelectedRegion = (e: LeafletMouseEvent) => {
         // setSelectedProperties(undefined);
-        e.target.setStyle(defaultFeatureStyle(e));
+        e.target.setStyle(defaultFeatureStyle());
     }
 
     const onEachAction = (feature: any, layer: Layer) => {
@@ -95,7 +104,7 @@ const MapGeojson: React.FC = () => {
                 url="https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png"
             />
             <ZoomControl position={"bottomright"}/>
-            <MapEventHandler />
+            <MapEventHandler/>
             <Marker position={[57.01228, 9.9917]}>
                 <Popup>
                     Aalborg Universitet, Cassiopeia - House of Computer Science <br/>
@@ -105,7 +114,7 @@ const MapGeojson: React.FC = () => {
 
             <GeoJSON data={mapData}
                      onEachFeature={onEachAction}
-                     style={defaultFeatureStyle}
+                     style={(ft) => defaultFeatureStyle(ft)}
             />
         </MapContainer>
     );
