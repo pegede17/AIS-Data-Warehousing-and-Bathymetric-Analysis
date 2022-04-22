@@ -4,12 +4,15 @@ import styled from "styled-components";
 import Sidebar from "../../components/Sidebar";
 import SidebarFloatingButton from "../../components/SidebarFloatingButton";
 import MapGeojson from "./maps/MapGeojson";
+import CellDetailPanel from "../../components/CellDetailPanel";
 
 const MainLayout = () => {
 
     return (
         <OnePageContainer className={'position-relative'}>
             <Container fluid className={'h-100 p-0'}>
+
+                <CellDetailPanel />
 
                 <Sidebar/>
 

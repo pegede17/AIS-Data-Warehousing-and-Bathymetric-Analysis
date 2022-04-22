@@ -5,9 +5,14 @@ import data from '../../../data/some_real_data.json';
 import * as geojson from "geojson";
 import {FeatureCollection} from "geojson";
 import MapEventHandler from "../../../components/MapEventHandler";
+import {MapDetailsContext} from "../../../contexts/mapDetailsContext";
 
 const MapGeojson: React.FC = () => {
-    // const [selectedProperties, setSelectedProperties] = React.useState(undefined);
+    const {setSelectedProperty, selectedProperties} = React.useContext(MapDetailsContext);
+
+    React.useEffect(() => {
+        console.log(selectedProperties);
+    }, [selectedProperties])
 
     const defaultFeatureStyle = (feature?: geojson.Feature) => {
         const draught = feature?.properties?.max;
@@ -32,24 +37,25 @@ const MapGeojson: React.FC = () => {
     }
 
     const selectRegion = (e: LeafletMouseEvent) => {
-        // setSelectedProperties(e.target.feature.properties);
+        setSelectedProperty(e.target.feature);
 
         e.target.setStyle({
             weight: 1,
+            fillColor: '#e7e7e7',
             color: "#526579",
-            fillOpacity: 1
+            fillOpacity: 1,
+            opacity: 1,
         });
     }
 
     const resetSelectedRegion = (e: LeafletMouseEvent) => {
-        // setSelectedProperties(undefined);
+        setSelectedProperty(undefined);
         e.target.setStyle(defaultFeatureStyle());
     }
 
     const onEachAction = (feature: any, layer: Layer) => {
         layer.on({
-            mouseover: selectRegion,
-            mouseout: resetSelectedRegion
+            mousedown: selectRegion,
         })
     }
 
@@ -93,8 +99,8 @@ const MapGeojson: React.FC = () => {
     // crs={ARCTIC_LAEA}
     return (
         <MapContainer
-            center={[57.007539, 9.973894]}
-            zoom={13}
+            center={[56.00, 11.08]}
+            zoom={9}
             preferCanvas={true}
             svg={false}
             zoomControl={false}
