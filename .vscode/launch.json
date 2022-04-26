@@ -8,9 +8,8 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/P10--backend/new_main.py",
-            "console": "integratedTerminal",
-            "args": ["-sd", "14/05/2021", "-ed", "14/05/2021", "-c"]
+            "program": "${workspaceFolder}/P10--backend/raster_creation.py",
+            "console": "integratedTerminal"
         }
     ]
 }
