@@ -7,7 +7,7 @@ from pygrametl.datasources import CSVSource, SQLSource
 from database_connection import connect_to_local, connect_via_ssh
 
 ais_file_handle = open(
-    'C:/Users/Peter/Desktop/data-1650875642354 - mindre.csv')
+    'C:/Users/Marcus Egge Olsen/Documents/AAU/10.semester/qgisFun/data-1650875642354.csv')
 csv_source = CSVSource(f=ais_file_handle, delimiter=',')
 
 connection = connect_via_ssh()
@@ -17,8 +17,7 @@ query = """
         dim_cell d inner join 
         (SELECT cell_id, max(max_draught) draught, sum(trajectory_count)trajectory_count
 	    FROM fact_cell
-	    GROUP BY cell_id
-        LIMIT 5000) f
+	    GROUP BY cell_id) f
 	    on f.cell_id = d.cell_id
         """
 
@@ -30,11 +29,15 @@ image_size = (16000, 22000)
 draughts = np.zeros((image_size), dtype=np.float32)
 
 
-for row in csv_source:
+# for row in csv_source:
+#     draughts[int(row["rowy_50m"]), int(
+#         row["columnx_50m"])] = float(row['draught']) + 200
+
+
+for row in sql_source:
     draughts[int(row["rowy_50m"]), int(
         row["columnx_50m"])] = float(row['draught'])
 
-draughts[1, 1] = 29.2
 
 #  Create Each Channel
 
@@ -48,7 +51,7 @@ geotransform = (xmin, xres, 0, ymax, 0, yres)
 
 # create the 3-band raster file
 dst_ds = gdal.GetDriverByName('GTiff').Create(
-    'draughts_debug_csv_5000_v5.tif', ny, nx, 1, gdal.GDT_Float32)
+    'AllCellsTwoMonths.tif', ny, nx, 1, gdal.GDT_Float32)
 
 dst_ds.SetGeoTransform(geotransform)    # specify coords
 srs = osr.SpatialReference()            # establish encoding
