@@ -1,7 +1,7 @@
 CREATE TABLE raster_50m_test (
 	ras raster
 );
-INSERT INTO raster_50m_test VALUES (ST_AddBand(ST_MakeEmptyRaster(22000,16000,0::float,5900000::float,50::float,50::float,0::float,0::float,32632),'8BUI'::text, 0, null));
+INSERT INTO raster_50m_test VALUES (ST_AddBand(ST_MakeEmptyRaster(157,83,3602375::float,3055475::float,5000::float,5000::float,0::float,0::float,3034),'8BUI'::text, 0, null));
 
 CREATE TABLE dim_cell (
 	geo_id BIGSERIAL PRIMARY KEY,
@@ -20,7 +20,7 @@ CREATE TABLE dim_cell (
 );
 
 With start_point as (
-	SELECT 0 x_start, 5900000 y_start
+	SELECT 3602375 x_start, 3055475 y_start
 )
 INSERT INTO dim_cell (
 	columnx_50m, rowy_50m, 
@@ -32,18 +32,18 @@ INSERT INTO dim_cell (
 	boundary_500m,
 	boundary_1000m) 
 	SELECT columnx, rowy,
-	ceil(columnx/2.0), ceil(rowy/2.0),
-	ceil(columnx/10.0), ceil(rowy/10.0),
-	ceil(columnx/20.0), ceil(rowy/20.0),
-	ST_MakeEnvelope(x_start + ((columnx - 1) * 50),y_start + ((rowy - 1) * 50),x_start + (columnx * 50),y_start + (rowy * 50),32632),
-	ST_MakeEnvelope(x_start + ((ceil(columnx/2.0) - 1) * 100),y_start + ((ceil(rowy/2.0) - 1) * 100),x_start + (ceil(columnx/2.0) * 100),y_start + (ceil(rowy/2.0) * 100),32632),
-	ST_MakeEnvelope(x_start + ((ceil(columnx/10.0) - 1) * 500),y_start + ((ceil(rowy/10.0) - 1) * 500),x_start + (ceil(columnx/10.0) * 500),y_start + (ceil(rowy/10.0) * 500),32632),
-	ST_MakeEnvelope(x_start + ((ceil(columnx/20.0) - 1) * 1000),y_start + ((ceil(rowy/20.0) - 1) * 1000),x_start + (ceil(columnx/20.0) * 1000),y_start + (ceil(rowy/20.0) * 1000),32632)
-	FROM generate_series(1, 22000) columnx, generate_series(1, 16000) rowy, start_point
+	ceil(columnx/200.0), ceil(rowy/200.0),
+	ceil(columnx/1000.0), ceil(rowy/1000.0),
+	ceil(columnx/2000.0), ceil(rowy/2000.0),
+	ST_MakeEnvelope(x_start + ((columnx - 1) * 5000),y_start + ((rowy - 1) * 5000),x_start + (columnx * 5000),y_start + (rowy * 5000),3034),
+	ST_MakeEnvelope(x_start + ((ceil(columnx/200.0) - 1) * 10000),y_start + ((ceil(rowy/200.0) - 1) * 10000),x_start + (ceil(columnx/200.0) * 10000),y_start + (ceil(rowy/200.0) * 10000),3034),
+	ST_MakeEnvelope(x_start + ((ceil(columnx/1000.0) - 1) * 50000),y_start + ((ceil(rowy/1000.0) - 1) * 50000),x_start + (ceil(columnx/1000.0) * 50000),y_start + (ceil(rowy/1000.0) * 50000),3034),
+	ST_MakeEnvelope(x_start + ((ceil(columnx/2000.0) - 1) * 100000),y_start + ((ceil(rowy/2000.0) - 1) * 100000),x_start + (ceil(columnx/2000.0) * 100000),y_start + (ceil(rowy/2000.0) * 100000),3034)
+	FROM generate_series(1, 157) columnx, generate_series(1, 83) rowy, start_point
 
 
 EXPLAIN with rast as (
-	SELECT ST_AddBand(ST_MakeEmptyRaster(22000,16000,0::float,5900000::float,50::float,50::float,0::float,0::float,32632),'8BUI'::text, 0, null) ras
+	SELECT ST_AddBand(ST_MakeEmptyRaster(15798,8324,3602375::float,3055475::float,50::float,50::float,0::float,0::float,3034),'8BUI'::text, 0, null) ras
 )
 	SELECT 
 	draught[1], ship_type_id, trajectory_id, (ST_WorldToRasterCoord(ras,(ST_PixelAsPoints(ST_AsRaster(ST_Transform(ST_SetSRID(coordinates,4326),3034), ras, '8BUI'::text, 1, 0, true))).geom)).rowy

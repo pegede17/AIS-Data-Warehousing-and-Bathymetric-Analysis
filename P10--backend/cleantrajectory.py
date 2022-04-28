@@ -22,8 +22,8 @@ from helper_functions import create_audit_dimension
 from haversine import haversine
 
 # Global variables
-MAX_COLUMNS = 22000
-MAX_ROWS = 16000
+MAX_COLUMNS = 15798
+MAX_ROWS = 8324
 TRANSFORMER = Transformer.from_crs("epsg:4326", "epsg:32632")
 
 
@@ -452,8 +452,8 @@ def clean_and_reconstruct(config, date_to_lookup):
     def calculateCellID(lat, long):
         x, y = TRANSFORMER.transform(lat, long)
 
-        columnx, rowy = ceil((x - 0) /
-                             50), ceil((y - 5900000) / 50)
+        columnx, rowy = ceil((x - 3602375) /
+                             50), ceil((y - 3055475) / 50)
         cell_id = ((rowy - 1) * MAX_COLUMNS) + columnx
 
         return cell_id
