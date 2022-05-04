@@ -6,25 +6,25 @@ import sys
 from pygrametl.datasources import CSVSource, SQLSource
 from database_connection import connect_to_local, connect_via_ssh
 
-ais_file_handle = open(
-    'C:/Users/Marcus Egge Olsen/Documents/AAU/10.semester/qgisFun/data-1650875642354.csv')
-csv_source = CSVSource(f=ais_file_handle, delimiter=',')
+# ais_file_handle = open(
+#     'C:/Users/Marcus Egge Olsen/Documents/AAU/10.semester/qgisFun/data-1650875642354.csv')
+# csv_source = CSVSource(f=ais_file_handle, delimiter=',')
 
 connection = connect_via_ssh()
 
 query = """
         SELECT columnx_50m, rowy_50m, CASE WHEN draught is null then -1 else draught END from 
-        dim_cell d inner join 
+        dim_cell_3034 d inner join 
         (SELECT cell_id, max(max_draught) draught, sum(trajectory_count)trajectory_count
-	    FROM fact_cell
+	    FROM fact_cell_3034
 	    GROUP BY cell_id) f
-	    on f.cell_id = d.cell_id
+	    on f.cell_id = d.geo_id
         """
 
 sql_source = SQLSource(connection=connection, query=query)
 
 #  Initialize the Image Size
-image_size = (16000, 22000)
+image_size = (8324, 15798)
 
 draughts = np.zeros((image_size), dtype=np.float32)
 
@@ -44,7 +44,8 @@ for row in sql_source:
 # set geotransform
 nx = image_size[0]
 ny = image_size[1]
-xmin, ymin, xmax, ymax = [0, 6700000, 1100000, 5900000]
+# xmin, ymin, xmax, ymax = [0, 6700000, 1100000, 5900000]
+xmin, ymin, xmax, ymax = [3602375, 3471675, 4392275, 3055475]
 xres = 50
 yres = 50
 geotransform = (xmin, xres, 0, ymax, 0, yres)
@@ -55,7 +56,7 @@ dst_ds = gdal.GetDriverByName('GTiff').Create(
 
 dst_ds.SetGeoTransform(geotransform)    # specify coords
 srs = osr.SpatialReference()            # establish encoding
-srs.ImportFromEPSG(32632)                # WGS84 lat/long
+srs.ImportFromEPSG(3034)                # WGS84 lat/long
 dst_ds.SetProjection(srs.ExportToWkt())  # export coords to file
 dst_ds.GetRasterBand(1).SetNoDataValue(0)
 dst_ds.GetRasterBand(1).WriteArray(draughts)
