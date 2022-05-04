@@ -6,18 +6,15 @@ import sys
 from pygrametl.datasources import CSVSource, SQLSource
 from database_connection import connect_to_local, connect_via_ssh
 
-# ais_file_handle = open(
-#     'C:/Users/Marcus Egge Olsen/Documents/AAU/10.semester/qgisFun/data-1650875642354.csv')
-# csv_source = CSVSource(f=ais_file_handle, delimiter=',')
-
 connection = connect_via_ssh()
+print("Starting")
 
 query = """
         SELECT columnx_50m, rowy_50m, CASE WHEN draught is null then -1 else draught END from 
         dim_cell_3034 d inner join 
-        (SELECT cell_id, max(max_draught) draught, sum(trajectory_count)trajectory_count
+        (SELECT cell_id , max(max_draught) draught
 	    FROM fact_cell_3034
-	    GROUP BY cell_id) f
+ 	    GROUP BY cell_id) f
 	    on f.cell_id = d.geo_id
         """
 
@@ -38,6 +35,7 @@ for row in sql_source:
     draughts[int(row["rowy_50m"]), int(
         row["columnx_50m"])] = float(row['draught'])
 
+print("matrix done")
 
 #  Create Each Channel
 
@@ -65,3 +63,5 @@ dst_ds.GetRasterBand(1).WriteArray(draughts)
 # dst_ds.GetRasterBand(3).WriteArray(b_pixels)   # write b-band to the raster
 dst_ds.FlushCache()                     # write to disk
 dst_ds = None
+
+print("Done")
