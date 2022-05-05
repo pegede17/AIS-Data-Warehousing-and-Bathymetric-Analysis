@@ -24,7 +24,7 @@ from haversine import haversine
 # Global variables
 MAX_COLUMNS = 15798
 MAX_ROWS = 8324
-TRANSFORMER = Transformer.from_crs("epsg:4326", "epsg:32632")
+TRANSFORMER = Transformer.from_crs("epsg:4326", "epsg:3034")
 
 
 def set_global_variables(args):
