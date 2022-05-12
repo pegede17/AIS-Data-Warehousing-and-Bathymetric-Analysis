@@ -8,7 +8,7 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/P10--backend/raster_creation.py",
+            "program": "${workspaceFolder}/P10--backend/update_cell_id.py",
             "console": "integratedTerminal"
         }
     ]
