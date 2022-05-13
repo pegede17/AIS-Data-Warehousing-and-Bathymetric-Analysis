@@ -6,16 +6,26 @@ import * as geojson from "geojson";
 import {FeatureCollection} from "geojson";
 import MapEventHandler from "../../../components/MapEventHandler";
 import {MapDetailsContext} from "../../../contexts/mapDetailsContext";
+import { Button, Container } from '@mui/material';
+
+
 
 const MapGeojson: React.FC = () => {
     const {setSelectedProperty, selectedProperties} = React.useContext(MapDetailsContext);
-
+    const [jsonData, setJsonData] = React.useState<FeatureCollection>(data as FeatureCollection)
+    const [test, setTest] = React.useState<number>(0)
     React.useEffect(() => {
         console.log(selectedProperties);
+        console.log("JsonData")
+        fetch('http://localhost:5000/boxes')
+        .then(response => response.json())
+        .then(data => setJsonData(data));
+        console.log(jsonData)
+        setTest(test + 1)
     }, [selectedProperties])
 
     const defaultFeatureStyle = (feature?: geojson.Feature) => {
-        const draught = feature?.properties?.max;
+        const draught = feature?.properties?.draught;
         const bgColor = draught ? '#000' : '#e440ea';
         const opacity = draught ? 1 - (1 / draught) : 1;
 
@@ -32,13 +42,14 @@ const MapGeojson: React.FC = () => {
             opacity: opacity,
             color: '#526579',
             dashArray: '2',
-            fillOpacity: opacity
+            fillOpacity: opacity,
+            stroke: false
         });
     }
 
     const selectRegion = (e: LeafletMouseEvent) => {
         setSelectedProperty(e.target.feature);
-
+        
         e.target.setStyle({
             weight: 1,
             fillColor: '#e7e7e7',
@@ -63,7 +74,7 @@ const MapGeojson: React.FC = () => {
     const TILE_SIZE = 512;
 
     // https://github.com/microsoft/TypeScript/issues/26552
-    const mapData = data as FeatureCollection;
+    // const mapData = data as FeatureCollection;
 
 // const extent = Math.sqrt(2) * 6371007.2;
     /*
@@ -98,6 +109,7 @@ const MapGeojson: React.FC = () => {
 
     // crs={ARCTIC_LAEA}
     return (
+        // <Container>
         <MapContainer
             center={[56.00, 11.08]}
             zoom={9}
@@ -118,11 +130,19 @@ const MapGeojson: React.FC = () => {
                 </Popup>
             </Marker>
 
-            <GeoJSON data={mapData}
+            <GeoJSON key={test} data={jsonData}
                      onEachFeature={onEachAction}
                      style={(ft) => defaultFeatureStyle(ft)}
-            />
+                     />
+            
         </MapContainer>
+        // {/* <Button onClick={() => {
+        //     console.log("I was clicked")
+        //     fetch('http://localhost:5000/boxes')
+        // .then(response => response.json())
+        // .then(data => setJsonData(data));
+        // console.log(jsonData)}}>Tester</Button> */}
+                    //  </Container>
     );
 };
 
