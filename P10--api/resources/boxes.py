@@ -3,8 +3,8 @@ import pandas as pd
 import psycopg2
 from models.viewDTO import ViewDTO
 from util.queries import testSelect, testSelect2
-from util.database import connect_via_ssh
-
+from util.database import connect_via_ssh, connect_locally
+import configparser
 
 class Boxes(Resource):
     def get(self):
@@ -49,9 +49,16 @@ class Boxes(Resource):
                                                    GROUP BY cell_id) foo on foo.cell_id = d.cell_id
                                                         ) as t(geom, draught);"""
 
+        config = configparser.ConfigParser()
+        config.read('application.properties')
 
-        with connect_via_ssh() as connection:
-            df = pd.read_sql_query(boxRaster, connection)
+        if (config["Environment"]["development"] == False):
+            with connect_via_ssh() as connection:
+                df = pd.read_sql_query(boxRaster, connection)
+        else:
+            with connect_locally() as connection:
+                df = pd.read_sql_query(boxRaster, connection)
+
 
         # with psycopg2.connect(database="speciale", user='<postgres', password='admin') as connection:
 

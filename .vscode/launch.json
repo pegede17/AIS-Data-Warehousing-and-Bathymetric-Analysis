@@ -17,7 +17,7 @@
             "type": "python",
             "request": "launch",
             "stopOnEntry": false,
-            // "pythonPath": "${config:python.pythonPath}",
+            // "python": "${command:python.interpreterPath}",
             "program": "${workspaceRoot}\\P10--api\\app.py",
             "env": {
                 "FLASK_APP": "${workspaceRoot}\\P10--api\\app.py"

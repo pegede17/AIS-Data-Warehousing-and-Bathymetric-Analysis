@@ -27,3 +27,17 @@ def connect_via_ssh():
         port=tunnel.local_bind_port,
     )
     return connection
+
+def connect_locally():
+    config = configparser.ConfigParser()
+    config.read('application.properties')
+
+    connection_string = "host='localhost' dbname='{}' user='{}' password='{}'".format(
+        config["Database"]["dbname"],
+        config["Database"]["dbuser"],
+        config["Database"]["dbpass"]
+    )
+
+    connection = psycopg2.connect(connection_string)
+
+    return connection
