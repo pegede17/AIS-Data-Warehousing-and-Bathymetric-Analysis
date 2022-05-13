@@ -7,7 +7,7 @@ import {RasterRequestParameters} from "../models/Requests";
 export default {
     map: {
         getBoxesTesting: async (params: RasterRequestParameters) => {
-            return await axios.get<FeatureCollection>('http://localhost:5000/boxes', {params});
+            return await axios.get<FeatureCollection>('http://130.225.39.233:5000/boxes', {params});
         }
     }
 }
