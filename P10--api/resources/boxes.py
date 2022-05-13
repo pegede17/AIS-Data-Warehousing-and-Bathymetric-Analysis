@@ -25,7 +25,7 @@ class Boxes(Resource):
                             {request.args['southWestLong']}, {request.args['southWestLat']}, -- bounding
                             {request.args['northEastLong']}, {request.args['northEastLat']}, -- box limits
                             4326), 3034)))
-        AND date_id BETWEEN {request.args['startDate']} AND {request.args['endDate']}
+        AND date_id BETWEEN {request.args['fromDate']} AND {request.args['toDate']}
         GROUP BY cell_id) foo on foo.cell_id = d.cell_id
              ) as t(geom, draught);
         """
