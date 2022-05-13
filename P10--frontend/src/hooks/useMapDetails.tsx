@@ -4,8 +4,8 @@ import {Feature, FeatureCollection} from "geojson";
 import API from "../utils/API";
 import {AxiosError} from "axios";
 import {useSnackbar} from "notistack";
-import data from "../data/some_real_data.json";
-import {RasterRequestParameters} from "../models/Requests";
+import {QueryFilters, RasterRequestParameters} from "../models/Requests";
+import {aisTypes, shipList} from "../models/FiltersDefaults";
 
 export type CustomFeature = Feature & { properties: { draught?: number; count?: number; } }
 
@@ -14,7 +14,7 @@ export interface MapDetails {
     bounds?: LatLngBounds;
     selectedProperties?: CustomFeature | undefined;
     mapLoading: boolean;
-    mapData: FeatureCollection;
+    mapData: FeatureCollection | undefined;
     viewportChanged: boolean;
 
     // Dispatch methods
@@ -24,6 +24,10 @@ export interface MapDetails {
     setMapLoading: (state: boolean) => void;
     updateMapData: () => void;
     setViewportChanged: (state: boolean) => void;
+
+    // Filters
+    filters: QueryFilters;
+    setFilters: (filter: QueryFilters) => void;
 }
 
 export const useMapDetails = () => {
@@ -32,8 +36,15 @@ export const useMapDetails = () => {
     const [bounds, setBounds] = React.useState<LatLngBounds | undefined>(undefined);
     const [selectedProperties, setSelectedProperty] = React.useState<CustomFeature | undefined>(undefined);
     const [mapLoading, setMapLoading] = React.useState<boolean>(false);
-    const [mapData, setMapData] = React.useState<FeatureCollection>(data as FeatureCollection); // TODO: Remove static data as default
+    const [mapData, setMapData] = React.useState<FeatureCollection | undefined>(); // TODO: Remove static data as default
     const [viewportChanged, setViewportChanged] = React.useState<boolean>(false);
+
+    const [filters, setFilters] = React.useState<QueryFilters>({
+        fromDate: "20210501",
+        toDate: "20210507",
+        shipTypes: shipList,
+        mobileTypes: aisTypes,
+    });
 
     const updateMapData = () => {
         setMapLoading(true);
@@ -41,10 +52,11 @@ export const useMapDetails = () => {
 
         if (bounds) {
             const params: RasterRequestParameters = {
+                ...filters,
                 "northEastLat": bounds.getNorthEast().lat,
                 "northEastLong": bounds.getNorthEast().lng,
                 "southWestLat": bounds.getSouthWest().lat,
-                "southWestLong": bounds.getSouthWest().lng
+                "southWestLong": bounds.getSouthWest().lng,
             }
 
             API.map.getBoxesTesting(params)
@@ -75,6 +87,8 @@ export const useMapDetails = () => {
         mapData,
         updateMapData,
         viewportChanged,
-        setViewportChanged
+        setViewportChanged,
+        filters,
+        setFilters
     };
 };

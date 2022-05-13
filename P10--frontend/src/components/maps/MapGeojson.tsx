@@ -94,10 +94,12 @@ const MapGeojson: React.FC = () => {
 
             <MapEventHandler/>
 
+            {mapData &&
             <GeoJSON key={uuidv4()} data={mapData}
                      onEachFeature={onEachAction}
                      style={(ft) => defaultFeatureStyle(ft)}
             />
+            }
 
         </MapContainer>
     );

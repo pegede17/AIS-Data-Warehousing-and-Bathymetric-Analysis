@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import Button from '@mui/material/Button';
 import {SidebarContext} from "../contexts/sidebarContext";
 import '../styles/hideOrShowSidebar.scss';
@@ -13,34 +13,57 @@ import {Box, Container, Drawer, Grid, IconButton, InputLabel, Typography} from '
 import daLocale from 'date-fns/locale/da';
 import {AdapterDateFns} from '@mui/x-date-pickers/AdapterDateFns';
 import {useSnackbar} from "notistack";
+import {MapDetailsContext} from "../contexts/mapDetailsContext";
+import {ConvertJSDateToSmartKey} from "../utils/Conversions";
+import {aisTypes, shipList} from "../models/FiltersDefaults";
 
 const DRAWER_WIDTH = 325;
 
 const Sidebar: React.FC = () => {
+    const {filters, setFilters} = React.useContext(MapDetailsContext);
+
     const {isShown, handleSidebar} = React.useContext(SidebarContext);
     const {enqueueSnackbar} = useSnackbar();
-
-    const [fromDate, setFromDate] = React.useState<Date | null>(
-        new Date('2021-01-01T12:00:00'),
-    );
-    const [toDate, setToDate] = React.useState<Date | null>(
-        new Date('2021-01-07T12:00:00'),
+    const [fromDate, setFromDate] = React.useState<Date>(
+        new Date('2021-05-01T12:00:00'),
     );
 
+    const [toDate, setToDate] = React.useState<Date>(
+        new Date('2021-05-07T12:00:00'),
+    );
+    const [shipTypes, setShipTypes] = React.useState<string[]>(shipList);
+    const [mobileTypes, setMobileTypes] = React.useState<string[]>(aisTypes);
     const shipListName = "Ship Types";
-    const shipList = ["Sailing", "Pleasure", "Cargo", "Passenger", "Military"];
 
     const aisListName = "AIS Transponder Type";
-    const aisTypes = ["Type A", "Type B"];
 
-    const gridListName = "Grid Size";
-    const gridList = ["50 Meters", "100 Meters", "500 Meters", "1000 Meters"];
+    useEffect(() => {
+        console.log(filters);
+    }, [filters])
+
+    const onApply = () => {
+
+        setFilters({
+            ...filters,
+            shipTypes,
+            mobileTypes,
+            fromDate: ConvertJSDateToSmartKey(fromDate),
+            toDate: ConvertJSDateToSmartKey(toDate)
+        });
+
+        // TODO: Temp
+        enqueueSnackbar('This is a toast example!', {variant: 'success'});
+    }
 
     const handleFromDate = (newValue: Date | null) => {
-        setFromDate(newValue);
+        if (newValue) {
+            setFromDate(newValue);
+        }
     };
     const handleToDate = (newValue: Date | null) => {
-        setToDate(newValue);
+        if (newValue) {
+            setToDate(newValue);
+        }
     };
 
     return (
@@ -101,16 +124,15 @@ const Sidebar: React.FC = () => {
 
                 <Box sx={{py: 4}}>
                     <InputLabel sx={{mb: 1, fontWeight: 'bold'}}>Filters</InputLabel>
-                    <ListButton listItems={shipList} listName={shipListName}/>
-                    <ListButton listItems={aisTypes} listName={aisListName}/>
-                    <ListButton listItems={gridList} listName={gridListName}/>
+                    <ListButton listItems={shipList} checkedList={shipTypes} listName={shipListName}
+                                setChecked={setShipTypes}/>
+                    <ListButton listItems={aisTypes} checkedList={mobileTypes} listName={aisListName}
+                                setChecked={setMobileTypes}/>
                 </Box>
 
                 <Box style={{display: "flex", justifyContent: "space-evenly"}} sx={{mb: 3}}>
                     <Button sx={{py: 1, px: 3, ...muiSidebarStyling.buttonRevertStyle}}>Revert</Button>
-                    <Button sx={{py: 1, px: 3, ...muiSidebarStyling.buttonApplyStyle}} onClick={() => {
-                        enqueueSnackbar('This is a toast example!', {variant: 'success'});
-                    }}>Apply</Button>
+                    <Button sx={{py: 1, px: 3, ...muiSidebarStyling.buttonApplyStyle}} onClick={onApply}>Apply</Button>
                 </Box>
             </Container>
         </Drawer>

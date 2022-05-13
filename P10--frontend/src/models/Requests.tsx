@@ -1,14 +1,17 @@
-export interface RasterRequestParameters {
+
+
+export interface RasterRequestParameters extends QueryFilters {
     // Viewport
     northEastLat: string | number,
     northEastLong: string | number,
     southWestLat: string | number,
     southWestLong: string | number,
-
-    // Filters
-    filters?: ShipFilters;
 }
 
-export interface ShipFilters {
-    temp: string;
+export interface QueryFilters {
+    fromDate: string;
+    toDate: string;
+
+    shipTypes: string[];
+    mobileTypes: string[];
 }

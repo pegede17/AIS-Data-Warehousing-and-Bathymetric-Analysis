@@ -30,6 +30,26 @@ class Boxes(Resource):
              ) as t(geom, draught);
         """
 
+        boxRaster50m = f"""SELECT json_build_object(
+                                                       'type', 'FeatureCollection',
+                                                       'features', json_agg(ST_AsGeoJSON(t.*)::json)
+                                                       )
+                                                   FROM ( SELECT ST_Transform(boundary_50m,4326), max_draught from dim_cell_3034 d inner join
+                                                   (SELECT max(max_draught) max_draught, cell_id
+                                                   from fact_cell_3034
+                                                   WHERE cell_id in (SELECT cell_id
+                                                               FROM   dim_cell_3034
+                                                               WHERE  ST_Intersects(boundary_1000m,
+
+                                                                   ST_Transform(ST_MakeEnvelope (
+                                                                       {request.args['southWestLong']}, {request.args['southWestLat']}, -- bounding
+                                                                       {request.args['northEastLong']}, {request.args['northEastLat']}, -- box limits
+                                                                       4326), 3034)))
+                                                   AND date_id BETWEEN {request.args['fromDate']} AND {request.args['toDate']}
+                                                   GROUP BY cell_id) foo on foo.cell_id = d.cell_id
+                                                        ) as t(geom, draught);"""
+
+
         with connect_via_ssh() as connection:
             df = pd.read_sql_query(boxRaster, connection)
 
@@ -37,3 +57,5 @@ class Boxes(Resource):
 
         # Return boxDTO, not made yet
         return df["json_build_object"].iloc[0]
+
+

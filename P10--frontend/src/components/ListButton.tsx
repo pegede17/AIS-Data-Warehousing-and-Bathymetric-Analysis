@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useEffect} from "react";
 
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
@@ -10,20 +10,29 @@ import Collapse from '@mui/material/Collapse';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import * as ListStyles from '../styles/muiSidebarStyling';
+import {MapDetailsContext} from "../contexts/mapDetailsContext";
+import {shipList} from "../models/FiltersDefaults";
 
 interface Props {
     listItems: string[];
     listName: string;
+    setChecked: (list: string[]) => void;
+    checkedList: string[];
 }
 
-const ListButton: React.FC<Props> = ({listItems, listName}) => {
-    const [checked, setChecked] = React.useState([""]);
+const ListButton: React.FC<Props> = ({listItems, listName, setChecked, checkedList}) => {
+    const {filters, setFilters} = React.useContext(MapDetailsContext);
     const [open, setOpen] = React.useState(false);
+
+    useEffect(() => {
+        console.log(checkedList);
+    }, [checkedList])
 
     // Handles the checkmark in the list
     const handleToggle = (value: string) => () => {
-        const currentIndex = checked.indexOf(value);
-        const newChecked = [...checked];
+        console.log(value);
+        const currentIndex = checkedList.indexOf(value);
+        const newChecked = [...checkedList];
         if (currentIndex === -1) {
             newChecked.push(value);
         } else {
@@ -61,7 +70,7 @@ const ListButton: React.FC<Props> = ({listItems, listName}) => {
                                     <ListItemIcon>
                                         <Checkbox
                                             edge="start"
-                                            checked={checked.indexOf(value) !== -1}
+                                            checked={checkedList.indexOf(value) !== -1}
                                             tabIndex={-1}
                                             disableRipple
                                             inputProps={{"aria-labelledby": labelId}}
