@@ -5,6 +5,7 @@ from models.viewDTO import ViewDTO
 from util.queries import testSelect, testSelect2
 from util.database import connect_via_ssh
 
+
 class Boxes(Resource):
     def get(self):
 
@@ -24,6 +25,7 @@ class Boxes(Resource):
                             {request.args['southWestLong']}, {request.args['southWestLat']}, -- bounding
                             {request.args['northEastLong']}, {request.args['northEastLat']}, -- box limits
                             4326), 3034)))
+        AND date_id BETWEEN {request.args['startDate']} AND {request.args['endDate']}
         GROUP BY cell_id) foo on foo.cell_id = d.cell_id
              ) as t(geom, draught);
         """
