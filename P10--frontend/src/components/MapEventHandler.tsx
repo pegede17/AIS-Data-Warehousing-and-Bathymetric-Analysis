@@ -3,7 +3,14 @@ import {useMapEvents} from "react-leaflet";
 import {MapDetailsContext} from "../contexts/mapDetailsContext";
 
 const MapEventHandler: React.FC = () => {
-    const {zoomLevel, bounds, setZoom, setBounds} = React.useContext(MapDetailsContext);
+    const {
+        zoomLevel,
+        bounds,
+        setZoom,
+        setBounds,
+        setViewportChanged,
+        viewportChanged
+    } = React.useContext(MapDetailsContext);
 
     const mapEvents = useMapEvents({
         zoomend: (event) => {
@@ -12,6 +19,11 @@ const MapEventHandler: React.FC = () => {
         moveend: (event) => {
             setBounds(event.target.getBounds());
         },
+        move: () => {
+            if (!viewportChanged) {
+                setViewportChanged(true);
+            }
+        }
     })
 
     /*
@@ -27,7 +39,7 @@ const MapEventHandler: React.FC = () => {
             <h2>Zoom: {zoomLevel}</h2>
             <label>Viewport details (lat, long)</label>
             <p>NE: ({bounds?.getNorthEast().lat} , {bounds?.getNorthEast().lng}) <br/>
-                SW: ({bounds?.getSouthWest().lat} , {bounds?.getNorthEast().lng}) </p>
+                SW: ({bounds?.getSouthWest().lat} , {bounds?.getSouthWest().lng}) </p>
         </div>
     );
 };

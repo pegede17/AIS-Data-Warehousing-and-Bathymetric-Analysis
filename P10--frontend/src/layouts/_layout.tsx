@@ -1,16 +1,19 @@
 import React from 'react';
 import Container from "react-bootstrap/Container";
 import styled from "styled-components";
-import Sidebar from "../../components/Sidebar";
-import SidebarFloatingButton from "../../components/SidebarFloatingButton";
-import MapGeojson from "./maps/MapGeojson";
-import CellDetailPanel from "../../components/CellDetailPanel";
+import Sidebar from "../components/Sidebar";
+import SidebarFloatingButton from "../components/SidebarFloatingButton";
+import MapGeojson from "../components/maps/MapGeojson";
+import CellDetailPanel from "../components/CellDetailPanel";
+import MapFetchIndicator from "../components/MapFetchIndicator";
 
 const MainLayout = () => {
 
     return (
         <OnePageContainer className={'position-relative'}>
             <Container fluid className={'h-100 p-0'}>
+
+                <MapFetchIndicator />
 
                 <CellDetailPanel />
 

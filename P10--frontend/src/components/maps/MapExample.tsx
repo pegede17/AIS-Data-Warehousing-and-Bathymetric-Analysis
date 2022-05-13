@@ -1,6 +1,6 @@
 import React from 'react';
 import {FeatureGroup, MapContainer, Marker, Popup, Rectangle, TileLayer, ZoomControl} from 'react-leaflet';
-import data from '../../../data/constraints.json';
+import data from '../../data/constraints.json';
 import {LatLng, LatLngBounds} from "leaflet";
 
 const MapExample: React.FC = () => {

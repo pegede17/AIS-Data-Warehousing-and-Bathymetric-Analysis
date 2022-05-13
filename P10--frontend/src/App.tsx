@@ -1,23 +1,23 @@
 import React from 'react';
-import '../styles/app.scss';
+import './styles/app.scss';
 import {BrowserRouter as Router, Route, Routes} from "react-router-dom";
-import MainLayout from "./temp/_layout";
-import {SidebarProvider} from "../contexts/sidebarContext";
+import MainLayout from "./layouts/_layout";
+import {SidebarProvider} from "./contexts/sidebarContext";
 import {SnackbarProvider} from 'notistack';
-import {MapDetailsProvider} from "../contexts/mapDetailsContext";
+import {MapDetailsProvider} from "./contexts/mapDetailsContext";
 
 function App() {
     return (
         <Router>
-            <MapDetailsProvider>
-                <SnackbarProvider>
+            <SnackbarProvider>
+                <MapDetailsProvider>
                     <SidebarProvider>
                         <Routes>
                             <Route path={'/'} element={<MainLayout/>}/>
                         </Routes>
                     </SidebarProvider>
-                </SnackbarProvider>
-            </MapDetailsProvider>
+                </MapDetailsProvider>
+            </SnackbarProvider>
         </Router>
     );
 }

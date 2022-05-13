@@ -1,4 +1,3 @@
-import {LatLngBounds} from 'leaflet';
 import React from 'react';
 import {MapDetails, useMapDetails} from "../hooks/useMapDetails";
 
