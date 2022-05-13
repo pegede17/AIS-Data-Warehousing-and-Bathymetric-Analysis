@@ -15,11 +15,17 @@ SELECT json_build_object(
     'type', 'FeatureCollection',
     'features', json_agg(ST_AsGeoJSON(t.*)::json)
     )
-FROM ( SELECT ST_Transform(boundary_1000m,4326), max(max_draught)
-     from box_10_11_55_56 b
-     inner join fact_cell_3034 f
-         on b.cell_id = f.cell_id
-      WHERE date_id = 20210501
-     GROUP BY boundary_1000m
+FROM ( SELECT ST_Transform(boundary,4326), max_draught from dim_cell_3034_1000m d inner join 
+(SELECT max(max_draught) max_draught, cell_id 
+from fact_cell_3034_1000m
+WHERE cell_id in (SELECT cell_id
+            FROM   dim_cell_3034_1000m
+            WHERE  ST_Intersects(boundary,
+                
+                ST_Transform(ST_MakeEnvelope (
+                    9.744236909555, 54.64721428702959, -- bounding 
+                    11.056517125109464, 55.93519790503039, -- box limits
+                    4326), 3034)))
+GROUP BY cell_id) foo on foo.cell_id = d.cell_id
      ) as t(geom, draught);
 """
