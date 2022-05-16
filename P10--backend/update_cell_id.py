@@ -54,11 +54,9 @@ def update_cellID():
 
     for i in range(iterrations):
 
-        #cursor.execute(getQuery_Update(x,y))
-        #cursor.execute(QUERY_COMMIT)
-        #curser.commit()
+        cursor.execute(get_Query_Update(x,y))
+        cursor.commit()
 
-        # print(get_Query_Update(x,y))
 
         if (i % 1000 == 0):
             print("reached milestone " + str(i) + " out of " + str(iterrations)) 
