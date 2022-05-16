@@ -16,6 +16,7 @@ export interface MapDetails {
     mapLoading: boolean;
     mapData: FeatureCollection | undefined;
     viewportChanged: boolean;
+    filtersChanged: boolean;
 
     // Dispatch methods
     setZoom: (zoom?: number) => void;
@@ -24,6 +25,7 @@ export interface MapDetails {
     setMapLoading: (state: boolean) => void;
     updateMapData: () => void;
     setViewportChanged: (state: boolean) => void;
+    setFiltersChanged: (state: boolean) => void;
 
     // Filters
     filters: QueryFilters;
@@ -38,17 +40,20 @@ export const useMapDetails = () => {
     const [mapLoading, setMapLoading] = React.useState<boolean>(false);
     const [mapData, setMapData] = React.useState<FeatureCollection | undefined>(); // TODO: Remove static data as default
     const [viewportChanged, setViewportChanged] = React.useState<boolean>(false);
+    const [filtersChanged, setFiltersChanged] = React.useState<boolean>(false);
 
     const [filters, setFilters] = React.useState<QueryFilters>({
         fromDate: "20210501",
         toDate: "20210507",
         shipTypes: shipList,
         mobileTypes: aisTypes,
+        onlyTrustedDraught: true
     });
 
     const updateMapData = () => {
         setMapLoading(true);
         setViewportChanged(false);
+        setFiltersChanged(false);
 
         if (bounds) {
             const params: RasterRequestParameters = {
@@ -57,12 +62,16 @@ export const useMapDetails = () => {
                 "northEastLong": bounds.getNorthEast().lng,
                 "southWestLat": bounds.getSouthWest().lat,
                 "southWestLong": bounds.getSouthWest().lng,
+                "zoomLevel": zoomLevel!
             }
-
+            console.log(params)
             API.map.getBoxesTesting(params)
                 .then(response => {
                     setMapLoading(false);
                     setMapData(response.data);
+                    if(!response.data.features) {
+                        enqueueSnackbar('No data found with the parameters')
+                    }
                 })
                 .catch((error: AxiosError) => {
                     setMapLoading(false);
@@ -89,6 +98,8 @@ export const useMapDetails = () => {
         viewportChanged,
         setViewportChanged,
         filters,
-        setFilters
+        setFilters,
+        filtersChanged,
+        setFiltersChanged
     };
 };

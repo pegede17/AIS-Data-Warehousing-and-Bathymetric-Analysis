@@ -6,6 +6,7 @@ export interface RasterRequestParameters extends QueryFilters {
     northEastLong: string | number,
     southWestLat: string | number,
     southWestLong: string | number,
+    zoomLevel: number,
 }
 
 export interface QueryFilters {
@@ -14,4 +15,5 @@ export interface QueryFilters {
 
     shipTypes: string[];
     mobileTypes: string[];
+    onlyTrustedDraught: boolean;
 }

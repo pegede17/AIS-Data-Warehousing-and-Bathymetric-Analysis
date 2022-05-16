@@ -29,6 +29,7 @@
     "notistack": "^2.0.4",
     "proj4": "^2.8.0",
     "proj4leaflet": "^1.0.2",
+    "qs": "^6.9.7",
     "react": "^17.0.2",
     "react-bootstrap": "^2.1.2",
     "react-dom": "^17.0.2",

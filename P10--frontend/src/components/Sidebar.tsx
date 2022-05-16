@@ -15,12 +15,12 @@ import {AdapterDateFns} from '@mui/x-date-pickers/AdapterDateFns';
 import {useSnackbar} from "notistack";
 import {MapDetailsContext} from "../contexts/mapDetailsContext";
 import {ConvertJSDateToSmartKey} from "../utils/Conversions";
-import {aisTypes, shipList} from "../models/FiltersDefaults";
+import {aisTypes, shipList, trustedDraughts} from "../models/FiltersDefaults";
 
 const DRAWER_WIDTH = 325;
 
 const Sidebar: React.FC = () => {
-    const {filters, setFilters} = React.useContext(MapDetailsContext);
+    const {filters, setFilters, filtersChanged, setFiltersChanged} = React.useContext(MapDetailsContext);
 
     const {isShown, handleSidebar} = React.useContext(SidebarContext);
     const {enqueueSnackbar} = useSnackbar();
@@ -33,22 +33,26 @@ const Sidebar: React.FC = () => {
     );
     const [shipTypes, setShipTypes] = React.useState<string[]>(shipList);
     const [mobileTypes, setMobileTypes] = React.useState<string[]>(aisTypes);
+    const [onlyTrusted, setOnlyTrusted] = React.useState<string[]>(trustedDraughts);
     const shipListName = "Ship Types";
 
     const aisListName = "AIS Transponder Type";
+    const trustedListName = "Trustworthiness";
 
     useEffect(() => {
         console.log(filters);
     }, [filters])
 
     const onApply = () => {
-
+        setFiltersChanged(true);
+        console.log(filtersChanged);
         setFilters({
             ...filters,
             shipTypes,
             mobileTypes,
             fromDate: ConvertJSDateToSmartKey(fromDate),
-            toDate: ConvertJSDateToSmartKey(toDate)
+            toDate: ConvertJSDateToSmartKey(toDate),
+            onlyTrustedDraught: onlyTrusted.length > 0
         });
 
         // TODO: Temp
@@ -128,6 +132,8 @@ const Sidebar: React.FC = () => {
                                 setChecked={setShipTypes}/>
                     <ListButton listItems={aisTypes} checkedList={mobileTypes} listName={aisListName}
                                 setChecked={setMobileTypes}/>
+                    <ListButton listItems={trustedDraughts} checkedList={onlyTrusted} listName={trustedListName} 
+                                setChecked={setOnlyTrusted}/>
                 </Box>
 
                 <Box style={{display: "flex", justifyContent: "space-evenly"}} sx={{mb: 3}}>

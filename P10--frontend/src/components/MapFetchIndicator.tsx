@@ -5,12 +5,12 @@ import Button from "@mui/material/Button";
 import * as muiSidebarStyling from "../styles/muiSidebarStyling";
 
 const MapFetchIndicator = () => {
-    const {mapLoading, setMapLoading, updateMapData, viewportChanged} = React.useContext(MapDetailsContext);
+    const {mapLoading, setMapLoading, updateMapData, viewportChanged, filtersChanged} = React.useContext(MapDetailsContext);
 
     return (
         <div className={'position-absolute top-0 start-50 translate-middle'} style={{zIndex: '9999'}}>
             <div className={'d-flex align-items-top'} style={{marginTop: '4rem'}}>
-                {(!mapLoading && viewportChanged) &&
+                {(!mapLoading && (viewportChanged || filtersChanged)) &&
                 <>
                     <Button sx={{py: 1, px: 3, ...muiSidebarStyling.buttonRevertStyle}} onClick={() => {
                         updateMapData();
