@@ -49,8 +49,8 @@ def update_cellID():
     cursor.execute(QUERY_COUNT_MIN)
     startNumber = cursor.fetchone()[0]
 
-    x = startNumber
-    y = startNumber + 10000
+    x = endNumber - 10000
+    y = endNumber 
 
     iterrations = ceil((endNumber - startNumber)/10000)
 
@@ -59,11 +59,11 @@ def update_cellID():
         cursor.execute(get_Query_Update(x,y))
 
 
-        if (i % 1000 == 0):
+        if (i % 100 == 0):
             print("reached milestone " + str(i) + " out of " + str(iterrations)) 
 
-        x = x + 10000
-        y = y + 10000
+        x = x - 10000
+        y = y - 10000
 
     
 update_cellID()
