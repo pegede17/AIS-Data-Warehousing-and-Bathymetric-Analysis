@@ -11,6 +11,8 @@ def get_Query_Update(x, y):
     set cell_id = ((ceil((ST_Y(ST_Transform(coordinate::geometry,3034))-3055475)/50)-1)*15798) + ceil((ST_X(ST_Transform(coordinate::geometry,3034))-3602375)/50)
     where fact_id between {x} and {y};
 
+    commit;
+
     """
 
 
@@ -55,7 +57,6 @@ def update_cellID():
     for i in range(iterrations):
 
         cursor.execute(get_Query_Update(x,y))
-        cursor.commit()
 
 
         if (i % 1000 == 0):
