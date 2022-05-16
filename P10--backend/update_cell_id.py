@@ -17,7 +17,7 @@ def get_Query_Update(x, y):
 
 def update_cellID():
 
-    connection = connect_via_ssh()
+    connection = connect_to_local()
 
 
     cursor = connection.cursor()
