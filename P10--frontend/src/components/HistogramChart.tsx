@@ -28,26 +28,30 @@ import Chart, {
   }];
 
 
+
 const HistogramChart = () => {
+
     return (
-      <div>Test</div>
-        // <Chart
-        //     title={"Histogram for Draughts"}
-        //     dataSource={exampleData}
-        //     id='chart'
-        // >
-        //     <ArgumentAxis tickInterval={1.0} >
-        //         <Label format="decimal" />
-        //     </ArgumentAxis>
+      <div>
+          <Chart 
+              title={"Histogram for Draughts"}
+              dataSource={exampleData}
+              id='chart'
+              
+          >
+              <ArgumentAxis tickInterval={1.0} >
+                  <Label format="decimal" />
+              </ArgumentAxis>
 
-        //     <Series
-        //         type="bar"
-        //     />
+              <Series
+                  type="bar"
+              />
 
-        //     <Legend
-        //         visible={false}
-        //     />
-        // </Chart>
+              <Legend
+                  visible={false}
+              />
+          </Chart>
+        </div>
     )
 }
 
