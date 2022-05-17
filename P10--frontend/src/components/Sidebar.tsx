@@ -55,8 +55,7 @@ const Sidebar: React.FC = () => {
             onlyTrustedDraught: onlyTrusted.length > 0
         });
 
-        // TODO: Temp
-        enqueueSnackbar('This is a toast example!', {variant: 'success'});
+        enqueueSnackbar('Filters successfully saved', {variant: 'success'});
     }
 
     const handleFromDate = (newValue: Date | null) => {
