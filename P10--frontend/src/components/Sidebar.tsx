@@ -56,7 +56,7 @@ const Sidebar: React.FC = () => {
         });
 
         // TODO: Temp
-        // enqueueSnackbar('This is a toast example!', {variant: 'success'});
+        enqueueSnackbar('This is a toast example!', {variant: 'success'});
     }
 
     const handleFromDate = (newValue: Date | null) => {
@@ -93,8 +93,8 @@ const Sidebar: React.FC = () => {
             <Container>
                 <Grid container spacing={2}>
                     <Grid item xs={10}>
-                        <Typography variant={'h6'} sx={{py: 4, fontWeight: 'bold', color: '#4f7ffe'}}>Draught
-                            Overview</Typography>
+                        <Typography variant={'h6'} sx={{py: 4, fontWeight: 'bold', color: '#4f7ffe'}}>
+                            Draught Overview</Typography>
                     </Grid>
                     <Grid item xs={2} sx={{mt: 1}}>
                         <IconButton sx={muiSidebarStyling.ExpandButtonStyle} onClick={() => handleSidebar()}>
@@ -132,7 +132,7 @@ const Sidebar: React.FC = () => {
                                 setChecked={setShipTypes}/>
                     <ListButton listItems={aisTypes} checkedList={mobileTypes} listName={aisListName}
                                 setChecked={setMobileTypes}/>
-                    <ListButton listItems={trustedDraughts} checkedList={onlyTrusted} listName={trustedListName} 
+                    <ListButton listItems={trustedDraughts} checkedList={onlyTrusted} listName={trustedListName}
                                 setChecked={setOnlyTrusted}/>
                 </Box>
 
