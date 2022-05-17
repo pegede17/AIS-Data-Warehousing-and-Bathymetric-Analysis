@@ -17,7 +17,6 @@ export interface MapDetails {
     mapData: FeatureCollection | undefined;
     viewportChanged: boolean;
     filtersChanged: boolean;
-    histogramData: number[];
 
     // Dispatch methods
     setZoom: (zoom?: number) => void;
@@ -27,8 +26,6 @@ export interface MapDetails {
     updateMapData: () => void;
     setViewportChanged: (state: boolean) => void;
     setFiltersChanged: (state: boolean) => void;
-    setHistogramData: (state: number[]) => void;
-    updateHistogramData: (cellId: number) => void;
 
     // Filters
     filters: QueryFilters;
@@ -44,7 +41,6 @@ export const useMapDetails = () => {
     const [mapData, setMapData] = React.useState<FeatureCollection | undefined>(); // TODO: Remove static data as default
     const [viewportChanged, setViewportChanged] = React.useState<boolean>(false);
     const [filtersChanged, setFiltersChanged] = React.useState<boolean>(false);
-    const [histogramData, setHistogramData] = React.useState<number[]>([]);
 
     const [filters, setFilters] = React.useState<QueryFilters>({
         fromDate: "20210501",
@@ -88,23 +84,7 @@ export const useMapDetails = () => {
         }
     }
 
-    const updateHistogramData = (cellId : number) => {
-        const params: HistogramParameters = {
-            ...filters,
-            "cellId": cellId,
-            "zoomLevel": zoomLevel!
-        }
-        console.log(params);
-        API.map.getHistogram(params)
-            .then(response => {
-                setHistogramData(response.data);
-            })
-            .catch((error: AxiosError) => {
-                setMapLoading(false);
-                enqueueSnackbar(`Error occurred: ${error.message} (${error.code})`, {variant: 'error'});
-            });
-    }
-
+    
     return {
         zoomLevel,
         bounds,
@@ -122,8 +102,5 @@ export const useMapDetails = () => {
         setFilters,
         filtersChanged,
         setFiltersChanged,
-        updateHistogramData,
-        histogramData,
-        setHistogramData
     };
 };

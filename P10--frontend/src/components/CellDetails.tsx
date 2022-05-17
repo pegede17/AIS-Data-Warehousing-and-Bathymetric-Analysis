@@ -1,6 +1,7 @@
 import React from "react";
 import { DraughtDetails } from "../models/DraughtDetails";
-import {Container, Grid} from '@mui/material';
+import {Button, Container, Grid} from '@mui/material';
+import { HistogramContext } from "../contexts/histogramContext";
 
 // Recorded Draughts style
 // font-family: 'Inter';
@@ -11,7 +12,8 @@ import {Container, Grid} from '@mui/material';
 // letter-spacing: 0.05em;
 // color: #526579;
 
-const CellDetails: React.FC<DraughtDetails> = ({maximumDraught, minimumDraught, averageDraught, shipsRecorded}) => {
+const CellDetails: React.FC<DraughtDetails> = ({maximumDraught, minimumDraught, averageDraught, shipsRecorded, cellId}) => {
+    const {histogramData, updateHistogramData } = React.useContext(HistogramContext);
 
     return (
         <div>
@@ -31,6 +33,9 @@ const CellDetails: React.FC<DraughtDetails> = ({maximumDraught, minimumDraught, 
                         <p>{shipsRecorded} ships</p>
                     </Grid>
                 </Grid>
+                <Button onClick={() => {
+                    updateHistogramData(cellId);
+                }}>Get Histogram</Button>
             </Container>
         </div>
     )
