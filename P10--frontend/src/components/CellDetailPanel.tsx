@@ -1,15 +1,19 @@
 import React from 'react';
 import {MapDetailsContext} from "../contexts/mapDetailsContext";
+import API from '../utils/API';
 import CellDetails from './CellDetails';
 
 const CellDetailPanel: React.FC = () => {
-    const {setSelectedProperty, selectedProperties} = React.useContext(MapDetailsContext);
+    const {setSelectedProperty, selectedProperties, histogramData, updateHistogramData } = React.useContext(MapDetailsContext);
 
     // TODO: make recorded draughts component
     // TODO: HOOK with api call to get draught details 
-
+    
     if (selectedProperties) {
+        updateHistogramData(selectedProperties.properties.cellid!)
+        console.log(histogramData);
         console.log(selectedProperties);
+
         return (
             <div style={{zIndex: 99999, position: 'absolute', right: '50px', top: '50px', backgroundColor: '#fff'}}
                  className={'p-4 rounded'}>

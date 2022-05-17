@@ -11,6 +11,16 @@ import re
 class Histogram(Resource):
     def get(self):
 
+        ship_types = "'" + request.args['shipTypes'] + "'"
+        ship_types = re.sub("\,", "\',\'", ship_types)
+        mobile_types = "'" + request.args['mobileTypes'] + "'"
+        mobile_types = re.sub("\,", "\',\'", mobile_types)
+        only_trusted_draught = request.args['onlyTrustedDraught']
+
+        only_trusted_draught_query = ""
+        if(only_trusted_draught == "true"):
+            only_trusted_draught_query = "AND is_trusted_draught"
+
         zoom_level = int(request.args['zoomLevel'])
 
         if(zoom_level <= 13):
@@ -19,39 +29,42 @@ class Histogram(Resource):
             fact_cell = "fact_cell_3034"
 
         histogram_query = f"""
-        WITH histos as (
-  SELECT 
-    histogram_draught, 
-    histogram_traj_speed 
-  from 
-    {fact_cell}
-  where 
-    date_id BETWEEN {request.args['fromDate']} AND {request.args['toDate']}
-    and cell_id = {request.args['cellId']}
-) 
-SELECT 
-  ARRAY (
-    SELECT 
-      sum(elem) 
-    FROM 
-      histos t, 
-      unnest(t.histogram_draught) WITH ORDINALITY x(elem, rn) 
-    GROUP BY 
-      rn 
-    ORDER BY 
-      rn
-  ) hist_draught, 
-  ARRAY (
-    SELECT 
-      sum(elem) 
-    FROM 
-      histos t, 
-      unnest(t.histogram_traj_speed) WITH ORDINALITY x(elem, rn) 
-    GROUP BY 
-      rn 
-    ORDER BY 
-      rn
-  ) hist_speed;"""
+              WITH histos as (
+        SELECT 
+          histogram_draught, 
+          histogram_traj_speed 
+        from 
+          {fact_cell}
+        where 
+          cell_id = {request.args['cellId']}
+          AND date_id BETWEEN {request.args['fromDate']} AND {request.args['toDate']}
+          AND ship_type_id IN (SELECT ship_type_id from dim_ship_type WHERE ship_type IN ({ship_types}))
+          AND type_of_mobile_id IN (SELECT type_of_mobile_id from dim_type_of_mobile WHERE mobile_type IN ({mobile_types}))
+          {only_trusted_draught_query}
+        ) 
+        SELECT 
+        ARRAY (
+          SELECT 
+            sum(elem) 
+          FROM 
+            histos t, 
+            unnest(t.histogram_draught) WITH ORDINALITY x(elem, rn) 
+          GROUP BY 
+            rn 
+          ORDER BY 
+            rn
+        ) hist_draught, 
+        ARRAY (
+          SELECT 
+            sum(elem) 
+          FROM 
+            histos t, 
+            unnest(t.histogram_traj_speed) WITH ORDINALITY x(elem, rn) 
+          GROUP BY 
+            rn 
+          ORDER BY 
+            rn
+        ) hist_speed;"""
 
         config = configparser.ConfigParser()
         config.read('application.properties')

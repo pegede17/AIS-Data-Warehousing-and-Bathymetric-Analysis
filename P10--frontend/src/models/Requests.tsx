@@ -17,3 +17,8 @@ export interface QueryFilters {
     mobileTypes: string[];
     onlyTrustedDraught: boolean;
 }
+
+export interface HistogramParameters extends QueryFilters {
+    zoomLevel: number;
+    cellId: number;
+}

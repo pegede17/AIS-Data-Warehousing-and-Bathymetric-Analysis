@@ -18,27 +18,6 @@ const MapGeojson: React.FC = () => {
     } = React.useContext(MapDetailsContext);
 
 
-    /*
-    React.useEffect(() => {
-        // setMapLoading(true);
-
-        API.map.getBoxesTesting()
-            .then(response => {
-                console.log("Test1")
-                // setMapLoading(false);
-                console.log(mapLoading);
-                setMapData(response.data);
-            })
-            .catch((error: AxiosError) => {
-                console.log("Test")
-                console.log(mapLoading);
-                // setMapLoading(false);
-                enqueueSnackbar(`Error occurred: ${error.message} (${error.code})`, {variant: 'error'});
-            });
-    }, []);
-
-     */
-
     const defaultFeatureStyle = (feature?: geojson.Feature) => {
         const draught = feature?.properties?.maxdraught;
         const bgColor = draught ? '#000' : '#e440ea';
