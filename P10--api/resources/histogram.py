@@ -8,7 +8,7 @@ import configparser
 import re
 
 
-class Boxes(Resource):
+class Histogram(Resource):
     def get(self):
         # Put quotes around ship types
         ship_types = "'" + request.args['shipTypes'] + "'"
