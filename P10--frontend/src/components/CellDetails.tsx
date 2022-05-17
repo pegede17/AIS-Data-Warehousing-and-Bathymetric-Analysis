@@ -35,7 +35,9 @@ const CellDetails: React.FC<DraughtDetails> = ({maximumDraught, minimumDraught, 
                 </Grid>
                 <Button onClick={() => {
                     updateHistogramData(cellId);
+                    console.log(histogramData)
                 }}>Get Histogram</Button>
+                {histogramData?.length > 1 ? <div>{histogramData}</div> : null}
             </Container>
         </div>
     )

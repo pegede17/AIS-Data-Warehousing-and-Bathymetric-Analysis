@@ -5,17 +5,20 @@ import MainLayout from "./layouts/_layout";
 import {SidebarProvider} from "./contexts/sidebarContext";
 import {SnackbarProvider} from 'notistack';
 import {MapDetailsProvider} from "./contexts/mapDetailsContext";
+import { HistogramProvider } from './contexts/histogramContext';
 
 function App() {
     return (
         <Router>
             <SnackbarProvider>
                 <MapDetailsProvider>
-                    <SidebarProvider>
-                        <Routes>
-                            <Route path={'/'} element={<MainLayout/>}/>
-                        </Routes>
-                    </SidebarProvider>
+                    <HistogramProvider>
+                        <SidebarProvider>
+                            <Routes>
+                                <Route path={'/'} element={<MainLayout/>}/>
+                            </Routes>
+                        </SidebarProvider>
+                    </HistogramProvider>
                 </MapDetailsProvider>
             </SnackbarProvider>
         </Router>
