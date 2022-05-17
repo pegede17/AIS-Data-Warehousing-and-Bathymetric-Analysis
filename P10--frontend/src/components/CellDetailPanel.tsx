@@ -9,6 +9,7 @@ const CellDetailPanel: React.FC = () => {
     // TODO: HOOK with api call to get draught details 
 
     if (selectedProperties) {
+        console.log(selectedProperties);
         return (
             <div style={{zIndex: 99999, position: 'absolute', right: '50px', top: '50px', backgroundColor: '#fff'}}
                  className={'p-4 rounded'}>

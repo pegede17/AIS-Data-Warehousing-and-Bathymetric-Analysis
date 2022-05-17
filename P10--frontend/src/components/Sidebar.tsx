@@ -56,7 +56,7 @@ const Sidebar: React.FC = () => {
         });
 
         // TODO: Temp
-        enqueueSnackbar('This is a toast example!', {variant: 'success'});
+        // enqueueSnackbar('This is a toast example!', {variant: 'success'});
     }
 
     const handleFromDate = (newValue: Date | null) => {

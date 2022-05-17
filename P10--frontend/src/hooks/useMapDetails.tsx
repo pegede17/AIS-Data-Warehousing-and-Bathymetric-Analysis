@@ -65,7 +65,7 @@ export const useMapDetails = () => {
                 "zoomLevel": zoomLevel!
             }
             console.log(params)
-            API.map.getBoxesTesting(params)
+            API.map.getBoxes(params)
                 .then(response => {
                     setMapLoading(false);
                     setMapData(response.data);
