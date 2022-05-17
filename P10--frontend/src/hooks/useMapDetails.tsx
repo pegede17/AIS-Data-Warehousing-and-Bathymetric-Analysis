@@ -7,7 +7,7 @@ import {useSnackbar} from "notistack";
 import {QueryFilters, RasterRequestParameters} from "../models/Requests";
 import {aisTypes, shipList} from "../models/FiltersDefaults";
 
-export type CustomFeature = Feature & { properties: { draught?: number; count?: number; } }
+export type CustomFeature = Feature & { properties: { maxdraught?: number; count?: number; mindraught?: number; cellid?: number; } }
 
 export interface MapDetails {
     zoomLevel?: number;

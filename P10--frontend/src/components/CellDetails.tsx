@@ -22,11 +22,13 @@ const CellDetails: React.FC<DraughtDetails> = ({maximumDraught, minimumDraught, 
                         <p>Maximum</p>
                         <p>Average</p>
                         <p>Minimum</p>
+                        <p>Count</p>
                     </Grid>
                     <Grid item xs={2} >
                         <p>{maximumDraught}m</p>
                         <p>{averageDraught}m</p>
                         <p>{minimumDraught}m</p>
+                        <p>{shipsRecorded} ships</p>
                     </Grid>
                 </Grid>
             </Container>

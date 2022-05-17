@@ -40,7 +40,7 @@ const MapGeojson: React.FC = () => {
      */
 
     const defaultFeatureStyle = (feature?: geojson.Feature) => {
-        const draught = feature?.properties?.draught;
+        const draught = feature?.properties?.maxdraught;
         const bgColor = draught ? '#000' : '#e440ea';
         const opacity = draught ? 1 - (1 / draught) : 1;
 
