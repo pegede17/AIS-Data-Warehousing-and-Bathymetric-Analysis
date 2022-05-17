@@ -4,10 +4,8 @@ import Chart, {
     ArgumentAxis,
     Label,
     Legend,
-    Series,
-    CommonSeriesSettings
+    Series
   } from 'devextreme-react/chart';
-import { Histogram } from "../hooks/useHistogram";
 interface Props {
   histogramData: number[];
 }
@@ -59,14 +57,17 @@ const HistogramChart: React.FC<Props> = ({histogramData}) => {
               title={"Histogram for Draughts"}
               dataSource={handleConversion(histogramData)}
               id='chart'
-              style={{width: 1000}}
+              style={{width: "100%"}}
+              onPointClick={(e) => {console.log(e)
+                e.target.showTooltip()
+              }}
               
           >
-              <CommonSeriesSettings
+              {/* <CommonSeriesSettings
                 argumentField="state"
                 // type="bar"
                 barPadding={0.5}
-              />
+              /> */}
                 
               <ArgumentAxis tickInterval={1.0} >
                   <Label format="decimal" />
@@ -74,7 +75,9 @@ const HistogramChart: React.FC<Props> = ({histogramData}) => {
 
               <Series
                   type="bar"
+                  barWidth={7}
                   // barPadding={5.5}
+                  hoverMode= "allSeriesPoints"
               />
 
               <Legend
