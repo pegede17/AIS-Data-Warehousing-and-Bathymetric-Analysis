@@ -26,35 +26,33 @@ const MapGeojson: React.FC = () => {
 
         return ({
             fillColor: bgColor,
-            weight: 1,
+            fillOpacity: opacity,
             opacity: opacity,
             color: '#526579',
-            dashArray: '2',
-            fillOpacity: opacity,
             stroke: false
         });
     }
 
     const selectRegion = (e: LeafletMouseEvent) => {
         setSelectedProperty(e.target.feature);
-
-        e.target.setStyle({
-            weight: 1,
-            fillColor: '#ff0000',
-            color: "#ff0000",
-            fillOpacity: 1,
-            opacity: 1,
-        });
     }
 
-    const resetSelectedRegion = (e: LeafletMouseEvent) => {
-        setSelectedProperty(undefined);
-        e.target.setStyle(defaultFeatureStyle());
+    const setFeatureHighlight = (e: LeafletMouseEvent) => {
+        e.target.setStyle({
+            fillColor: "#4f7ffe",
+            weight: 1,
+            opacity: 0.5,
+            color: '#526579',
+            dashArray: '5',
+            fillOpacity: 0.5,
+            stroke: true
+        });
     }
 
     const onEachAction = (feature: any, layer: Layer) => {
         layer.on({
             mousedown: selectRegion,
+            click: setFeatureHighlight,
         })
     }
 

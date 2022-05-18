@@ -1,6 +1,6 @@
 import React, {useEffect} from "react";
 
-import Chart, {ArgumentAxis, Label, Legend, ScrollBar, Series, ZoomAndPan} from 'devextreme-react/chart';
+import Chart, {Legend, ScrollBar, Series, ZoomAndPan} from 'devextreme-react/chart';
 import LoadingIndicator from "./LoadingIndicator";
 
 interface Props {
@@ -87,7 +87,7 @@ const HistogramChart: React.FC<Props> = ({histogramData, isLoading}) => {
                     type="bar"
                     barWidth={7}
                     // barPadding={5.5}
-                    hoverMode="allSeriesPoints"
+                    hoverMode="onlyPoint"
                 />
 
                 <Legend

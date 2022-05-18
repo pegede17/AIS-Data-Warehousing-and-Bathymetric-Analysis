@@ -8,7 +8,7 @@ const MapFetchIndicator = () => {
     const {mapLoading, setMapLoading, updateMapData, viewportChanged, filtersChanged} = React.useContext(MapDetailsContext);
 
     return (
-        <div className={'position-absolute top-0 start-50 translate-middle'} style={{zIndex: '9999'}}>
+        <div className={'position-absolute top-0 start-50 translate-middle'} style={{zIndex: '1150'}}>
             <div className={'d-flex align-items-top'} style={{marginTop: '4rem'}}>
                 {(!mapLoading && (viewportChanged || filtersChanged)) &&
                 <>
