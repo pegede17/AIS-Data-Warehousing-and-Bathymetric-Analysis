@@ -1,10 +1,10 @@
-CREATE TABLE IF NOT EXISTS fact_cell(
+CREATE TABLE IF NOT EXISTS fact_cell_50m_3034(
             fact_cell_id BIGSERIAL NOT NULL PRIMARY KEY,
             date_id INTEGER NOT NULL,
             cell_id BIGINT NOT NULL,
             ship_type_id INTEGER NOT NULL,
             type_of_mobile_id INTEGER NOT NULL,
-            trust_id INTEGER NOT NULL,
+            trust_id BOOLEAN DEFAULT False,
             audit_id INTEGER NOT NULL,
             trajectory_count INTEGER NOT NULL,
             max_draught DOUBLE PRECISION,
@@ -27,18 +27,15 @@ CREATE TABLE IF NOT EXISTS fact_cell(
                 ON UPDATE CASCADE,
             FOREIGN KEY(type_of_mobile_id)
                 REFERENCES dim_type_of_mobile (type_of_mobile_id)
-                ON UPDATE CASCADE,
-            FOREIGN KEY(trust_id)
-                REFERENCES dim_trustworthiness (trust_id)
                 ON UPDATE CASCADE
         );
 
-ALTER TABLE fact_cell DISABLE TRIGGER ALL;
-INSERT INTO fact_cell(date_id, cell_id, ship_type_id, type_of_mobile_id, trust_id, audit_id, trajectory_count, max_draught, min_draught, avg_draught, min_traj_speed, max_traj_speed, avg_traj_speed, histogram_draught, histogram_traj_speed) SELECT date_start_id,
+ALTER TABLE fact_cell_50m_3034 DISABLE TRIGGER ALL;
+INSERT INTO fact_cell_50m_3034(date_id, cell_id, ship_type_id, type_of_mobile_id, is_draught_trusted, audit_id, trajectory_count, max_draught, min_draught, avg_draught, min_traj_speed, max_traj_speed, avg_traj_speed, histogram_draught, histogram_traj_speed) SELECT date_start_id,
 		dim_cell.cell_id, 
 		ship_type_id, 
 		type_of_mobile_id,
-		1 trust_id,
+		is_draught_trusted,
 		1 audit_id,
 		count(traj.trajectory_id) trajectory_count, 
 		MAX(draught[1]) max_draught,
@@ -54,5 +51,5 @@ inner join bridge_traj_sailing_cell b
 	on traj.trajectory_id = b.trajectory_id
 inner join dim_cell on dim_cell.cell_id = b.cell_id
 WHERE date_start_id > 20210501
-GROUP BY date_start_id, dim_cell.cell_id, ship_type_id, type_of_mobile_id;
-ALTER TABLE fact_cell ENABLE TRIGGER ALL;
+GROUP BY date_start_id, dim_cell.cell_id, ship_type_id, type_of_mobile_id, is_draught_trusted;
+ALTER TABLE fact_cell_50m_3034 ENABLE TRIGGER ALL;
