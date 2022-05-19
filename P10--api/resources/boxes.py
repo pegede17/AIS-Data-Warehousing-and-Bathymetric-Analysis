@@ -19,7 +19,7 @@ class Boxes(Resource):
 
         only_trusted_draught_query = ""
         if(only_trusted_draught == "true"):
-            only_trusted_draught_query = "AND is_trusted_draught"
+            only_trusted_draught_query = "AND is_draught_trusted"
 
         zoom_level = int(request.args['zoomLevel'])
 
@@ -41,13 +41,13 @@ class Boxes(Resource):
             )
         FROM ( SELECT ST_Transform({boundary_to_show},4326), max_draught, min_draught, count, foo.cell_id, avg_draught
         FROM {dim_cell} d inner join
-            (SELECT max(max_draught) max_draught, 
-                MIN(min_draught) min_draught, 
-                cell_id, 
-                SUM(trajectory_count) count, 
-                SUM(avg_draught * trajectory_count)/ 
-                    CASE WHEN SUM(CASE WHEN avg_draught IS NOT NULL THEN trajectory_count ELSE 0 END) > 0 
-                        THEN SUM(CASE WHEN avg_draught IS NOT NULL THEN trajectory_count ELSE 0 END) 
+            (SELECT max(max_draught) max_draught,
+                MIN(min_draught) min_draught,
+                cell_id,
+                SUM(trajectory_count) count,
+                SUM(avg_draught * trajectory_count)/
+                    CASE WHEN SUM(CASE WHEN avg_draught IS NOT NULL THEN trajectory_count ELSE 0 END) > 0
+                        THEN SUM(CASE WHEN avg_draught IS NOT NULL THEN trajectory_count ELSE 0 END)
                         ELSE 1 END avg_draught
             from {fact_cell}
             WHERE cell_id in (SELECT cell_id

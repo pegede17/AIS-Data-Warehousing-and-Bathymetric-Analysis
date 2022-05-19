@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React from 'react';
 import Button from '@mui/material/Button';
 import {SidebarContext} from "../contexts/sidebarContext";
 import '../styles/hideOrShowSidebar.scss';
@@ -9,18 +9,37 @@ import {LocalizationProvider} from '@mui/x-date-pickers/LocalizationProvider';
 import {DesktopDatePicker} from '@mui/x-date-pickers/DesktopDatePicker';
 import TextField from '@mui/material/TextField';
 import DoubleArrowIcon from '@mui/icons-material/DoubleArrow';
-import {Box, Container, Drawer, Grid, IconButton, InputLabel, Typography} from '@mui/material';
+import {
+    Box,
+    Container,
+    Drawer,
+    FormControlLabel,
+    Grid,
+    IconButton,
+    InputLabel,
+    Stack,
+    Switch,
+    Typography
+} from '@mui/material';
 import daLocale from 'date-fns/locale/da';
 import {AdapterDateFns} from '@mui/x-date-pickers/AdapterDateFns';
 import {useSnackbar} from "notistack";
 import {MapDetailsContext} from "../contexts/mapDetailsContext";
 import {ConvertJSDateToSmartKey} from "../utils/Conversions";
 import {aisTypes, shipList, trustedDraughts} from "../models/FiltersDefaults";
+import {ViewType} from "../hooks/useMapDetails";
 
 const DRAWER_WIDTH = 325;
 
 const Sidebar: React.FC = () => {
-    const {filters, setFilters, filtersChanged, setFiltersChanged} = React.useContext(MapDetailsContext);
+    const {
+        filters,
+        setFilters,
+        filtersChanged,
+        setFiltersChanged,
+        setViewType,
+        viewType
+    } = React.useContext(MapDetailsContext);
 
     const {isShown, handleSidebar} = React.useContext(SidebarContext);
     const {enqueueSnackbar} = useSnackbar();
@@ -39,13 +58,8 @@ const Sidebar: React.FC = () => {
     const aisListName = "AIS Transponder Type";
     const trustedListName = "Trustworthiness";
 
-    useEffect(() => {
-        console.log(filters);
-    }, [filters])
-
     const onApply = () => {
         setFiltersChanged(true);
-        console.log(filtersChanged);
         setFilters({
             ...filters,
             shipTypes,
@@ -138,6 +152,24 @@ const Sidebar: React.FC = () => {
                 <Box style={{display: "flex", justifyContent: "space-evenly"}} sx={{mb: 3}}>
                     <Button sx={{py: 1, px: 3, ...muiSidebarStyling.buttonRevertStyle}}>Revert</Button>
                     <Button sx={{py: 1, px: 3, ...muiSidebarStyling.buttonApplyStyle}} onClick={onApply}>Apply</Button>
+                </Box>
+
+                <Box>
+                    <Stack direction="row" spacing={2} sx={{justifyContent: 'center', alignItems: 'center'}}>
+                        <Typography variant="overline" display="block" gutterBottom>
+                            <abbr title="Minimum Depth Chart"><strong>MDC</strong></abbr>
+                        </Typography>
+                        <FormControlLabel
+                            value="end"
+                            label={""}
+                            checked={viewType === ViewType.HEATMAP}
+                            control={<Switch color="primary"
+                                             onChange={() => viewType === ViewType.DRAUGHT ? setViewType(ViewType.HEATMAP) : setViewType(ViewType.DRAUGHT)}/>}
+                            disableTypography={true}
+                        />
+                        <Typography variant="overline" display="block"
+                                    gutterBottom><strong>Heatmap</strong></Typography>
+                    </Stack>
                 </Box>
             </Container>
         </Drawer>

@@ -4,10 +4,14 @@ import {Feature, FeatureCollection} from "geojson";
 import API from "../utils/API";
 import {AxiosError} from "axios";
 import {useSnackbar} from "notistack";
-import {HistogramParameters, QueryFilters, RasterRequestParameters} from "../models/Requests";
+import {QueryFilters, RasterRequestParameters} from "../models/Requests";
 import {aisTypes, shipList} from "../models/FiltersDefaults";
 
-export type CustomFeature = Feature & { properties: { maxdraught?: number; count?: number; mindraught?: number; cellid?: number; } }
+export type CustomFeature =
+    Feature
+    & { properties: { maxdraught?: number; count?: number; mindraught?: number; cellid?: number; } }
+
+export enum ViewType { "DRAUGHT", "HEATMAP"}
 
 export interface MapDetails {
     zoomLevel?: number;
@@ -17,6 +21,7 @@ export interface MapDetails {
     mapData: FeatureCollection | undefined;
     viewportChanged: boolean;
     filtersChanged: boolean;
+    viewType: ViewType;
 
     // Dispatch methods
     setZoom: (zoom?: number) => void;
@@ -26,6 +31,7 @@ export interface MapDetails {
     updateMapData: () => void;
     setViewportChanged: (state: boolean) => void;
     setFiltersChanged: (state: boolean) => void;
+    setViewType: (type: ViewType) => void;
 
     // Filters
     filters: QueryFilters;
@@ -41,6 +47,7 @@ export const useMapDetails = () => {
     const [mapData, setMapData] = React.useState<FeatureCollection | undefined>(); // TODO: Remove static data as default
     const [viewportChanged, setViewportChanged] = React.useState<boolean>(false);
     const [filtersChanged, setFiltersChanged] = React.useState<boolean>(false);
+    const [viewType, setViewType] = React.useState<ViewType>(ViewType.DRAUGHT);
 
     const [filters, setFilters] = React.useState<QueryFilters>({
         fromDate: "20210501",
@@ -69,7 +76,7 @@ export const useMapDetails = () => {
                 .then(response => {
                     setMapLoading(false);
                     setMapData(response.data);
-                    if(!response.data.features) {
+                    if (!response.data.features) {
                         enqueueSnackbar('No data found with the parameters')
                     }
                 })
@@ -84,7 +91,7 @@ export const useMapDetails = () => {
         }
     }
 
-    
+
     return {
         zoomLevel,
         bounds,
@@ -102,5 +109,7 @@ export const useMapDetails = () => {
         setFilters,
         filtersChanged,
         setFiltersChanged,
+        viewType,
+        setViewType
     };
 };

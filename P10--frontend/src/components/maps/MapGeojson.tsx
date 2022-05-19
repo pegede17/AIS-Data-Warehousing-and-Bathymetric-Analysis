@@ -6,6 +6,7 @@ import MapEventHandler from "../MapEventHandler";
 import {MapDetailsContext} from "../../contexts/mapDetailsContext";
 import {v4 as uuidv4} from 'uuid';
 import {useSnackbar} from "notistack";
+import {ViewType} from "../../hooks/useMapDetails";
 
 const MapGeojson: React.FC = () => {
     const {enqueueSnackbar} = useSnackbar();
@@ -14,13 +15,19 @@ const MapGeojson: React.FC = () => {
         setMapLoading,
         mapLoading,
         mapData,
-        updateMapData
+        updateMapData,
+        viewType
     } = React.useContext(MapDetailsContext);
 
 
     const defaultFeatureStyle = (feature?: geojson.Feature) => {
         // TODO: Skift mellem dybde og varmekort (Draught/count)
-        const draught = feature?.properties?.maxdraught;
+        let draught;
+        if (viewType === ViewType.DRAUGHT) {
+            draught = feature?.properties?.maxdraught;
+        } else {
+            draught = feature?.properties?.count;
+        }
         const bgColor = draught ? '#000' : '#e440ea';
         const opacity = draught ? 1 - (1 / draught) : 1;
 

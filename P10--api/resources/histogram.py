@@ -19,7 +19,7 @@ class Histogram(Resource):
 
         only_trusted_draught_query = ""
         if(only_trusted_draught == "true"):
-            only_trusted_draught_query = "AND is_trusted_draught"
+            only_trusted_draught_query = "AND is_draught_trusted"
 
         zoom_level = int(request.args['zoomLevel'])
 
@@ -30,39 +30,39 @@ class Histogram(Resource):
 
         histogram_query = f"""
               WITH histos as (
-        SELECT 
-          histogram_draught, 
-          histogram_traj_speed 
-        from 
+        SELECT
+          histogram_draught,
+          histogram_traj_speed
+        from
           {fact_cell}
-        where 
+        where
           cell_id = {request.args['cellId']}
           AND date_id BETWEEN {request.args['fromDate']} AND {request.args['toDate']}
           AND ship_type_id IN (SELECT ship_type_id from dim_ship_type WHERE ship_type IN ({ship_types}))
           AND type_of_mobile_id IN (SELECT type_of_mobile_id from dim_type_of_mobile WHERE mobile_type IN ({mobile_types}))
           {only_trusted_draught_query}
-        ) 
-        SELECT 
+        )
+        SELECT
         ARRAY (
-          SELECT 
-            sum(elem) 
-          FROM 
-            histos t, 
-            unnest(t.histogram_draught) WITH ORDINALITY x(elem, rn) 
-          GROUP BY 
-            rn 
-          ORDER BY 
+          SELECT
+            sum(elem)
+          FROM
+            histos t,
+            unnest(t.histogram_draught) WITH ORDINALITY x(elem, rn)
+          GROUP BY
             rn
-        ) hist_draught, 
+          ORDER BY
+            rn
+        ) hist_draught,
         ARRAY (
-          SELECT 
-            sum(elem) 
-          FROM 
-            histos t, 
-            unnest(t.histogram_traj_speed) WITH ORDINALITY x(elem, rn) 
-          GROUP BY 
-            rn 
-          ORDER BY 
+          SELECT
+            sum(elem)
+          FROM
+            histos t,
+            unnest(t.histogram_traj_speed) WITH ORDINALITY x(elem, rn)
+          GROUP BY
+            rn
+          ORDER BY
             rn
         ) hist_speed;"""
 
