@@ -10,12 +10,13 @@ connection = connect_via_ssh()
 print("Starting")
 
 query = """
-        SELECT columnx_50m, rowy_50m, CASE WHEN draught is null then -1 else draught END from 
+        SELECT columnx_50m, rowy_50m,CASE WHEN draught is null then -1 else draught END from 
         dim_cell_3034 d inner join 
         (SELECT cell_id , max(max_draught) draught
-	    FROM fact_cell_3034
+	    FROM fact_cell_3034_50m
+        WHERE is_draught_trusted
  	    GROUP BY cell_id) f
-	    on f.cell_id = d.geo_id
+	    on f.cell_id = d.cell_id
         """
 
 sql_source = SQLSource(connection=connection, query=query)
@@ -50,7 +51,7 @@ geotransform = (xmin, xres, 0, ymax, 0, yres)
 
 # create the 3-band raster file
 dst_ds = gdal.GetDriverByName('GTiff').Create(
-    'AllCellsTwoMonths.tif', ny, nx, 1, gdal.GDT_Float32)
+    'AllCells50mOnlyTrust.tif', ny, nx, 1, gdal.GDT_Float32)
 
 dst_ds.SetGeoTransform(geotransform)    # specify coords
 srs = osr.SpatialReference()            # establish encoding
