@@ -6,7 +6,7 @@ import sys
 from pygrametl.datasources import CSVSource, SQLSource
 from database_connection import connect_to_local, connect_via_ssh
 
-connection = connect_via_ssh()
+connection = connect_to_local()
 print("Starting")
 
 query = """
