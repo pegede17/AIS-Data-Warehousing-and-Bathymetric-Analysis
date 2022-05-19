@@ -28,6 +28,7 @@ import {MapDetailsContext} from "../contexts/mapDetailsContext";
 import {ConvertJSDateToSmartKey} from "../utils/Conversions";
 import {aisTypes, shipList, trustedDraughts} from "../models/FiltersDefaults";
 import {ViewType} from "../hooks/useMapDetails";
+import SidebarColorPicker from "./SidebarColorPicker";
 
 const DRAWER_WIDTH = 325;
 
@@ -38,7 +39,9 @@ const Sidebar: React.FC = () => {
         filtersChanged,
         setFiltersChanged,
         setViewType,
-        viewType
+        viewType,
+        gradientColors,
+        setGradientColors
     } = React.useContext(MapDetailsContext);
 
     const {isShown, handleSidebar} = React.useContext(SidebarContext);
@@ -53,6 +56,8 @@ const Sidebar: React.FC = () => {
     const [shipTypes, setShipTypes] = React.useState<string[]>(shipList);
     const [mobileTypes, setMobileTypes] = React.useState<string[]>(aisTypes);
     const [onlyTrusted, setOnlyTrusted] = React.useState<string[]>(trustedDraughts);
+
+
     const shipListName = "Ship Types";
 
     const aisListName = "AIS Transponder Type";
@@ -171,6 +176,9 @@ const Sidebar: React.FC = () => {
                                     gutterBottom><strong>Heatmap</strong></Typography>
                     </Stack>
                 </Box>
+
+                <SidebarColorPicker/>
+
             </Container>
         </Drawer>
     );

@@ -1,5 +1,3 @@
-
-
 export interface DraughtDetails {
     maximumDraught: number;
     averageDraught: number;
