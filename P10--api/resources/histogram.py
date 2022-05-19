@@ -26,7 +26,7 @@ class Histogram(Resource):
         if(zoom_level <= 13):
             fact_cell = "fact_cell_3034_1000m"
         else:
-            fact_cell = "fact_cell_3034"
+            fact_cell = "fact_cell_3034_50m"
 
         histogram_query = f"""
               WITH histos as (
