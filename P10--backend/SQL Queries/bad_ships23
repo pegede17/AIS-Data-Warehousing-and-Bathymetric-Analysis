@@ -1,6 +1,0 @@
-SELECT * from (
-SELECT mmsi, count(mmsi)
-from dim_ship
-group by mmsi) foo
-where count > 1
-order by count desc

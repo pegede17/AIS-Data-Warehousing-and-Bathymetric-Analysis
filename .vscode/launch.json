@@ -8,8 +8,27 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/P10--backend/raster_creation.py",
-            "console": "integratedTerminal"
+            "program": "${workspaceFolder}/P10--backend/new_main.py",
+            "console": "integratedTerminal",
+            "args": ["-sd", "01/10/2021", "-ed", "01/10/2021", "-r"]
+        },
+        {
+            "name": "Flask",
+            "type": "python",
+            "request": "launch",
+            "stopOnEntry": false,
+            // "python": "${command:python.interpreterPath}",
+            "program": "${workspaceRoot}\\P10--api\\app.py",
+            "env": {
+                "FLASK_APP": "${workspaceRoot}\\P10--api\\app.py"
+            },
+            "args": [
+                "run"
+            ],
+            // "envFile": "${workspaceFolder}\\P10--api\\.env",
+            "debugOptions": [
+                "RedirectOutput"
+            ]
         }
     ]
 }

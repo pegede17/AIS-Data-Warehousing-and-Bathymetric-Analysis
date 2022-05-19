@@ -1,0 +1,7 @@
+CREATE TABLE dim_cell_3034_1000m(
+	cell_id INTEGER PRIMARY KEY,
+	columnx INTEGER,
+	rowy INTEGER,
+	boundary GEOMETRY
+);
+
