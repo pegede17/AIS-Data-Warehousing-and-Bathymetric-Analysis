@@ -6,6 +6,7 @@ import MapEventHandler from "../MapEventHandler";
 import {MapDetailsContext} from "../../contexts/mapDetailsContext";
 import {v4 as uuidv4} from 'uuid';
 import {useSnackbar} from "notistack";
+import {ViewType} from "../../hooks/useMapDetails";
 
 const MapGeojson: React.FC = () => {
     const {enqueueSnackbar} = useSnackbar();
@@ -14,67 +15,51 @@ const MapGeojson: React.FC = () => {
         setMapLoading,
         mapLoading,
         mapData,
-        updateMapData
+        updateMapData,
+        viewType
     } = React.useContext(MapDetailsContext);
 
 
-    /*
-    React.useEffect(() => {
-        // setMapLoading(true);
-
-        API.map.getBoxesTesting()
-            .then(response => {
-                console.log("Test1")
-                // setMapLoading(false);
-                console.log(mapLoading);
-                setMapData(response.data);
-            })
-            .catch((error: AxiosError) => {
-                console.log("Test")
-                console.log(mapLoading);
-                // setMapLoading(false);
-                enqueueSnackbar(`Error occurred: ${error.message} (${error.code})`, {variant: 'error'});
-            });
-    }, []);
-
-     */
-
     const defaultFeatureStyle = (feature?: geojson.Feature) => {
-        const draught = feature?.properties?.maxdraught;
+        // TODO: Skift mellem dybde og varmekort (Draught/count)
+        let draught;
+        if (viewType === ViewType.DRAUGHT) {
+            draught = feature?.properties?.maxdraught;
+        } else {
+            draught = feature?.properties?.count;
+        }
         const bgColor = draught ? '#000' : '#e440ea';
         const opacity = draught ? 1 - (1 / draught) : 1;
 
         return ({
             fillColor: bgColor,
-            weight: 1,
+            fillOpacity: opacity,
             opacity: opacity,
             color: '#526579',
-            dashArray: '2',
-            fillOpacity: opacity,
             stroke: false
         });
     }
 
     const selectRegion = (e: LeafletMouseEvent) => {
         setSelectedProperty(e.target.feature);
-
-        e.target.setStyle({
-            weight: 1,
-            fillColor: '#ff0000',
-            color: "#ff0000",
-            fillOpacity: 1,
-            opacity: 1,
-        });
     }
 
-    const resetSelectedRegion = (e: LeafletMouseEvent) => {
-        setSelectedProperty(undefined);
-        e.target.setStyle(defaultFeatureStyle());
+    const setFeatureHighlight = (e: LeafletMouseEvent) => {
+        e.target.setStyle({
+            fillColor: "#4f7ffe",
+            weight: 1,
+            opacity: 0.5,
+            color: '#526579',
+            dashArray: '5',
+            fillOpacity: 0.5,
+            stroke: true
+        });
     }
 
     const onEachAction = (feature: any, layer: Layer) => {
         layer.on({
             mousedown: selectRegion,
+            click: setFeatureHighlight,
         })
     }
 

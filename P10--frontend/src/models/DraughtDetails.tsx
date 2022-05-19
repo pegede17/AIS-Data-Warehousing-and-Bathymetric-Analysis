@@ -5,5 +5,5 @@ export interface DraughtDetails {
     averageDraught: number;
     minimumDraught: number;
     shipsRecorded: number; //trajectory count
-    histogram?: number[];
+    cellId: number;
 }

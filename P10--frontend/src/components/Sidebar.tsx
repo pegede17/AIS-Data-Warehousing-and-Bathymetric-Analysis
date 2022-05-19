@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React from 'react';
 import Button from '@mui/material/Button';
 import {SidebarContext} from "../contexts/sidebarContext";
 import '../styles/hideOrShowSidebar.scss';
@@ -9,18 +9,37 @@ import {LocalizationProvider} from '@mui/x-date-pickers/LocalizationProvider';
 import {DesktopDatePicker} from '@mui/x-date-pickers/DesktopDatePicker';
 import TextField from '@mui/material/TextField';
 import DoubleArrowIcon from '@mui/icons-material/DoubleArrow';
-import {Box, Container, Drawer, Grid, IconButton, InputLabel, Typography} from '@mui/material';
+import {
+    Box,
+    Container,
+    Drawer,
+    FormControlLabel,
+    Grid,
+    IconButton,
+    InputLabel,
+    Stack,
+    Switch,
+    Typography
+} from '@mui/material';
 import daLocale from 'date-fns/locale/da';
 import {AdapterDateFns} from '@mui/x-date-pickers/AdapterDateFns';
 import {useSnackbar} from "notistack";
 import {MapDetailsContext} from "../contexts/mapDetailsContext";
 import {ConvertJSDateToSmartKey} from "../utils/Conversions";
 import {aisTypes, shipList, trustedDraughts} from "../models/FiltersDefaults";
+import {ViewType} from "../hooks/useMapDetails";
 
 const DRAWER_WIDTH = 325;
 
 const Sidebar: React.FC = () => {
-    const {filters, setFilters, filtersChanged, setFiltersChanged} = React.useContext(MapDetailsContext);
+    const {
+        filters,
+        setFilters,
+        filtersChanged,
+        setFiltersChanged,
+        setViewType,
+        viewType
+    } = React.useContext(MapDetailsContext);
 
     const {isShown, handleSidebar} = React.useContext(SidebarContext);
     const {enqueueSnackbar} = useSnackbar();
@@ -39,13 +58,8 @@ const Sidebar: React.FC = () => {
     const aisListName = "AIS Transponder Type";
     const trustedListName = "Trustworthiness";
 
-    useEffect(() => {
-        console.log(filters);
-    }, [filters])
-
     const onApply = () => {
         setFiltersChanged(true);
-        console.log(filtersChanged);
         setFilters({
             ...filters,
             shipTypes,
@@ -55,8 +69,7 @@ const Sidebar: React.FC = () => {
             onlyTrustedDraught: onlyTrusted.length > 0
         });
 
-        // TODO: Temp
-        // enqueueSnackbar('This is a toast example!', {variant: 'success'});
+        enqueueSnackbar('Filters successfully saved', {variant: 'success'});
     }
 
     const handleFromDate = (newValue: Date | null) => {
@@ -93,8 +106,8 @@ const Sidebar: React.FC = () => {
             <Container>
                 <Grid container spacing={2}>
                     <Grid item xs={10}>
-                        <Typography variant={'h6'} sx={{py: 4, fontWeight: 'bold', color: '#4f7ffe'}}>Draught
-                            Overview</Typography>
+                        <Typography variant={'h6'} sx={{py: 4, fontWeight: 'bold', color: '#4f7ffe'}}>
+                            Draught Overview</Typography>
                     </Grid>
                     <Grid item xs={2} sx={{mt: 1}}>
                         <IconButton sx={muiSidebarStyling.ExpandButtonStyle} onClick={() => handleSidebar()}>
@@ -132,13 +145,31 @@ const Sidebar: React.FC = () => {
                                 setChecked={setShipTypes}/>
                     <ListButton listItems={aisTypes} checkedList={mobileTypes} listName={aisListName}
                                 setChecked={setMobileTypes}/>
-                    <ListButton listItems={trustedDraughts} checkedList={onlyTrusted} listName={trustedListName} 
+                    <ListButton listItems={trustedDraughts} checkedList={onlyTrusted} listName={trustedListName}
                                 setChecked={setOnlyTrusted}/>
                 </Box>
 
                 <Box style={{display: "flex", justifyContent: "space-evenly"}} sx={{mb: 3}}>
                     <Button sx={{py: 1, px: 3, ...muiSidebarStyling.buttonRevertStyle}}>Revert</Button>
                     <Button sx={{py: 1, px: 3, ...muiSidebarStyling.buttonApplyStyle}} onClick={onApply}>Apply</Button>
+                </Box>
+
+                <Box>
+                    <Stack direction="row" spacing={2} sx={{justifyContent: 'center', alignItems: 'center'}}>
+                        <Typography variant="overline" display="block" gutterBottom>
+                            <abbr title="Minimum Depth Chart"><strong>MDC</strong></abbr>
+                        </Typography>
+                        <FormControlLabel
+                            value="end"
+                            label={""}
+                            checked={viewType === ViewType.HEATMAP}
+                            control={<Switch color="primary"
+                                             onChange={() => viewType === ViewType.DRAUGHT ? setViewType(ViewType.HEATMAP) : setViewType(ViewType.DRAUGHT)}/>}
+                            disableTypography={true}
+                        />
+                        <Typography variant="overline" display="block"
+                                    gutterBottom><strong>Heatmap</strong></Typography>
+                    </Stack>
                 </Box>
             </Container>
         </Drawer>

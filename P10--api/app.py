@@ -22,3 +22,8 @@ if __name__ == '__main__':
 @app.route("/boxes")
 def fetch_boxes():
     return "lets get them boxes from the server"
+
+
+@app.route("/histogram")
+def fetch_histogram():
+    return "lets get them boxes from the server"
