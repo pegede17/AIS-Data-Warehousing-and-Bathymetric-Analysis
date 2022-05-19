@@ -7,3 +7,7 @@ export interface DraughtDetails {
     shipsRecorded: number; //trajectory count
     cellId: number;
 }
+
+export interface CustomFeatureProperties {
+
+}
