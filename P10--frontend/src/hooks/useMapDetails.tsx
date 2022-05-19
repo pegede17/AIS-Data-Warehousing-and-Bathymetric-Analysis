@@ -5,13 +5,18 @@ import API from "../utils/API";
 import {AxiosError} from "axios";
 import {useSnackbar} from "notistack";
 import {QueryFilters, RasterRequestParameters} from "../models/Requests";
-import {aisTypes, shipList} from "../models/FiltersDefaults";
+import {aisTypes, defaultGradientColors, shipList} from "../models/FiltersDefaults";
 
 export type CustomFeature =
     Feature
     & { properties: { maxdraught?: number; count?: number; mindraught?: number; cellid?: number; } }
 
 export enum ViewType { "DRAUGHT", "HEATMAP"}
+
+export type GradientColors = {
+    colorOne: string;
+    colorTwo: string;
+}
 
 export interface MapDetails {
     zoomLevel?: number;
@@ -22,6 +27,7 @@ export interface MapDetails {
     viewportChanged: boolean;
     filtersChanged: boolean;
     viewType: ViewType;
+    gradientColors: GradientColors;
 
     // Dispatch methods
     setZoom: (zoom?: number) => void;
@@ -32,6 +38,7 @@ export interface MapDetails {
     setViewportChanged: (state: boolean) => void;
     setFiltersChanged: (state: boolean) => void;
     setViewType: (type: ViewType) => void;
+    setGradientColors: (color: GradientColors) => void;
 
     // Filters
     filters: QueryFilters;
@@ -48,6 +55,7 @@ export const useMapDetails = () => {
     const [viewportChanged, setViewportChanged] = React.useState<boolean>(false);
     const [filtersChanged, setFiltersChanged] = React.useState<boolean>(false);
     const [viewType, setViewType] = React.useState<ViewType>(ViewType.DRAUGHT);
+    const [gradientColors, setGradientColors] = React.useState<GradientColors>(defaultGradientColors);
 
     const [filters, setFilters] = React.useState<QueryFilters>({
         fromDate: "20210501",
@@ -110,6 +118,8 @@ export const useMapDetails = () => {
         filtersChanged,
         setFiltersChanged,
         viewType,
-        setViewType
+        setViewType,
+        gradientColors,
+        setGradientColors
     };
 };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {GeoJSON, MapContainer, TileLayer, ZoomControl} from 'react-leaflet';
 import {Layer, LeafletMouseEvent} from "leaflet";
 import * as geojson from "geojson";
@@ -7,6 +7,7 @@ import {MapDetailsContext} from "../../contexts/mapDetailsContext";
 import {v4 as uuidv4} from 'uuid';
 import {useSnackbar} from "notistack";
 import {ViewType} from "../../hooks/useMapDetails";
+import Gradient from "javascript-color-gradient";
 
 const MapGeojson: React.FC = () => {
     const {enqueueSnackbar} = useSnackbar();
@@ -16,27 +17,45 @@ const MapGeojson: React.FC = () => {
         mapLoading,
         mapData,
         updateMapData,
-        viewType
+        viewType,
+        gradientColors
     } = React.useContext(MapDetailsContext);
+
+    const GradientGenerator = new Gradient()
+        .setColorGradient(gradientColors.colorOne, gradientColors.colorTwo)
+        .setMidpoint(50); // 50 = 100 colors to pick from (useful for normalization 0-100)
+
+    const [MAX_DATA_VALUE, setMaxRecordedValue] = React.useState(undefined);
+
+    const calculateMaxValue = () => {
+        if (viewType === ViewType.DRAUGHT) {
+            setMaxRecordedValue(Math.max(...mapData?.features.map(ft => ft.properties.maxdraught)));
+        } else {
+            setMaxRecordedValue(Math.max(...mapData?.features.map(ft => ft.properties.count)));
+        }
+    }
+
+    useEffect(() => {
+        if (mapData?.features) {
+            calculateMaxValue();
+        }
+    }, [mapData, viewType]);
 
 
     const defaultFeatureStyle = (feature?: geojson.Feature) => {
-        // TODO: Skift mellem dybde og varmekort (Draught/count)
-        let draught;
-        if (viewType === ViewType.DRAUGHT) {
-            draught = feature?.properties?.maxdraught;
-        } else {
-            draught = feature?.properties?.count;
-        }
-        const bgColor = draught ? '#000' : '#e440ea';
-        const opacity = draught ? 1 - (1 / draught) : 1;
+        const draught = viewType === ViewType.DRAUGHT ? feature?.properties?.maxdraught : feature?.properties?.count;
+        let cellColor = "#e440ea"; // Default value (pink) in case draught is missing or max data
 
+        if (MAX_DATA_VALUE) {
+            const colorIndex = Math.floor(((draught - 0.1) / (MAX_DATA_VALUE - 0.1) * 100))
+            cellColor = colorIndex > 0 ? GradientGenerator.getColor(colorIndex) : GradientGenerator.getColor(1);
+        }
+        
         return ({
-            fillColor: bgColor,
-            fillOpacity: opacity,
-            opacity: opacity,
-            color: '#526579',
-            stroke: false
+            fillColor: cellColor,
+            fillOpacity: 1,
+            opacity: 1,
+            stroke: false,
         });
     }
 
