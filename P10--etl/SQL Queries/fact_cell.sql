@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS fact_cell_3034_50m(
             cell_id BIGINT NOT NULL,
             ship_type_id INTEGER NOT NULL,
             type_of_mobile_id INTEGER NOT NULL,
-            trust_id BOOLEAN DEFAULT False,
+            is_draught_trusted BOOLEAN DEFAULT False,
             audit_id INTEGER NOT NULL,
             trajectory_count INTEGER NOT NULL,
             max_draught DOUBLE PRECISION,
