@@ -67,7 +67,7 @@ class Histogram(Resource):
         ) hist_speed;"""
 
         config = configparser.ConfigParser()
-        config.read('application.properties')
+        config.read('../application.properties')
 
         if (config["Environment"]["development"] == "False"):
             with connect_via_ssh() as connection:

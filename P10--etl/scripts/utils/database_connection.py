@@ -6,12 +6,12 @@ import configparser
 def connect_via_ssh():
 
     config = configparser.ConfigParser()
-    config.read('P10--backend/application.properties')
+    config.read('../application.properties')
 
     connection = None
 
     tunnel = SSHTunnelForwarder(
-        ('10.92.0.28', 22),
+        (config["Database"]["ipadress"], 22),
         ssh_username='ubuntu',
         ssh_private_key=config["Environment"]["SSH_PATH"],
         remote_bind_address=('localhost', 5432),
@@ -33,7 +33,7 @@ def connect_via_ssh():
 
 def connect_to_local():
     config = configparser.ConfigParser()
-    config.read('P10--backend/application.properties')
+    config.read('../application.properties')
 
     connection_string = "host='localhost' dbname='{}' user='{}' password='{}'".format(
         config["Database"]["dbname"],
@@ -48,12 +48,12 @@ def connect_to_local():
 
 def connect_to_postgres_db_via_ssh():
     config = configparser.ConfigParser()
-    config.read('P10--backend/application.properties')
+    config.read('../application.properties')
 
     connection = None
 
     tunnel = SSHTunnelForwarder(
-        ('10.92.0.28', 22),
+        (config["Database"]["ipadress"], 22),
         ssh_username='ubuntu',
         ssh_private_key=config["Environment"]["SSH_PATH"],
         remote_bind_address=('localhost', 5432),
@@ -75,7 +75,7 @@ def connect_to_postgres_db_via_ssh():
 
 def connect_to_postgres_db_local():
     config = configparser.ConfigParser()
-    config.read('P10--backend/application.properties')
+    config.read('../application.properties')
 
     connection_string = "host='localhost' dbname='postgres' user='{}' password='{}'".format(
         config["Database"]["dbuser"],

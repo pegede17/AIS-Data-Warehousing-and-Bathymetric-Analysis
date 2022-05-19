@@ -1,66 +1,24 @@
-import imp
 from time import perf_counter
-from utils.create_database import create_database
-from utils.dansk_farvand import create_dansk_farvand
 from utils.database_connection import connect_to_local, connect_via_ssh
-import psycopg2
 import pygrametl
-from pygrametl.datasources import SQLSource, CSVSource
-from pygrametl.tables import BulkFactTable, Dimension, CachedDimension, FactTable, SlowlyChangingDimension
-from sshtunnel import SSHTunnelForwarder
-from utils.helper_functions import create_audit_dimension, create_cargo_type_dimension, create_data_source_type_dimension, create_date_dimension, create_destination_dimension, create_fact_table, create_navigational_status_dimension, create_ship_dimension, create_ship_type_dimension, create_tables, create_time_dimension, create_type_of_mobile_dimension, create_type_of_position_fixing_device_dimension, create_trustworthiness_dimension
-from pygrametl.datasources import SQLSource, CSVSource, ProcessSource, TransformingSource
-from pygrametl.tables import BulkFactTable, DecoupledFactTable, DimensionPartitioner, DecoupledDimension, Dimension, CachedDimension, FactTable, SlowlyChangingDimension
-from datetime import datetime
-import configparser
-from pygrametl.parallel import shareconnectionwrapper, getsharedsequencefactory
-from pygrametl import ConnectionWrapper
-import configparser
-from datetime import timedelta
-# from helper_functions import create_tables
+from utils.helper_functions import create_audit_dimension, create_cargo_type_dimension, create_data_source_type_dimension, create_destination_dimension, create_fact_table, create_navigational_status_dimension, create_ship_dimension, create_ship_type_dimension, create_type_of_mobile_dimension, create_type_of_position_fixing_device_dimension, create_trustworthiness_dimension
+from pygrametl.datasources import CSVSource, TransformingSource
+from datetime import datetime, timedelta
 
 
-def load_data_into_db(config, date_id):
+def load_data_into_db(config, date_id, filename):
     t_start = perf_counter()
 
     # Initialize variables
     connection = None
     dw_conn_wrapper = None
 
-    # Initialize database
-    try:
-        if (config["Database"]["initialize"] == "True"):
-            # Create Database
-            print("Creating database")
-            connection = create_database()
-
-            # Create Tables
-            print("Creating tables")
-            commands = create_tables()
-            dansk_farvand = create_dansk_farvand()
-
-            cur = connection.cursor()
-            for command in commands:
-                cur.execute(command)
-            for command in dansk_farvand:
-                cur.execute(command)
-                # close communication with the PostgreSQL database server
-            cur.close()
-            # commit the changes
-            connection.commit()
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(error)
-    finally:
-        if connection is not None:
-            dw_conn_wrapper = pygrametl.ConnectionWrapper(
-                connection=connection)
-        else:
-            if(config["Environment"]["development"] == "True"):
-                connection = connect_via_ssh()
-            else:
-                connection = connect_to_local()
-            dw_conn_wrapper = pygrametl.ConnectionWrapper(
-                connection=connection)
+    if(config["Environment"]["development"] == "True"):
+        connection = connect_via_ssh()
+    else:
+        connection = connect_to_local()
+    dw_conn_wrapper = pygrametl.ConnectionWrapper(
+        connection=connection)
 
     def convertTimestampToTimeId(timestamp):
         if(timestamp):
@@ -141,7 +99,7 @@ def load_data_into_db(config, date_id):
                 return 5
 
     ais_file_handle = open(
-        config["Environment"]["FILE_PATH"] + config["Environment"]["FILE_NAME"], 'r')
+        config["Environment"]["FILE_PATH"] + filename, 'r')
     ais_source = CSVSource(f=ais_file_handle, delimiter=',')
 
     transformeddata = TransformingSource(ais_source, transformNulls)

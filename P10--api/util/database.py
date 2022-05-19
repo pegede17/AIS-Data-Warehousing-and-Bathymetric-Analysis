@@ -2,9 +2,12 @@ import psycopg2
 from sshtunnel import SSHTunnelForwarder
 import configparser
 
+
 def connect_via_ssh():
     config = configparser.ConfigParser()
-    config.read('application.properties')
+    config.read('../application.properties')
+
+    print(config["Environment"]["SSH_PATH"])
 
     connection = None
 
@@ -28,9 +31,10 @@ def connect_via_ssh():
     )
     return connection
 
+
 def connect_locally():
     config = configparser.ConfigParser()
-    config.read('application.properties')
+    config.read('../application.properties')
 
     connection_string = "host='localhost' dbname='{}' user='{}' password='{}'".format(
         config["Database"]["dbname"],

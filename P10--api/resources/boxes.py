@@ -65,7 +65,7 @@ class Boxes(Resource):
         ) as t(geom, maxDraught, minDraught, count, cellId, avgDraught);"""
 
         config = configparser.ConfigParser()
-        config.read('application.properties')
+        config.read('../application.properties')
 
         if (config["Environment"]["development"] == "False"):
             with connect_via_ssh() as connection:
