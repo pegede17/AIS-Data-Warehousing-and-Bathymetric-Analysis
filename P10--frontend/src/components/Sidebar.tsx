@@ -28,7 +28,6 @@ import {MapDetailsContext} from "../contexts/mapDetailsContext";
 import {ConvertJSDateToSmartKey} from "../utils/Conversions";
 import {aisTypes, shipList, trustedDraughts} from "../models/FiltersDefaults";
 import {ViewType} from "../hooks/useMapDetails";
-import {HexColorPicker} from "react-colorful";
 import SidebarColorPicker from "./SidebarColorPicker";
 
 const DRAWER_WIDTH = 325;
@@ -178,7 +177,7 @@ const Sidebar: React.FC = () => {
                     </Stack>
                 </Box>
 
-                <SidebarColorPicker />
+                <SidebarColorPicker/>
 
             </Container>
         </Drawer>
