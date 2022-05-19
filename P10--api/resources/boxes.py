@@ -32,7 +32,7 @@ class Boxes(Resource):
             boundary_to_show = "boundary_50m"
             dim_cell = "dim_cell_3034"
             boundary_to_intersect = "boundary_1000m"
-            fact_cell = "fact_cell_3034"
+            fact_cell = "fact_cell_3034_50m"
 
         boxRaster = f"""
         SELECT json_build_object(
