@@ -5,6 +5,10 @@ import os
 import sys
 from pygrametl.datasources import CSVSource, SQLSource
 from utils.database_connection import connect_to_local, connect_via_ssh
+import configparser
+
+config = configparser.ConfigParser()
+config.read('../application.properties')
 
 connection = connect_to_local()
 print("Starting")

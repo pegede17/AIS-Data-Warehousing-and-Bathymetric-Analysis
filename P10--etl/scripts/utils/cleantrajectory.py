@@ -20,9 +20,6 @@ from pyproj import Transformer
 from haversine import haversine
 
 # Global variables
-MAX_COLUMNS = 15798
-MAX_ROWS = 8324
-TRANSFORMER = Transformer.from_crs("epsg:4326", "epsg:3034")
 
 
 def set_global_variables(args):
@@ -66,7 +63,6 @@ def get_speed_in_knots(meters_to_last_point, time_since_last_point, point, i):
     elif(time_since_last_point == timedelta(0)):
         return 999
     else:
-        # TODO fix enhed så det er i knob
         calculated_speed = meters_to_last_point/time_since_last_point.seconds * 1.94
         if(abs(calculated_speed-sog) > 2):
             return calculated_speed
@@ -140,14 +136,14 @@ def create_database_object(trajectory):
     return database_object
 
 
-def traj_splitter_except_catch(ship):
+def traj_splitter_except_catch(ship, config):
     try:
-        traj_splitter(ship)
+        traj_splitter(ship, config)
     except Exception as e:
         print(str(e))
 
 
-def traj_splitter(ship):
+def traj_splitter(ship, config):
     speed_treshold = 0.5
     time_threshold = 300
     SOG_limit = 100
@@ -167,13 +163,7 @@ def traj_splitter(ship):
     time_since_above_threshold = timedelta(minutes=0)
     last_point_over_threshold_index = 0
 
-    # time_initial = []
-    # time_skip = []
-    # time_above = []
-    # time_below = []
-
     for i in journey.index:
-        # time_initial_start = perf_counter_ns()
         point = journey.iloc[i, :]
 
         # Determine time since last point or set to 0 if it is the first point
@@ -194,8 +184,6 @@ def traj_splitter(ship):
             else:
                 stopped_trajectories, stopped_points, first_point_not_handled = handle_time_gap(
                     stopped_points, stopped_trajectories, first_point_not_handled, i, journey)
-        # time_initial_end = perf_counter_ns()
-        # time_initial.append(time_initial_end-time_initial_start)
 
         # Skip a point if it is has a too high speed/it is an outlier
         if(speed > SOG_limit):
@@ -216,7 +204,6 @@ def traj_splitter(ship):
                 continue
 
         if(speed >= speed_treshold):
-            # time_above_start = perf_counter_ns()
             # Reset counters
             last_point_over_threshold_index = i
             # End a "stopped" session and push to stops list
@@ -235,17 +222,13 @@ def traj_splitter(ship):
                 last_point_not_skipped = i
             time_since_above_threshold = timedelta(minutes=0)
             first_point_not_handled = -1
-            # time_above_end = perf_counter_ns()
-            # time_above.append(time_above_end-time_above_start)
             continue
 
         if(speed < speed_treshold):
-            # time_below_start = perf_counter_ns()
             # Keep track of the first point with a low speed
             if(first_point_not_handled == -1):
                 first_point_not_handled = i
             # Update time since above threshold
-            # timeSinceAboveThreshold = (datetime.strptime(point['timestamp'], '%d-%m-%Y, %H:%M:%S') - datetime.strptime(journey[lastPointOverThreshold]['timestamp'],  '%d-%m-%Y, %H:%M:%S') )
             time_since_above_threshold = point['ts_time_id'] - \
                 journey.at[last_point_over_threshold_index, 'ts_time_id']
 
@@ -268,8 +251,6 @@ def traj_splitter(ship):
                         [stopped_points, journey.iloc[first_point_not_handled:i+1, :]])
                     last_point_not_skipped = i
                 first_point_not_handled = -1
-            # time_below_end = perf_counter_ns()
-            # time_below.append(time_below_end-time_below_start)
 
     if(len(stopped_points) > 2):
         stopped_trajectories.append(stopped_points.copy())
@@ -282,9 +263,9 @@ def traj_splitter(ship):
     for trajectory in stopped_trajectories:
         geoSeries = gpd.GeoSeries.from_wkb(
             trajectory['coordinate'], crs=4326)
-        geoSeries = geoSeries.to_crs("epsg:3034")
+        geoSeries = geoSeries.to_crs(config["Map"]["projection"])
         trajectory = gpd.GeoDataFrame(
-            trajectory, crs='EPSG:3034', geometry=geoSeries)
+            trajectory, crs=config["Map"]["projection"], geometry=geoSeries)
         db_object = create_database_object(trajectory)
         if (db_object == None):
             continue
@@ -297,9 +278,9 @@ def traj_splitter(ship):
     for trajectory in sailing_trajectories:
         geoSeries = gpd.GeoSeries.from_wkb(
             trajectory['coordinate'], crs=4326)
-        geoSeries = geoSeries.to_crs("epsg:3034")
+        geoSeries = geoSeries.to_crs(config["Map"]["projection"])
         trajectory = gpd.GeoDataFrame(
-            trajectory, crs='EPSG:3034', geometry=geoSeries)
+            trajectory, crs=config["Map"]["projection"], geometry=geoSeries)
         db_object = create_database_object(trajectory)
         if (db_object == None):
             continue
@@ -447,19 +428,21 @@ def clean_and_reconstruct(config, date_to_lookup):
         #            'junk_id'] = junk_df.index[(cond_patched_diff) & (cond_outlier)].tolist()[0]
 
     # Function to calculate the correct cell_id given (lat, long)
-    def calculateCellID(lat, long):
-        x, y = TRANSFORMER.transform(lat, long)
+    def calculateCellID(lat, long, transformer):
+        x, y = transformer.transform(lat, long)
 
-        columnx, rowy = ceil((x - 3602375) /
-                             50), ceil((y - 3055475) / 50)
-        cell_id = ((rowy - 1) * MAX_COLUMNS) + columnx
+        columnx, rowy = ceil((x - {config["Map"]["southwestx"]}) /
+                             50), ceil((y - {config["Map"]["southwesty"]}) / 50)
+        cell_id = ((rowy - 1) * config["Map"]["columns"]) + columnx
 
         return cell_id
 
     # Create a new column and apply a function that calculates the cell_id based on row coordinates
     print("Applying cell_id calculations to all rows")
+    transformer = Transformer.from_crs(
+        "epsg:4326", config["Map"]["projection"])
     ais_df['cell_id'] = ais_df.apply(lambda row: calculateCellID(
-        row['latitude'], row['longitude']), axis=1)
+        row['latitude'], row['longitude'], transformer), axis=1)
     # ais_df['cell_id'] = 0
 
     # Remove mmsi column. It was only required during computation
@@ -526,7 +509,7 @@ def clean_and_reconstruct(config, date_to_lookup):
 
     trajectories_per_ship = mp.Manager().dict()
     with concurrent.futures.ProcessPoolExecutor(initializer=set_global_variables, initargs=(trajectories_per_ship,)) as executor:
-        executor.map(traj_splitter_except_catch, trajectory_df)
+        executor.map(traj_splitter_except_catch, trajectory_df, config)
 
     print("Inserting trajectories")
     for _, ship in trajectory_df:
