@@ -13,7 +13,7 @@ def load_data_into_db(config, date_id, filename):
     connection = None
     dw_conn_wrapper = None
 
-    if(config["Environment"]["development"] == "True"):
+    if(config["Environment"]["connect_via_ssh"] == "True"):
         connection = connect_via_ssh()
     else:
         connection = connect_to_local()

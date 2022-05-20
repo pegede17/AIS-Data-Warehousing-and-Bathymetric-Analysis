@@ -8,7 +8,7 @@ def create_database():
     config = configparser.ConfigParser()
     config.read('../application.properties')
 
-    if(config["Environment"]["development"] == "True"):
+    if(config["Environment"]["connect_via_ssh"] == "True"):
         connection = connect_to_postgres_db_via_ssh()
     else:
         connection = connect_to_postgres_db_local()
@@ -22,7 +22,7 @@ def create_database():
     cur.close()
     connection.close()
 
-    if(config["Environment"]["development"] == "True"):
+    if(config["Environment"]["connect_via_ssh"] == "True"):
         connection = connect_via_ssh()
     else:
         connection = connect_to_local()

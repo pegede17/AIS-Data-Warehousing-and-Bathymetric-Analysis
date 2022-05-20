@@ -67,7 +67,7 @@ class Boxes(Resource):
         config = configparser.ConfigParser()
         config.read('../application.properties')
 
-        if (config["Environment"]["development"] == "False"):
+        if (config["Environment"]["connect_via_ssh"] == "True"):
             with connect_via_ssh() as connection:
                 df = pd.read_sql_query(boxRaster, connection)
         else:

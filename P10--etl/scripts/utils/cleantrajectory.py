@@ -297,7 +297,7 @@ def traj_splitter(ship, config):
 
 
 def clean_and_reconstruct(config, date_to_lookup):
-    if (config["Environment"]["development"] == "True"):
+    if (config["Environment"]["connect_via_ssh"] == "True"):
         connection = connect_via_ssh()
     else:
         connection = connect_to_local()
@@ -431,9 +431,9 @@ def clean_and_reconstruct(config, date_to_lookup):
     def calculateCellID(lat, long, transformer):
         x, y = transformer.transform(lat, long)
 
-        columnx, rowy = ceil((x - {config["Map"]["southwestx"]}) /
-                             50), ceil((y - {config["Map"]["southwesty"]}) / 50)
-        cell_id = ((rowy - 1) * config["Map"]["columns"]) + columnx
+        columnx, rowy = ceil((x - int(config["Map"]["southwestx"])) /
+                             50), ceil((y - int(config["Map"]["southwesty"])) / 50)
+        cell_id = ((rowy - 1) * int(config["Map"]["columns"])) + columnx
 
         return cell_id
 

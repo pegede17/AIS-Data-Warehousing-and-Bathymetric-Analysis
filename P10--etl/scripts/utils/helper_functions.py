@@ -4,7 +4,7 @@ from pygrametl.tables import BulkFactTable, CachedDimension, Dimension, FactTabl
 def get_fill_dim_cell_query(config):
     f"""
     With start_point as (
-        SELECT {config["Map"]["southwestx"]} x_start, {config["Map"]["southwesty"]} y_start
+        SELECT {int(config["Map"]["southwestx"])} x_start, {int(config["Map"]["southwesty"])} y_start
     )
     INSERT INTO dim_cell (
         columnx_50m, rowy_50m, 
@@ -23,7 +23,7 @@ def get_fill_dim_cell_query(config):
         ST_MakeEnvelope(x_start + ((ceil(columnx/2.0) - 1) * 100),y_start + ((ceil(rowy/2.0) - 1) * 100),x_start + (ceil(columnx/2.0) * 100),y_start + (ceil(rowy/2.0) * 100),3034),
         ST_MakeEnvelope(x_start + ((ceil(columnx/10.0) - 1) * 500),y_start + ((ceil(rowy/10.0) - 1) * 500),x_start + (ceil(columnx/10.0) * 500),y_start + (ceil(rowy/10.0) * 500),3034),
         ST_MakeEnvelope(x_start + ((ceil(columnx/20.0) - 1) * 1000),y_start + ((ceil(rowy/20.0) - 1) * 1000),x_start + (ceil(columnx/20.0) * 1000),y_start + (ceil(rowy/20.0) * 1000),3034)
-        FROM generate_series(1, {config["Map"]["columns"]}) columnx, generate_series(1, {config["Map"]["rows"]}) rowy, start_point
+        FROM generate_series(1, {int(config["Map"]["columns"])}) columnx, generate_series(1, {int(config["Map"]["rows"])}) rowy, start_point
     """
 
 
