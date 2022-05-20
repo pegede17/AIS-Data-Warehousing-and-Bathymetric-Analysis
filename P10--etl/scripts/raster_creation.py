@@ -14,17 +14,18 @@ config.read('../application.properties')
 connection = connect_to_local()
 print("Starting")
 
-query = """
-        SELECT columnx_50m, rowy_50m,CASE WHEN draught is null then -1 else draught END from 
-        dim_cell_3034 d inner join 
-        (SELECT cell_id , max(max_draught) draught
-	    FROM fact_cell_3034
- 	    GROUP BY cell_id) f
-	    on f.cell_id = d.cell_id
-        LIMIT 100
-        """
+# query = """
+#         SELECT columnx_50m, rowy_50m,CASE WHEN draught is null then -1 else draught END from
+#         dim_cell_3034 d inner join
+#         (SELECT cell_id , max(max_draught) draught
+# 	    FROM fact_cell_3034
+#         WHERE is_draught_trusted
+#  	    GROUP BY cell_id) f
+# 	    on f.cell_id = d.cell_id
+#         LIMIT 100
+#         """
 
-sql_source = SQLSource(connection=connection, query=query)
+# sql_source = SQLSource(connection=connection, query=query)
 
 rows = int(config["Map"]["rows"])
 columns = int(config["Map"]["columns"])
@@ -35,9 +36,9 @@ image_size = (rows, columns)
 
 draughts = np.zeros((image_size), dtype=np.float32)
 
-for row in sql_source:
-    draughts[int(row["rowy_50m"]), int(
-        row["columnx_50m"])] = float(row['draught'])
+# for row in sql_source:
+#     draughts[int(row["rowy_50m"]), int(
+#         row["columnx_50m"])] = float(row['draught'])
 
 print("matrix done")
 
