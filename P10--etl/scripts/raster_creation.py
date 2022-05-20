@@ -4,6 +4,7 @@ import numpy as np
 import os
 import sys
 from pygrametl.datasources import CSVSource, SQLSource
+from sqlalchemy import column
 from utils.database_connection import connect_to_local, connect_via_ssh
 import configparser
 
@@ -17,16 +18,21 @@ query = """
         SELECT columnx_50m, rowy_50m,CASE WHEN draught is null then -1 else draught END from 
         dim_cell_3034 d inner join 
         (SELECT cell_id , max(max_draught) draught
-	    FROM fact_cell_3034_50m
+	    FROM fact_cell_3034
         WHERE is_draught_trusted
  	    GROUP BY cell_id) f
 	    on f.cell_id = d.cell_id
+        LIMIT 100
         """
 
 sql_source = SQLSource(connection=connection, query=query)
 
+rows = config["Map"]["rows"]
+columns = config["Map"]["columns"]
+
+
 #  Initialize the Image Size
-image_size = (8324, 15798)
+image_size = (rows, columns)
 
 draughts = np.zeros((image_size), dtype=np.float32)
 
@@ -40,7 +46,8 @@ print("matrix done")
 nx = image_size[0]
 ny = image_size[1]
 # xmin, ymin, xmax, ymax = [0, 6700000, 1100000, 5900000]
-xmin, ymin, xmax, ymax = [3602375, 3471675, 4392275, 3055475]
+xmin, xmax, ymin, ymax = [int(config["Map"]["southwestx"]), int(config["Map"]["southwestx"]) + (
+    columns * 50), int(config["Map"]["southwesty"]) + (rows * 50), int(config["Map"]["southwesty"])]
 xres = 50
 yres = 50
 geotransform = (xmin, xres, 0, ymax, 0, yres)
@@ -51,7 +58,7 @@ dst_ds = gdal.GetDriverByName('GTiff').Create(
 
 dst_ds.SetGeoTransform(geotransform)    # specify coords
 srs = osr.SpatialReference()            # establish encoding
-srs.ImportFromEPSG(3034)                # WGS84 lat/long
+srs.ImportFromEPSG(int(config["Map"]["projectionasnumber"]))
 dst_ds.SetProjection(srs.ExportToWkt())  # export coords to file
 dst_ds.GetRasterBand(1).SetNoDataValue(0)
 dst_ds.GetRasterBand(1).WriteArray(draughts)
