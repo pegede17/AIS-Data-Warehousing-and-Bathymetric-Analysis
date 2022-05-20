@@ -18,7 +18,7 @@ query = """
         SELECT columnx_50m, rowy_50m,CASE WHEN draught is null then -1 else draught END from 
         dim_cell_3034 d inner join 
         (SELECT cell_id , max(max_draught) draught
-	    FROM fact_cell_3034
+	    FROM fact_cell_3034_50m
         WHERE is_draught_trusted
  	    GROUP BY cell_id) f
 	    on f.cell_id = d.cell_id
