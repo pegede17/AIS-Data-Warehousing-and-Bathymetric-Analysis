@@ -27,8 +27,8 @@ query = """
 
 sql_source = SQLSource(connection=connection, query=query)
 
-rows = config["Map"]["rows"]
-columns = config["Map"]["columns"]
+rows = int(config["Map"]["rows"])
+columns = int(config["Map"]["columns"])
 
 
 #  Initialize the Image Size
