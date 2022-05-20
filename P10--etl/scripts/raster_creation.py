@@ -19,7 +19,6 @@ query = """
         dim_cell_3034 d inner join 
         (SELECT cell_id , max(max_draught) draught
 	    FROM fact_cell_3034
-        WHERE is_draught_trusted
  	    GROUP BY cell_id) f
 	    on f.cell_id = d.cell_id
         LIMIT 100
