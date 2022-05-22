@@ -20,7 +20,6 @@ query = """
         WHERE is_draught_trusted
  	    GROUP BY cell_id) f
 	    on f.cell_id = d.cell_id
-        LIMIT 100
         """
 
 sql_source = SQLSource(connection=connection, query=query)
