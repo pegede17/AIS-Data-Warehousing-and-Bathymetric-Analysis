@@ -82,12 +82,9 @@ def handle_time_gap(points: pd.DataFrame, trajectories: list, first_point_not_ha
 
 
 def skip_point(points: pd.DataFrame, first_point_not_handled: int, i: int, journey: pd.DataFrame):
-    # time_skip_start = perf_counter_ns()
     points = pd.concat(
         [points, journey.iloc[first_point_not_handled:i, :]])
     first_point_not_handled = -1
-    # time_skip_end = perf_counter_ns()
-    # timer.append(time_skip_end-time_skip_start)
 
     return points, first_point_not_handled
 
@@ -130,8 +127,9 @@ def create_database_object(trajectory):
         "duration": duration.seconds,
         "coordinates": str(linestring.simplify(tolerance=0.0001)),
         "length_meters": projected_linestring.length,
-        "avg_speed_knots": projected_linestring.length / duration.seconds,  # FIX
-        "total_points": len(trajectory)
+        "avg_speed_knots": projected_linestring.length / duration.seconds * 1.94,  # FIX
+        "total_points": len(trajectory),
+        "is_draught_trusted": True
     }
     return database_object
 
@@ -352,6 +350,28 @@ def clean_and_reconstruct(config, date_to_lookup):
         ORDER BY ship_id, ts_time_id ASC
     """
 
+    FILL_BRIDGE_TABLE_QUERY = f"""
+    ALTER TABLE bridge_traj_sailing_cell DISABLE TRIGGER ALL;
+    WITH raster as (
+    SELECT ST_AddBand(ST_MakeEmptyRaster({ceil(int(config["Map"]["columns"]))},{ceil(int(config["Map"]["rows"]))},{int(config["Map"]["southwestx"])}::float,{int(config["Map"]["southwesty"])}::float,50::float,50::float,0::float,0::float,3034),
+                    '8BUI'::text, 0, null) ras
+    ),
+    trajectory as(
+    SELECT trajectory_id, coordinates
+        FROM public.fact_trajectory_sailing
+        WHERE date_start_id = {date_to_lookup}
+    ), cells as (
+    SELECT (((rowy - 1) * {ceil(int(config["Map"]["columns"]))}) + columnx), trajectory_id as cell_id from(
+    SELECT trajectory_id, (ST_WorldToRasterCoord(ras,(
+                ST_PixelAsPoints(
+                    ST_AsRaster(
+                        ST_Transform(
+                            ST_SetSRID(coordinates, 4326),3034), ras, '8BUI'::text,1,0,true))).geom)).*
+    FROM raster, trajectory) foo)
+    INSERT INTO bridge_traj_sailing_cell
+    SELECT * from cells;
+    ALTER TABLE bridge_traj_sailing_cell ENABLE TRIGGER ALL;"""
+
     FULL_START_TIME = perf_counter()
 
     # Disable triggers during load for efficiency
@@ -557,6 +577,7 @@ def clean_and_reconstruct(config, date_to_lookup):
     print("Creating connection commit!!")
     connection.commit()
     cur.execute(ENABLE_TRIGGERS)
+    cur.execute(FILL_BRIDGE_TABLE_QUERY)
 
     print("Creating __dw_conn commit!!")
     dw_conn_wrapper.commit()

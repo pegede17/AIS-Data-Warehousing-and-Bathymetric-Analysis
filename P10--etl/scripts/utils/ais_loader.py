@@ -1,7 +1,7 @@
 from time import perf_counter
 from utils.database_connection import connect_to_db
 import pygrametl
-from utils.helper_functions import create_audit_dimension, create_cargo_type_dimension, create_data_source_type_dimension, create_destination_dimension, create_fact_table, create_navigational_status_dimension, create_ship_dimension, create_ship_type_dimension, create_type_of_mobile_dimension, create_type_of_position_fixing_device_dimension, create_trustworthiness_dimension
+from utils.helper_functions import create_audit_dimension, create_cargo_type_dimension, create_data_source_type_dimension, create_destination_dimension, create_fact_table, create_navigational_status_dimension, create_ship_dimension, create_ship_type_dimension, create_type_of_mobile_dimension, create_type_of_position_fixing_device_dimension
 from pygrametl.datasources import CSVSource, TransformingSource
 from datetime import datetime, timedelta
 
@@ -48,8 +48,6 @@ def load_data_into_db(config, date_id, filename):
 
     type_of_mobile_dimension = create_type_of_mobile_dimension()
 
-    trustworthiness_dimension = create_trustworthiness_dimension()
-
     ship_dimension = create_ship_dimension()
 
     navigational_status_dimension = create_navigational_status_dimension()
@@ -87,15 +85,6 @@ def load_data_into_db(config, date_id, filename):
             val = row[value]
             row[value] = validateToNull(val)
 
-    def getTrust(row):
-        match (row['Type of mobile']):
-            case 'Class A':
-                return 10
-            case 'Class B':
-                return 2
-            case _:
-                return 5
-
     ais_file_handle = open(
         config["Environment"]["FILE_PATH"] + filename, 'r')
     ais_source = CSVSource(f=ais_file_handle, delimiter=',')
@@ -107,9 +96,6 @@ def load_data_into_db(config, date_id, filename):
     print("Starting loading " + str(datetime.now()))
     for row in transformeddata:
         timestamp = convertTimestampToTimeId(row["# Timestamp"])
-        trust = getTrust(row)
-        row['trust_score'] = trust
-        row['trust_category'] = 0 if trust < 5 else 1 if trust < 8 else 2
 
         i = i + 1
 
@@ -117,7 +103,6 @@ def load_data_into_db(config, date_id, filename):
         fact["audit_id"] = audit_id
 
         row['MMSI'] = int(row['MMSI'])
-        fact['cell_id'] = 1
 
         fact["cargo_type_id"] = cargo_type_dimension.ensure(row, {
             'cargo_type': 'Cargo type'
@@ -151,9 +136,6 @@ def load_data_into_db(config, date_id, filename):
         })
         fact["ship_type_id"] = row['ship_type_id']
 
-        row['trust_id'] = trustworthiness_dimension.lookup(
-            {'trust_score': trust})
-
         fact["ship_id"] = ship_dimension.ensure(row, {
             'size_a': 'A',
             'size_b': 'B',
@@ -162,8 +144,7 @@ def load_data_into_db(config, date_id, filename):
             'mmsi': 'MMSI',
             'ship_type_id': 'ship_type_id',
             'type_of_position_fixing_device_id': "type_of_position_fixing_device_id",
-            'type_of_mobile_id': 'type_of_mobile_id',
-            'trust_id': 'trust_id'
+            'type_of_mobile_id': 'type_of_mobile_id'
         })
 
         # Retrieve attributes that are obtained either by formula or as a measure from dataset

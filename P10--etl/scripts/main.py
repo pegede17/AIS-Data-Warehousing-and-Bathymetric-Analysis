@@ -7,6 +7,7 @@ from pandas import date_range
 from utils.cleantrajectory import clean_and_reconstruct
 from utils.ais_loader import load_data_into_db
 from utils.initializer import initialize_db
+from utils.fact_cell_filler import fill_fact_cell
 import configparser
 from datetime import datetime
 import configparser
@@ -58,6 +59,7 @@ def main(argv):
                 print("Cleaning " + str(current_date))
                 clean_and_reconstruct(
                     config=config, date_to_lookup=current_date)
+                fill_fact_cell(current_date)
             except Exception as e:
                 print(str(e))
         print("Finished " + str(current_date))

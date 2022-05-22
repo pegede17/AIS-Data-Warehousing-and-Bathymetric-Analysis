@@ -2,7 +2,7 @@ from pygrametl.tables import BulkFactTable, CachedDimension, Dimension, FactTabl
 
 
 def get_fill_dim_cell_query(config):
-    f"""
+    return f"""
     With start_point as (
         SELECT {int(config["Map"]["southwestx"])} x_start, {int(config["Map"]["southwesty"])} y_start
     )
@@ -28,7 +28,7 @@ def get_fill_dim_cell_query(config):
 
 
 def get_histogram_functions_query():
-    """
+    return """
     CREATE OR REPLACE FUNCTION hist_sfunc (state INTEGER[], val DOUBLE PRECISION,
     MIN DOUBLE PRECISION, MAX DOUBLE PRECISION, nbuckets INTEGER) RETURNS INTEGER[] AS $$
     DECLARE
@@ -171,28 +171,6 @@ def create_tables():
         INSERT INTO dim_type_of_position_fixing_device (device_type) VALUES ('Unknown');
         """
 
-    dim_trustworthiness = """
-        CREATE TABLE IF NOT EXISTS dim_trustworthiness (
-            trust_id SERIAL NOT NULL,
-            trust_score DOUBLE PRECISION,
-            trust_category INTEGER,
-            PRIMARY KEY (trust_id)
-        );
-        INSERT INTO dim_trustworthiness (trust_score, trust_category) VALUES 
-            (-1,-1),
-            (0,0),
-            (1,0),
-            (2,1),
-            (3,1),
-            (4,1),
-            (5,2),
-            (6,2),
-            (7,2),
-            (8,3),
-            (9,3),
-            (10,3);
-        """
-
     dim_ship = """
         CREATE TABLE IF NOT EXISTS dim_ship (
             ship_id SERIAL NOT NULL,
@@ -209,7 +187,6 @@ def create_tables():
             ship_type_id INTEGER NOT NULL DEFAULT 1,
             type_of_position_fixing_device_id INTEGER NOT NULL DEFAULT 1,
             type_of_mobile_id INTEGER NOT NULL DEFAULT 1,
-            trust_id INTEGER NOT NULL DEFAULT 1,
             PRIMARY KEY (ship_id),
             FOREIGN KEY (ship_type_id)
                 REFERENCES dim_ship_type (ship_type_id)
@@ -219,13 +196,10 @@ def create_tables():
                 ON UPDATE CASCADE,
             FOREIGN KEY (type_of_mobile_id)
                 REFERENCES dim_type_of_mobile (type_of_mobile_id)
-                ON UPDATE CASCADE,
-            FOREIGN KEY (trust_id)
-                REFERENCES dim_trustworthiness (trust_id)
                 ON UPDATE CASCADE
         );
-        INSERT INTO dim_ship (mmsi, imo, name, width, length, callsign, size_a, size_b, size_c, size_d, ship_type_id, type_of_position_fixing_device_id, type_of_mobile_id, trust_id) 
-            VALUES (0,0,'Unknown',0,0,'Unknown',0,0,0,0,1,1,1,1);
+        INSERT INTO dim_ship (mmsi, imo, name, width, length, callsign, size_a, size_b, size_c, size_d, ship_type_id, type_of_position_fixing_device_id, type_of_mobile_id) 
+            VALUES (0,0,'Unknown',0,0,'Unknown',0,0,0,0,1,1,1);
         """
 
     dim_date = """
@@ -471,6 +445,7 @@ def create_tables():
             ship_type_id INTEGER NOT NULL DEFAULT 0,
             avg_speed_knots DOUBLE PRECISION NOT NULL,
             is_draught_trusted BOOLEAN DEFAULT false,
+
             FOREIGN KEY (audit_id)
                 REFERENCES dim_audit (audit_id)
                 ON UPDATE CASCADE
@@ -697,6 +672,43 @@ def create_tables():
         CREATE TABLE fact_ais_clean_y2021week53 PARTITION OF fact_ais_clean FOR VALUES FROM ('20211231') TO ('20220107');
         """
 
+    fact_cell = """
+        CREATE TABLE IF NOT EXISTS fact_cell(
+            fact_cell_id BIGSERIAL NOT NULL PRIMARY KEY,
+            date_id INTEGER NOT NULL,
+            cell_id BIGINT NOT NULL,
+            ship_type_id INTEGER NOT NULL,
+            type_of_mobile_id INTEGER NOT NULL,
+            audit_id INTEGER NOT NULL,
+            trajectory_count INTEGER NOT NULL,
+            max_draught DOUBLE PRECISION,
+            min_draught DOUBLE PRECISION,
+            avg_draught DOUBLE PRECISION,
+            min_traj_speed DOUBLE PRECISION,
+            max_traj_speed DOUBLE PRECISION,
+            avg_traj_speed DOUBLE PRECISION,
+            histogram_draught INTEGER[256],
+            histogram_traj_speed INTEGER[1024],
+            is_draught_trusted BOOLEAN DEFAULT False,
+
+            FOREIGN KEY(date_id)
+                REFERENCES dim_date (date_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY(cell_id)
+                REFERENCES dim_cell (cell_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY(ship_type_id)
+                REFERENCES dim_ship_type (ship_type_id)
+                ON UPDATE CASCADE,
+            FOREIGN KEY(type_of_mobile_id)
+                REFERENCES dim_type_of_mobile (type_of_mobile_id)
+                ON UPDATE CASCADE
+        );
+
+        CREATE INDEX ON fact_cell (cell_id);
+        CREATE INDEX ON fact_cell (date_id, ship_type_id, type_of_mobile_id, is_draught_trusted);
+        """
+
     return (
         dim_data_source_type,
         dim_ship_type,
@@ -705,7 +717,6 @@ def create_tables():
         dim_cargo_type,
         dim_navigational_status,
         dim_type_of_position_fixing_device,
-        dim_trustworthiness,
         dim_ship,
         dim_date,  # Initializes dim_date with values from 01/01/2021 and 2000 days forward
         dim_time,
@@ -717,7 +728,8 @@ def create_tables():
         bridge_traj_sailing_cell,
         bridge_traj_stopped_cell,
         junk_ais_clean,
-        fact_ais_clean
+        fact_ais_clean,
+        fact_cell
     )
 
 
@@ -820,18 +832,6 @@ def create_type_of_position_fixing_device_dimension():
         prefill=True,
         cacheoninsert=True,
         defaultidvalue=1
-    )
-
-
-def create_trustworthiness_dimension():
-    return CachedDimension(
-        name='dim_trustworthiness',
-        key='trust_id',
-        attributes=['trust_score', 'trust_category'],
-        prefill=True,
-        cacheoninsert=True,
-        defaultidvalue=-1,
-        lookupatts=['trust_score']
     )
 
 

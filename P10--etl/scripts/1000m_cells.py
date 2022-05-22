@@ -39,6 +39,8 @@ def create_3034_1000m_cells():
         ST_MakeEnvelope(x_start + ((columnx - 1) * 1000),y_start + ((rowy - 1) * 1000),x_start + (columnx * 1000),y_start + (rowy * 1000),3034)
         FROM generate_series(1, {ceil(int(config["Map"]["columns"])/20)}) columnx, generate_series(1, {ceil(int(config["Map"]["rows"])/20)}) rowy, start_point;
     """)
+    cur.close()
+    connection.close()
 
 
 def fill_3034_1000m_bridge_and_fact():
@@ -70,3 +72,6 @@ def fill_3034_1000m_bridge_and_fact():
     SELECT * from cells;
     ALTER TABLE bridge_traj_sailing_cell_3034_1000m ENABLE TRIGGER ALL;
     """)
+
+    cur.close()
+    connection.close()
