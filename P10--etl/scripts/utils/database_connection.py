@@ -3,6 +3,13 @@ import psycopg2
 import configparser
 
 
+def connect_to_db(config):
+    if (config["Environment"]["connect_via_ssh"] == "True"):
+        return connect_via_ssh()
+    else:
+        return connect_to_local()
+
+
 def connect_via_ssh():
 
     config = configparser.ConfigParser()

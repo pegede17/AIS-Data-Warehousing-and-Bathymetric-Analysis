@@ -3,7 +3,7 @@ import pandas as pd
 import psycopg2
 from models.viewDTO import ViewDTO
 from util.queries import testSelect, testSelect2
-from util.database import connect_via_ssh, connect_locally
+from util.database import connect_to_db
 import configparser
 import re
 
@@ -67,12 +67,8 @@ class Boxes(Resource):
         config = configparser.ConfigParser()
         config.read('../application.properties')
 
-        if (config["Environment"]["connect_via_ssh"] == "True"):
-            with connect_via_ssh() as connection:
-                df = pd.read_sql_query(boxRaster, connection)
-        else:
-            with connect_locally() as connection:
-                df = pd.read_sql_query(boxRaster, connection)
+        with connect_to_db(config) as connection:
+            df = pd.read_sql_query(boxRaster, connection)
 
         # with psycopg2.connect(database="speciale", user='<postgres', password='admin') as connection:
 

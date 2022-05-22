@@ -3,6 +3,13 @@ from sshtunnel import SSHTunnelForwarder
 import configparser
 
 
+def connect_to_db(config):
+    if (config["Environment"]["connect_via_ssh"] == "True"):
+        return connect_via_ssh()
+    else:
+        return connect_locally()
+
+
 def connect_via_ssh():
     config = configparser.ConfigParser()
     config.read('../application.properties')

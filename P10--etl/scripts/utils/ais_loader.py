@@ -1,5 +1,5 @@
 from time import perf_counter
-from utils.database_connection import connect_to_local, connect_via_ssh
+from utils.database_connection import connect_to_db
 import pygrametl
 from utils.helper_functions import create_audit_dimension, create_cargo_type_dimension, create_data_source_type_dimension, create_destination_dimension, create_fact_table, create_navigational_status_dimension, create_ship_dimension, create_ship_type_dimension, create_type_of_mobile_dimension, create_type_of_position_fixing_device_dimension, create_trustworthiness_dimension
 from pygrametl.datasources import CSVSource, TransformingSource
@@ -13,10 +13,8 @@ def load_data_into_db(config, date_id, filename):
     connection = None
     dw_conn_wrapper = None
 
-    if(config["Environment"]["connect_via_ssh"] == "True"):
-        connection = connect_via_ssh()
-    else:
-        connection = connect_to_local()
+    connection = connect_to_db(config)
+
     dw_conn_wrapper = pygrametl.ConnectionWrapper(
         connection=connection)
 

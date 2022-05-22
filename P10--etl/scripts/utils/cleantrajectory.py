@@ -1,6 +1,6 @@
 from time import perf_counter, perf_counter_ns
 import pygrametl
-from utils.database_connection import connect_to_local, connect_via_ssh
+from utils.database_connection import connect_to_db
 from pygrametl.datasources import SQLSource
 import pandas as pd
 import math
@@ -297,10 +297,7 @@ def traj_splitter(ship, config):
 
 
 def clean_and_reconstruct(config, date_to_lookup):
-    if (config["Environment"]["connect_via_ssh"] == "True"):
-        connection = connect_via_ssh()
-    else:
-        connection = connect_to_local()
+    connection = connect_to_db(config)
 
     # Create engine for to_sql method in pandas
     engineString = f"""postgresql://{config["Database"]["dbuser"]}:{config["Database"]["dbpass"]}@{config["Database"]["hostname"]}:5432/{config["Database"]["dbname"]}"""

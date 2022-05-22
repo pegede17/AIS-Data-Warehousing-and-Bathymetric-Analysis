@@ -1,17 +1,15 @@
 from osgeo import gdal
 from osgeo import osr
 import numpy as np
-import os
-import sys
 from pygrametl.datasources import CSVSource, SQLSource
 from sqlalchemy import column
-from utils.database_connection import connect_to_local, connect_via_ssh
+from utils.database_connection import connect_to_db
 import configparser
 
 config = configparser.ConfigParser()
 config.read('../application.properties')
 
-connection = connect_to_local()
+connection = connect_to_db(config)
 print("Starting")
 
 query = """
