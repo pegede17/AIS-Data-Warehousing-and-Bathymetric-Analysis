@@ -41,7 +41,7 @@ const HistogramChart: React.FC<Props> = ({histogramData, isLoading}) => {
         if (histogramData) {
             for (let index = 0; index < histogramData.length; index++) {
                 if (histogramData[index] > 0) {
-                    const element: ChartDataElement = {arg: (index-1) / 10, val: histogramData[index]};
+                    const element: ChartDataElement = {arg: (index-2) / 10, val: histogramData[index]};
                     dataSet.push(element);
                 }
             }
