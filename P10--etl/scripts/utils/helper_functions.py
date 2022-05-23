@@ -609,7 +609,7 @@ def create_tables():
                 REFERENCES dim_cell (cell_id)
                 ON DELETE SET DEFAULT,
             FOREIGN KEY (trajectory_stopped_id)
-                REFERENCES dim_cell (cell_id)
+                REFERENCES fact_trajectory_stopped (trajectory_id)
                 ON DELETE SET DEFAULT,
             FOREIGN KEY (trajectory_sailing_id)
                 REFERENCES fact_trajectory_sailing (trajectory_id)
