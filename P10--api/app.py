@@ -6,7 +6,7 @@ from resources.histogram import Histogram
 from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
-CORS(app, support_credentials=True)
+CORS(app, support_credentials=True, origins=["http://130.225.39.233:3000"])
 
 api = Api(app)
 

@@ -42,7 +42,7 @@ const MapGeojson: React.FC = () => {
         const draught = viewType === ViewType.DRAUGHT ? feature?.properties?.maxdraught : feature?.properties?.count;
         let cellColor = "#e440ea"; // Default value (pink) in case draught is missing or max data
 
-        if (MAX_DATA_VALUE) {
+        if (MAX_DATA_VALUE && draught > 0) {
             const colorIndex = Math.floor(((draught - 0.1) / (MAX_DATA_VALUE - 0.1) * 100))
             cellColor = colorIndex > 0 ? GradientGenerator.getColor(colorIndex) : GradientGenerator.getColor(1);
         }
