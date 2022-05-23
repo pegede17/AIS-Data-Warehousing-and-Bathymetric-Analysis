@@ -33,9 +33,12 @@ image_size = (rows, columns)
 
 draughts = np.zeros((image_size), dtype=np.float32)
 
-for row in sql_source:
-    draughts[int(row["rowy_50m"]), int(
-        row["columnx_50m"])] = float(row['draught'])
+for entry in sql_source:
+    row = int(entry["rowy_50m"])
+    column = int(entry["columnx_50m"])
+    if (row >= 0 and row < rows and column >= 0 and column < columns):
+        draughts[int(entry["rowy_50m"]), int(
+            entry["columnx_50m"])] = float(entry['draught'])
 
 print("matrix done")
 
