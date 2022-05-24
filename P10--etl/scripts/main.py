@@ -12,6 +12,9 @@ import configparser
 from datetime import datetime
 import configparser
 
+from time import perf_counter
+from datetime import datetime, timedelta
+
 config = configparser.ConfigParser()
 config.read('../application.properties')
 
@@ -51,15 +54,23 @@ def main(argv):
         if args.l:
             print("Loading " + str(current_date))
             # the data to load will be retrieved from the config
+            LOADING_START_TIMER = perf_counter()
             load_data_into_db(
                 config=config, date_id=current_date, filename=file)
+            LOADING_END_TIMER = perf_counter()
+            LOADING_TIME_ELAPSED = timedelta(seconds=(LOADING_END_TIMER - LOADING_START_TIMER))
+            print(f"Loading duration: {LOADING_TIME_ELAPSED}")
 
         if args.cr:
             try:
+                CLEANING_START_TIMER = perf_counter()
                 print("Cleaning " + str(current_date))
                 clean_and_reconstruct(
                     config=config, date_to_lookup=current_date)
                 fill_fact_cell(current_date)
+                CLEANING_END_TIMER = perf_counter()
+                CLEANING_TIME_ELAPSED = timedelta(seconds=(CLEANING_END_TIMER - CLEANING_START_TIMER))
+                print(f"Cleaning duration: {CLEANING_TIME_ELAPSED}")
             except Exception as e:
                 print(str(e))
         print("Finished " + str(current_date))
