@@ -33,8 +33,12 @@ def main(argv):
     args = parser.parse_args()
 
     if args.i:
+        DATABASE_START_TIMER = perf_counter()
         print("Initializing database")
         initialize_db(config)
+        DATABASE_END_TIMER = perf_counter()
+        DATABASE_TIME_ELAPSED = timedelta(seconds=(DATABASE_END_TIMER - DATABASE_START_TIMER))
+        print(f"Database init. duration: {DATABASE_TIME_ELAPSED}")
 
     if args.sd:
         start_date = datetime.strptime(args.sd, '%d/%m/%Y')
