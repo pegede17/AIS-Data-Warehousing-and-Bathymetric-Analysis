@@ -142,6 +142,7 @@ def traj_splitter_except_catch(ship, config):
 
 
 def traj_splitter(ship, config):
+    print("Now we in traj_splitter")
     speed_treshold = 0.5
     time_threshold = 300
     SOG_limit = 100
@@ -162,6 +163,7 @@ def traj_splitter(ship, config):
     last_point_over_threshold_index = 0
 
     for i in journey.index:
+        print("Now we in journey_index loop")
         point = journey.iloc[i, :]
 
         # Determine time since last point or set to 0 if it is the first point
@@ -183,6 +185,7 @@ def traj_splitter(ship, config):
                 stopped_trajectories, stopped_points, first_point_not_handled = handle_time_gap(
                     stopped_points, stopped_trajectories, first_point_not_handled, i, journey)
 
+        print("Now we in (3)")
         # Skip a point if it is has a too high speed/it is an outlier
         if(speed > SOG_limit):
             if(first_point_not_handled == -1):
@@ -201,6 +204,7 @@ def traj_splitter(ship, config):
                 first_point_not_handled = -1
                 continue
 
+        print("Now we in (4)")
         if(speed >= speed_treshold):
             # Reset counters
             last_point_over_threshold_index = i
@@ -222,6 +226,7 @@ def traj_splitter(ship, config):
             first_point_not_handled = -1
             continue
 
+        print("Now we in (5)")
         if(speed < speed_treshold):
             # Keep track of the first point with a low speed
             if(first_point_not_handled == -1):
@@ -250,6 +255,7 @@ def traj_splitter(ship, config):
                     last_point_not_skipped = i
                 first_point_not_handled = -1
 
+    print("Now we in (6)")
     if(len(stopped_points) > 2):
         stopped_trajectories.append(stopped_points.copy())
         stopped_points = stopped_points.iloc[0:0, :]
@@ -261,9 +267,9 @@ def traj_splitter(ship, config):
     for trajectory in stopped_trajectories:
         geoSeries = gpd.GeoSeries.from_wkb(
             trajectory['coordinate'], crs=4326)
-        geoSeries = geoSeries.to_crs(config["Map"]["projection"])
+        geoSeries = geoSeries.to_crs("epsg:3034")
         trajectory = gpd.GeoDataFrame(
-            trajectory, crs=config["Map"]["projection"], geometry=geoSeries)
+            trajectory, crs='EPSG:3034', geometry=geoSeries)
         db_object = create_database_object(trajectory)
         if (db_object == None):
             continue
@@ -276,9 +282,9 @@ def traj_splitter(ship, config):
     for trajectory in sailing_trajectories:
         geoSeries = gpd.GeoSeries.from_wkb(
             trajectory['coordinate'], crs=4326)
-        geoSeries = geoSeries.to_crs(config["Map"]["projection"])
+        geoSeries = geoSeries.to_crs("epsg:3034")
         trajectory = gpd.GeoDataFrame(
-            trajectory, crs=config["Map"]["projection"], geometry=geoSeries)
+            trajectory, crs='EPSG:3034', geometry=geoSeries)
         db_object = create_database_object(trajectory)
         if (db_object == None):
             continue
@@ -287,6 +293,7 @@ def traj_splitter(ship, config):
             db_object["ship_id"]) + str(db_object["time_start_id"]) + "sailing"
         trajectory["stopped_traj_identifier"] = None
 
+    print("Now we in (7)")
     trajectories = {"stopped": stopped_trajectories,
                     "stopped_db_objects": stopped_db_objects,
                     "sailing": sailing_trajectories,
