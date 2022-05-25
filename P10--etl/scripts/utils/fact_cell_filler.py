@@ -7,7 +7,7 @@ def fill_fact_cell(date):
     config = configparser.ConfigParser()
     config.read('../application.properties')
 
-    connection = connect_to_db()
+    connection = connect_to_db(config)
 
     cur = connection.cursor()
     cur.execute(f"""
