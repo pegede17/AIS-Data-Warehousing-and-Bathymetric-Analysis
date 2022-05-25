@@ -129,7 +129,7 @@ def create_database_object(trajectory):
         "length_meters": projected_linestring.length,
         "avg_speed_knots": projected_linestring.length / duration.seconds * 1.94,  # FIX
         "total_points": len(trajectory),
-        "is_draught_trusted": True
+        "is_draught_trusted": 'True'
     }
     return database_object
 
