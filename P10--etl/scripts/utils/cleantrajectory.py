@@ -134,14 +134,14 @@ def create_database_object(trajectory):
     return database_object
 
 
-def traj_splitter_except_catch(ship, config):
+def traj_splitter_except_catch(ship):
     try:
-        traj_splitter(ship, config)
+        traj_splitter(ship)
     except Exception as e:
         print(str(e))
 
 
-def traj_splitter(ship, config):
+def traj_splitter(ship):
     speed_treshold = 0.5
     time_threshold = 300
     SOG_limit = 100
@@ -457,7 +457,7 @@ def clean_and_reconstruct(config, date_to_lookup):
     # Create a new column and apply a function that calculates the cell_id based on row coordinates
     print("Applying cell_id calculations to all rows")
     transformer = Transformer.from_crs(
-        "epsg:4326", config["Map"]["projection"])
+        "epsg:4326", "epsg:3034")
     ais_df['cell_id'] = ais_df.apply(lambda row: calculateCellID(
         row['latitude'], row['longitude'], transformer), axis=1)
     # ais_df['cell_id'] = 0
@@ -526,7 +526,7 @@ def clean_and_reconstruct(config, date_to_lookup):
 
     trajectories_per_ship = mp.Manager().dict()
     with concurrent.futures.ProcessPoolExecutor(initializer=set_global_variables, initargs=(trajectories_per_ship,)) as executor:
-        executor.map(traj_splitter_except_catch, trajectory_df, config)
+        executor.map(traj_splitter_except_catch, trajectory_df)
 
     print("Inserting trajectories")
     for _, ship in trajectory_df:

@@ -37,7 +37,8 @@ def main(argv):
         print("Initializing database")
         initialize_db(config)
         DATABASE_END_TIMER = perf_counter()
-        DATABASE_TIME_ELAPSED = timedelta(seconds=(DATABASE_END_TIMER - DATABASE_START_TIMER))
+        DATABASE_TIME_ELAPSED = timedelta(
+            seconds=(DATABASE_END_TIMER - DATABASE_START_TIMER))
         print(f"Database init. duration: {DATABASE_TIME_ELAPSED}")
 
     if args.sd:
@@ -62,7 +63,8 @@ def main(argv):
             load_data_into_db(
                 config=config, date_id=current_date, filename=file)
             LOADING_END_TIMER = perf_counter()
-            LOADING_TIME_ELAPSED = timedelta(seconds=(LOADING_END_TIMER - LOADING_START_TIMER))
+            LOADING_TIME_ELAPSED = timedelta(
+                seconds=(LOADING_END_TIMER - LOADING_START_TIMER))
             print(f"Loading duration: {LOADING_TIME_ELAPSED}")
 
         if args.cr:
@@ -73,7 +75,8 @@ def main(argv):
                     config=config, date_to_lookup=current_date)
                 fill_fact_cell(current_date)
                 CLEANING_END_TIMER = perf_counter()
-                CLEANING_TIME_ELAPSED = timedelta(seconds=(CLEANING_END_TIMER - CLEANING_START_TIMER))
+                CLEANING_TIME_ELAPSED = timedelta(
+                    seconds=(CLEANING_END_TIMER - CLEANING_START_TIMER))
                 print(f"Cleaning duration: {CLEANING_TIME_ELAPSED}")
             except Exception as e:
                 print(str(e))

@@ -57,7 +57,7 @@ dst_ds = gdal.GetDriverByName('GTiff').Create(
 
 dst_ds.SetGeoTransform(geotransform)    # specify coords
 srs = osr.SpatialReference()            # establish encoding
-srs.ImportFromEPSG(int(config["Map"]["projectionasnumber"]))
+srs.ImportFromEPSG(3034)
 dst_ds.SetProjection(srs.ExportToWkt())  # export coords to file
 dst_ds.GetRasterBand(1).SetNoDataValue(0)
 dst_ds.GetRasterBand(1).WriteArray(draughts)
