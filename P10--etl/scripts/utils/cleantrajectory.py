@@ -372,7 +372,7 @@ def clean_and_reconstruct(config, date_to_lookup):
     SELECT * from cells;
     ALTER TABLE bridge_traj_sailing_cell ENABLE TRIGGER ALL;"""
 
-    ASSIGN_TRUST_QUERY = """
+    ASSIGN_TRUST_QUERY = f"""
     UPDATE public.fact_trajectory_sailing ft
     SET is_draught_trusted = 
                 draught IS NOT NULL 
