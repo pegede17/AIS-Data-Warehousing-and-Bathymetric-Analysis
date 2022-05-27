@@ -372,6 +372,17 @@ def clean_and_reconstruct(config, date_to_lookup):
     SELECT * from cells;
     ALTER TABLE bridge_traj_sailing_cell ENABLE TRIGGER ALL;"""
 
+    ASSIGN_TRUST_QUERY = """
+    UPDATE public.fact_trajectory_sailing ft
+    SET is_draught_trusted = 
+                draught IS NOT NULL 
+                AND length is NOT NULL
+                AND width IS NOT NULL 
+                AND (draught[1] < 3 or ((length * width) / ft.draught[1]) > 60)
+	FROM dim_ship s
+	WHERE s.ship_id = ft.ship_id AND date_start_id = {date_to_lookup}
+    """
+
     FULL_START_TIME = perf_counter()
 
     # Disable triggers during load for efficiency
@@ -579,6 +590,7 @@ def clean_and_reconstruct(config, date_to_lookup):
     cur.execute(ENABLE_TRIGGERS)
     print("Filling bridge table")
     cur.execute(FILL_BRIDGE_TABLE_QUERY)
+    cur.execute(ASSIGN_TRUST_QUERY)
 
     print("Creating __dw_conn commit!!")
     dw_conn_wrapper.commit()

@@ -50,6 +50,6 @@ def fill_fact_cell(date):
     GROUP BY date_start_id, dim_cell.cell_id, ship_type_id, type_of_mobile_id, is_draught_trusted;
     ALTER TABLE fact_cell ENABLE TRIGGER ALL;
     """)
-
+    connection.commit()
     cur.close()
     connection.close()
