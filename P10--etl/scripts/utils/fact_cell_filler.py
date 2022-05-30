@@ -28,7 +28,7 @@ def fill_fact_cell(date):
                                     histogram_draught, 
                                     histogram_traj_speed) 
     SELECT date_start_id,
-            dim_cell.cell_id, 
+            dim_cell_3034.cell_id, 
             ship_type_id, 
             type_of_mobile_id,
             is_draught_trusted,
@@ -47,7 +47,7 @@ def fill_fact_cell(date):
         on traj.trajectory_id = b.trajectory_id
     inner join dim_cell_3034 on dim_cell_3034.cell_id = b.cell_id
     WHERE date_start_id = {date}
-    GROUP BY date_start_id, dim_cell.cell_id, ship_type_id, type_of_mobile_id, is_draught_trusted;
+    GROUP BY date_start_id, dim_cell_3034.cell_id, ship_type_id, type_of_mobile_id, is_draught_trusted;
     ALTER TABLE fact_cell_3034_50m ENABLE TRIGGER ALL;
     """)
     connection.commit()
