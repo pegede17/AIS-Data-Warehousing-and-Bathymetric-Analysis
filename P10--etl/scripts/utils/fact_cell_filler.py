@@ -11,8 +11,8 @@ def fill_fact_cell(date):
 
     cur = connection.cursor()
     cur.execute(f"""
-    ALTER TABLE fact_cell DISABLE TRIGGER ALL;
-    INSERT INTO fact_cell(date_id, 
+    ALTER TABLE fact_cell_3034_50m DISABLE TRIGGER ALL;
+    INSERT INTO fact_cell_3034_50m(date_id, 
                                     cell_id, 
                                     ship_type_id, 
                                     type_of_mobile_id, 
@@ -43,12 +43,12 @@ def fill_fact_cell(date):
             histogram(CASE WHEN draught[1] IS NOT NULL THEN draught[1] ELSE -0.1 END,-0.1,25,251),
             histogram(avg_speed_knots, 0,100,1000)
     from fact_trajectory_sailing traj 
-    inner join bridge_traj_sailing_cell b 
+    inner join bridge_traj_sailing_cell_3034 b 
         on traj.trajectory_id = b.trajectory_id
-    inner join dim_cell on dim_cell.cell_id = b.cell_id
+    inner join dim_cell_3034 on dim_cell_3034.cell_id = b.cell_id
     WHERE date_start_id = {date}
     GROUP BY date_start_id, dim_cell.cell_id, ship_type_id, type_of_mobile_id, is_draught_trusted;
-    ALTER TABLE fact_cell ENABLE TRIGGER ALL;
+    ALTER TABLE fact_cell_3034_50m ENABLE TRIGGER ALL;
     """)
     connection.commit()
     cur.close()
