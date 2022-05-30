@@ -341,8 +341,8 @@ def clean_and_reconstruct(config, date_to_lookup):
         WHERE
             ts_date_id = {date_to_lookup}
             AND (draught < 28.5 OR draught IS NULL)
-            AND (width < 75 or width IS NULL)
-            AND (length < 488 or length IS NULL)
+            AND (width < 75)
+            AND (length < 488)
             AND mmsi > 99999999
             AND mmsi < 990000000
             AND NOT (mmsi > 111000000 and mmsi < 112000000)
