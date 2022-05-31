@@ -155,7 +155,7 @@ const Sidebar: React.FC = () => {
                 </Box>
 
                 <Box style={{display: "flex", justifyContent: "space-evenly"}} sx={{mb: 3}}>
-                    <Button sx={{py: 1, px: 3, ...muiSidebarStyling.buttonRevertStyle}}>Revert</Button>
+                    <Button sx={{py: 1, px: 3, ...muiSidebarStyling.buttonRevertStyle}}>Reset</Button>
                     <Button sx={{py: 1, px: 3, ...muiSidebarStyling.buttonApplyStyle}} onClick={onApply}>Apply</Button>
                 </Box>
 
