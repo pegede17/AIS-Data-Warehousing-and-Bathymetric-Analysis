@@ -8,9 +8,9 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/P10--backend/new_main.py",
+            "program": "${workspaceFolder}/P10--etl/scripts/main.py",
             "console": "integratedTerminal",
-            "args": ["-sd", "01/10/2021", "-ed", "01/10/2021", "-r"]
+            "args": ["-sd", "02/05/2021", "-ed", "02/05/2021", "-cr"]
         },
         {
             "name": "Flask",
