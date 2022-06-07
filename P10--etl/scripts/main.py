@@ -74,11 +74,11 @@ def main(argv):
                 print("Cleaning " + str(current_date))
                 clean_and_reconstruct(
                     config=config, date_to_lookup=current_date)
+                fill_bridge_table(current_date)
                 CLEANING_END_TIMER = perf_counter()
                 CLEANING_TIME_ELAPSED = timedelta(
                     seconds=(CLEANING_END_TIMER - CLEANING_START_TIMER))
                 print(f"Cleaning duration: {CLEANING_TIME_ELAPSED}")
-                fill_bridge_table(current_date)
                 FACT_CELL_START_TIMER = perf_counter()
                 fill_fact_cell(current_date)
                 FACT_CELL_END_TIMER = perf_counter()
