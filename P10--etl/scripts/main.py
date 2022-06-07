@@ -72,15 +72,15 @@ def main(argv):
             try:
                 CLEANING_START_TIMER = perf_counter()
                 print("Cleaning " + str(current_date))
-                clean_and_reconstruct(
-                    config=config, date_to_lookup=current_date)
+                # clean_and_reconstruct(
+                #     config=config, date_to_lookup=current_date)
                 fill_bridge_table(current_date)
                 CLEANING_END_TIMER = perf_counter()
                 CLEANING_TIME_ELAPSED = timedelta(
                     seconds=(CLEANING_END_TIMER - CLEANING_START_TIMER))
                 print(f"Cleaning duration: {CLEANING_TIME_ELAPSED}")
                 FACT_CELL_START_TIMER = perf_counter()
-                fill_fact_cell(current_date)
+                # fill_fact_cell(current_date)
                 FACT_CELL_END_TIMER = perf_counter()
                 FACT_CELL_TIME_ELAPSED = timedelta(
                     seconds=(FACT_CELL_END_TIMER - FACT_CELL_START_TIMER))
