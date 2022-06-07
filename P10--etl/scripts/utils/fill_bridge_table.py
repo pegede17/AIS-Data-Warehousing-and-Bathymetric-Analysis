@@ -9,7 +9,7 @@ from sqlalchemy import create_engine
 def fill_bridge_table(date):
 
     config = configparser.ConfigParser()
-    config.read('../../application.properties')
+    config.read('../application.properties')
 
     connection = connect_to_db(config)
 
