@@ -55,7 +55,7 @@ const CellDetails: React.FC<DraughtDetails> = ({
                 {renderRow("Maximum", maximumDraught + " m")}
                 {renderRow("Average", averageDraught + " m")}
                 {renderRow("Minimum", minimumDraught + " m")}
-                {renderRow("Ship Count", shipsRecorded)}
+                {renderRow("Trajectory Count", shipsRecorded)}
             </div>
 
             <div className={'d-flex justify-content-center py-2'}>
