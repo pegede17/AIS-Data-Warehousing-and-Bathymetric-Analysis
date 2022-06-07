@@ -27,7 +27,7 @@ def fill_bridge_table(date):
         FROM public.fact_trajectory_sailing
         WHERE date_start_id = {date}
     ), cells as (
-    SELECT (((rowy - 1) * {ceil(int(config["Map"]["columns"]))}) + columnx), trajectory_id as cell_id from(
+    SELECT (((rowy - 1) * {ceil(int(config["Map"]["columns"]))}) + columnx) as cell_id, trajectory_id as trajectory_id from(
     SELECT trajectory_id, (ST_WorldToRasterCoord(ras,(
                 ST_PixelAsPoints(
                     ST_AsRaster(
