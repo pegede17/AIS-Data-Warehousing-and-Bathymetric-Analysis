@@ -1,6 +1,9 @@
 from math import ceil
 from utils.database_connection import connect_to_db
 import configparser
+from pygrametl.datasources import SQLSource
+import pandas as pd
+from sqlalchemy import create_engine
 
 
 def fill_bridge_table(date):
@@ -12,7 +15,9 @@ def fill_bridge_table(date):
 
     cur = connection.cursor()
 
-    FILL_BRIDGE_TABLE_QUERY = f"""
+    print("Getting rows to insert")
+
+    BRIDGE_TABLE_QUERY = f"""
     WITH raster as (
     SELECT ST_AddBand(ST_MakeEmptyRaster({ceil(int(config["Map"]["columns"]))},{ceil(int(config["Map"]["rows"]))},{int(config["Map"]["southwestx"])}::float,{int(config["Map"]["southwesty"])}::float,50::float,50::float,0::float,0::float,3034),
                     '8BUI'::text, 0, null) ras
@@ -29,14 +34,22 @@ def fill_bridge_table(date):
                         ST_Transform(
                             ST_SetSRID(coordinates, 4326),3034), ras, '8BUI'::text,1,0,true))).geom)).*
     FROM raster, trajectory) foo)
-    INSERT INTO bridge_traj_sailing_cell_3034
     SELECT * from cells;"""
+
+    bridge_data = SQLSource(connection=connection, query=BRIDGE_TABLE_QUERY)
+
+    bridge_df = pd.DataFrame(bridge_data)
+
+    engineString = f"""postgresql://{config["Database"]["dbuser"]}:{config["Database"]["dbpass"]}@{config["Database"]["hostname"]}:5432/{config["Database"]["dbname"]}"""
+    engine = create_engine(engineString, executemany_mode='values_plus_batch')
 
     print("Filling bridge table")
     cur.execute("ALTER TABLE bridge_traj_sailing_cell_3034 DISABLE TRIGGER ALL;")
     connection.commit()
-    cur.execute(FILL_BRIDGE_TABLE_QUERY)
-    connection.commit()
+
+    bridge_df.to_sql('bridge_traj_sailing_cell_3034', index=False, con=engine,
+                     if_exists='append', chunksize=10000)
+
     cur.execute("ALTER TABLE bridge_traj_sailing_cell_3034 ENABLE TRIGGER ALL;")
 
     connection.commit()
