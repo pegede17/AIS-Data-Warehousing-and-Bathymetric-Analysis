@@ -586,13 +586,7 @@ def clean_and_reconstruct(config, date_to_lookup):
     print("Creating connection commit!!")
     connection.commit()
     cur.execute(ENABLE_TRIGGERS)
-    print("Filling bridge table")
-    cur.execute("ALTER TABLE bridge_traj_sailing_cell_3034 DISABLE TRIGGER ALL;")
-    connection.commit()
-    cur.execute(FILL_BRIDGE_TABLE_QUERY)
     cur.execute(ASSIGN_TRUST_QUERY)
-    connection.commit()
-    cur.execute("ALTER TABLE bridge_traj_sailing_cell_3034 ENABLE TRIGGER ALL;")
     connection.commit()
 
     print("Creating __dw_conn commit!!")

@@ -8,6 +8,7 @@ from utils.cleantrajectory import clean_and_reconstruct
 from utils.ais_loader import load_data_into_db
 from utils.initializer import initialize_db
 from utils.fact_cell_filler import fill_fact_cell
+from utils.fill_bridge_table import fill_bridge_table
 import configparser
 from datetime import datetime
 import configparser
@@ -77,6 +78,7 @@ def main(argv):
                 CLEANING_TIME_ELAPSED = timedelta(
                     seconds=(CLEANING_END_TIMER - CLEANING_START_TIMER))
                 print(f"Cleaning duration: {CLEANING_TIME_ELAPSED}")
+                fill_bridge_table(current_date)
                 FACT_CELL_START_TIMER = perf_counter()
                 fill_fact_cell(current_date)
                 FACT_CELL_END_TIMER = perf_counter()
