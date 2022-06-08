@@ -70,23 +70,23 @@ def main(argv):
 
         if args.cr:
             try:
-                # CLEANING_START_TIMER = perf_counter()
-                # print("Cleaning " + str(current_date))
-                # clean_and_reconstruct(
-                #     config=config, date_to_lookup=current_date)
-                # CLEANING_END_TIMER = perf_counter()
-                # CLEANING_TIME_ELAPSED = timedelta(
-                #     seconds=(CLEANING_END_TIMER - CLEANING_START_TIMER))
-                # print(f"Cleaning duration: {CLEANING_TIME_ELAPSED}")
+                CLEANING_START_TIMER = perf_counter()
+                print("Cleaning " + str(current_date))
+                clean_and_reconstruct(
+                    config=config, date_to_lookup=current_date)
+                CLEANING_END_TIMER = perf_counter()
+                CLEANING_TIME_ELAPSED = timedelta(
+                    seconds=(CLEANING_END_TIMER - CLEANING_START_TIMER))
+                print(f"Cleaning duration: {CLEANING_TIME_ELAPSED}")
 
-                # BRIDGE_START_TIMER = perf_counter()
-                # fill_bridge_table_50m(current_date)
-                # fill_bridge_table_1000m(current_date)
-                # BRIDGE_END_TIMER = perf_counter()
-                # BRIDGE_TIME_ELAPSED = timedelta(
-                #     seconds=(BRIDGE_END_TIMER - BRIDGE_START_TIMER))
+                BRIDGE_START_TIMER = perf_counter()
+                fill_bridge_table_50m(current_date)
+                fill_bridge_table_1000m(current_date)
+                BRIDGE_END_TIMER = perf_counter()
+                BRIDGE_TIME_ELAPSED = timedelta(
+                    seconds=(BRIDGE_END_TIMER - BRIDGE_START_TIMER))
 
-                # print(f"Bridge duration: {BRIDGE_TIME_ELAPSED}")
+                print(f"Bridge duration: {BRIDGE_TIME_ELAPSED}")
 
                 CONSTRAINTS_START_TIMER = perf_counter()
                 readd_constraints()
