@@ -73,6 +73,8 @@ def fill_bridge_table(date):
     for row in bridge_data:
         i += 1
         if (i % 10000 == 0):
+            print("Commiting:", end="")
+            dw_conn_wrapper.commit()
             print(i)
         bridge_table.insert(row)
 
