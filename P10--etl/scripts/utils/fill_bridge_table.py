@@ -38,7 +38,7 @@ def fill_bridge_table_50m(date):
         FROM public.fact_trajectory_sailing
         WHERE date_start_id = {date}
     ), cells as (
-    SELECT (((rowy - 1) * {ceil(int(config["Map"]["columns"]))}) + columnx) as cell_id, trajectory_id as trajectory_id from(
+    SELECT (((rowy - 1) * {ceil(int(config["Map"]["columns"]))}) + columnx) as cell_id, trajectory_id from(
     SELECT trajectory_id, (ST_WorldToRasterCoord(ras,(
                 ST_PixelAsPoints(
                     ST_AsRaster(
@@ -115,14 +115,13 @@ def fill_bridge_table_1000m(date):
         FROM public.fact_trajectory_sailing
         WHERE date_start_id = {date}
     ), cells as (
-    SELECT (((rowy - 1) * {ceil(int(config["Map"]["columns"])/20)}) + columnx), trajectory_id as cell_id from(
+    SELECT (((rowy - 1) * {ceil(int(config["Map"]["columns"])/20)}) + columnx) as cell_id, trajectory_id from(
     SELECT trajectory_id, (ST_WorldToRasterCoord(ras,(
                 ST_PixelAsPoints(
                     ST_AsRaster(
                         ST_Transform(
                             ST_SetSRID(coordinates, 4326),3034), ras, '8BUI'::text,1,0,true))).geom)).*
     FROM raster, trajectory) foo)
-    INSERT INTO bridge_traj_sailing_cell_3034_1000m
     SELECT * from cells WHERE cell_id BETWEEN 0 AND 329430;
     """
 

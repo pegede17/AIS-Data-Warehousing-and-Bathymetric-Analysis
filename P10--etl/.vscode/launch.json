@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["-sd", "01/01/2021", "-ed", "01/01/2021", "-l"]
+            "args": ["-sd", "03/10/2021", "-ed", "03/10/2021", "-cr"]
         }
     ]
 }
