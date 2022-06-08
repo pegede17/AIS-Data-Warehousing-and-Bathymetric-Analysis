@@ -5,6 +5,7 @@ from pygrametl.datasources import SQLSource
 import pandas as pd
 from sqlalchemy import create_engine
 from pygrametl.tables import BulkFactTable
+import pygrametl
 
 
 def fill_bridge_table(date):
@@ -53,6 +54,9 @@ def fill_bridge_table(date):
         cursor.copy_from(file=filehandle, table=name, sep=fieldsep, null=str(nullval),
                          columns=attributes)
 
+    dw_conn_wrapper = pygrametl.ConnectionWrapper(
+        connection=connection)
+
     bridge_table = BulkFactTable(
         name='bridge_traj_sailing_cell_3034',
         keyrefs=['trajectory_id', 'cell_id'],
@@ -73,5 +77,7 @@ def fill_bridge_table(date):
     cur.execute("ALTER TABLE bridge_traj_sailing_cell_3034 ENABLE TRIGGER ALL;")
 
     connection.commit()
+    dw_conn_wrapper.commit()
+    dw_conn_wrapper.close()
     cur.close()
     connection.close()
