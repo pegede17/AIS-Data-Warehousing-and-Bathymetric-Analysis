@@ -17,6 +17,15 @@ def fill_bridge_table_50m(date):
 
     cur = connection.cursor()
 
+    print("Removing constraints")
+
+    cur.execute("""ALTER TABLE bridge_traj_sailing_cell_3034 DISABLE TRIGGER ALL;
+                    ALTER TABLE bridge_traj_sailing_cell_3034 DROP CONSTRAINT IF EXISTS bridge_traj_sailing_cell_3034_cell_id_fkey;
+                    ALTER TABLE bridge_traj_sailing_cell_3034 DROP CONSTRAINT IF EXISTS bridge_traj_sailing_cell_3034_pkey;
+                    ALTER TABLE bridge_traj_sailing_cell_3034 DROP CONSTRAINT IF EXISTS bridge_traj_sailing_cell_3034_trajectory_id_fkey;
+                """)
+    connection.commit()
+
     print("Getting rows to insert")
 
     BRIDGE_TABLE_QUERY = f"""
@@ -41,15 +50,6 @@ def fill_bridge_table_50m(date):
     bridge_data = SQLSource(connection=connection, query=BRIDGE_TABLE_QUERY)
 
     print(BRIDGE_TABLE_QUERY)
-
-    print("Removing constraints")
-
-    cur.execute("""ALTER TABLE bridge_traj_sailing_cell_3034 DISABLE TRIGGER ALL;
-                    ALTER TABLE bridge_traj_sailing_cell_3034 DROP CONSTRAINT IF EXISTS bridge_traj_sailing_cell_3034_cell_id_fkey;
-                    ALTER TABLE bridge_traj_sailing_cell_3034 DROP CONSTRAINT IF EXISTS bridge_traj_sailing_cell_3034_pkey;
-                    ALTER TABLE bridge_traj_sailing_cell_3034 DROP CONSTRAINT IF EXISTS bridge_traj_sailing_cell_3034_trajectory_id_fkey;
-                """)
-    connection.commit()
 
     def pgbulkloader(name, attributes, fieldsep, rowsep, nullval, filehandle):
         cursor = connection.cursor()
@@ -96,6 +96,15 @@ def fill_bridge_table_1000m(date):
 
     cur = connection.cursor()
 
+    print("Removing constraints")
+
+    cur.execute("""ALTER TABLE bridge_traj_sailing_cell_3034_1000m DISABLE TRIGGER ALL;
+                    ALTER TABLE bridge_traj_sailing_cell_3034_1000m DROP CONSTRAINT IF EXISTS bridge_traj_sailing_cell_3034_1000m_cell_id_fkey;
+                    ALTER TABLE bridge_traj_sailing_cell_3034_1000m DROP CONSTRAINT IF EXISTS bridge_traj_sailing_cell_3034_1000m_pkey;
+                    ALTER TABLE bridge_traj_sailing_cell_3034_1000m DROP CONSTRAINT IF EXISTS bridge_traj_sailing_cell_3034_1000m_trajectory_id_fkey;
+                """)
+    connection.commit()
+
     print("Getting rows to insert")
 
     BRIDGE_TABLE_QUERY = f"""
@@ -120,15 +129,6 @@ def fill_bridge_table_1000m(date):
     """
 
     bridge_data = SQLSource(connection=connection, query=BRIDGE_TABLE_QUERY)
-
-    print("Removing constraints")
-
-    cur.execute("""ALTER TABLE bridge_traj_sailing_cell_3034_1000m DISABLE TRIGGER ALL;
-                    ALTER TABLE bridge_traj_sailing_cell_3034_1000m DROP CONSTRAINT IF EXISTS bridge_traj_sailing_cell_3034_1000m_cell_id_fkey;
-                    ALTER TABLE bridge_traj_sailing_cell_3034_1000m DROP CONSTRAINT IF EXISTS bridge_traj_sailing_cell_3034_1000m_pkey;
-                    ALTER TABLE bridge_traj_sailing_cell_3034_1000m DROP CONSTRAINT IF EXISTS bridge_traj_sailing_cell_3034_1000m_trajectory_id_fkey;
-                """)
-    connection.commit()
 
     def pgbulkloader(name, attributes, fieldsep, rowsep, nullval, filehandle):
         cursor = connection.cursor()
