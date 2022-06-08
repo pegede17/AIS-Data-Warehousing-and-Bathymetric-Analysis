@@ -48,7 +48,7 @@ def fill_bridge_table(date):
     connection.commit()
 
     bridge_df.to_sql('bridge_traj_sailing_cell_3034', index=False, con=engine,
-                     if_exists='append', chunksize=10000)
+                     if_exists='append', chunksize=100000)
 
     cur.execute("ALTER TABLE bridge_traj_sailing_cell_3034 ENABLE TRIGGER ALL;")
 
