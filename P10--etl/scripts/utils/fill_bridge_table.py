@@ -46,7 +46,11 @@ def fill_bridge_table(date):
     # engine = create_engine(engineString, executemany_mode='values_plus_batch')
 
     print("Filling bridge table")
-    cur.execute("ALTER TABLE bridge_traj_sailing_cell_3034 DISABLE TRIGGER ALL;")
+    cur.execute("""ALTER TABLE bridge_traj_sailing_cell_3034 DISABLE TRIGGER ALL;
+                    ALTER TABLE bridge_traj_sailing_cell_3034 DROP CONSTRAINT bridge_traj_sailing_cell_3034_geo_id_fkey;
+                    ALTER TABLE bridge_traj_sailing_cell_3034 DROP CONSTRAINT bridge_traj_sailing_cell_3034_pkey;
+                    ALTER TABLE bridge_traj_sailing_cell_3034 DROP CONSTRAINT bridge_traj_sailing_cell_3034_trajectory_id_fkey;
+                """)
     connection.commit()
 
     def pgbulkloader(name, attributes, fieldsep, rowsep, nullval, filehandle):
@@ -81,7 +85,18 @@ def fill_bridge_table(date):
     # bridge_df.to_sql('bridge_traj_sailing_cell_3034', index=False, con=engine,
     #                 #  if_exists='append', chunksize=100000)
 
-    cur.execute("ALTER TABLE bridge_traj_sailing_cell_3034 ENABLE TRIGGER ALL;")
+    cur.execute("""ALTER TABLE bridge_traj_sailing_cell_3034 ENABLE TRIGGER ALL;
+                    ALTER TABLE bridge_traj_sailing_cell_3034 ADD CONSTRAINT bridge_traj_sailing_cell_3034_geo_id_fkey
+                        FOREIGN KEY (cell_id)
+                        REFERENCES dim_cell_3034_1000m (cell_id)
+                        ON UPDATE CASCADE;
+                    ALTER TABLE bridge_traj_sailing_cell_3034 ADD CONSTRAINT bridge_traj_sailing_cell_3034_trajectory_id_fkey
+                        FOREIGN KEY (trajectory_id)
+                        REFERENCES fact_trajectory_sailing (trajectory_id)
+                        ON UPDATE CASCADE;
+                    ALTER TABLE bridge_traj_sailing_cell_3034 ADD CONTRAINT bridge_traj_sailing_cell_3034_pkey
+                        PRIMARY KEY (cell_id, trajectory_id);
+                    """)
 
     connection.commit()
     dw_conn_wrapper.commit()
