@@ -4,6 +4,7 @@ import configparser
 from pygrametl.datasources import SQLSource
 import pandas as pd
 from sqlalchemy import create_engine
+from pygrametl.tables import BulkFactTable
 
 
 def fill_bridge_table(date):
@@ -38,17 +39,36 @@ def fill_bridge_table(date):
 
     bridge_data = SQLSource(connection=connection, query=BRIDGE_TABLE_QUERY)
 
-    bridge_df = pd.DataFrame(bridge_data)
+    # bridge_df = pd.DataFrame(bridge_data)
 
-    engineString = f"""postgresql://{config["Database"]["dbuser"]}:{config["Database"]["dbpass"]}@{config["Database"]["hostname"]}:5432/{config["Database"]["dbname"]}"""
-    engine = create_engine(engineString, executemany_mode='values_plus_batch')
+    # engineString = f"""postgresql://{config["Database"]["dbuser"]}:{config["Database"]["dbpass"]}@{config["Database"]["hostname"]}:5432/{config["Database"]["dbname"]}"""
+    # engine = create_engine(engineString, executemany_mode='values_plus_batch')
 
     print("Filling bridge table")
     cur.execute("ALTER TABLE bridge_traj_sailing_cell_3034 DISABLE TRIGGER ALL;")
     connection.commit()
 
-    bridge_df.to_sql('bridge_traj_sailing_cell_3034', index=False, con=engine,
-                     if_exists='append', chunksize=100000)
+    def pgbulkloader(name, attributes, fieldsep, rowsep, nullval, filehandle):
+        cursor = connection.cursor()
+        cursor.copy_from(file=filehandle, table=name, sep=fieldsep, null=str(nullval),
+                         columns=attributes)
+
+    bridge_table = BulkFactTable(
+        name='bridge_traj_sailing_cell_3034',
+        keyrefs=['trajectory_id', 'cell_id'],
+        measures=[],
+        bulkloader=pgbulkloader,
+        fieldsep=',',
+        rowsep='\\r\n',
+        nullsubst=str(None),
+        bulksize=10000,
+        usefilename=False,
+    )
+    for row in bridge_data:
+        bridge_table.insert(row)
+
+    # bridge_df.to_sql('bridge_traj_sailing_cell_3034', index=False, con=engine,
+    #                 #  if_exists='append', chunksize=100000)
 
     cur.execute("ALTER TABLE bridge_traj_sailing_cell_3034 ENABLE TRIGGER ALL;")
 
