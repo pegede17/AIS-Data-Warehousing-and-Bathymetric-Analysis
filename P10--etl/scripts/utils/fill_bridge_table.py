@@ -121,9 +121,9 @@ def fill_bridge_table_1000m(date):
 
     print("Filling bridge table")
     cur.execute("""ALTER TABLE bridge_traj_sailing_cell_3034_1000m DISABLE TRIGGER ALL;
-                    ALTER TABLE bridge_traj_sailing_cell_3034_1000m DROP IF EXISTS CONSTRAINT bridge_traj_sailing_cell_3034_1000m_cell_id_fkey;
-                    ALTER TABLE bridge_traj_sailing_cell_3034_1000m DROP IF EXISTS CONSTRAINT bridge_traj_sailing_cell_3034_1000m_pkey;
-                    ALTER TABLE bridge_traj_sailing_cell_3034_1000m DROP IF EXISTS CONSTRAINT bridge_traj_sailing_cell_3034_1000m_trajectory_id_fkey;
+                    ALTER TABLE bridge_traj_sailing_cell_3034_1000m DROP CONSTRAINT IF EXISTS bridge_traj_sailing_cell_3034_1000m_cell_id_fkey;
+                    ALTER TABLE bridge_traj_sailing_cell_3034_1000m DROP CONSTRAINT IF EXISTS bridge_traj_sailing_cell_3034_1000m_pkey;
+                    ALTER TABLE bridge_traj_sailing_cell_3034_1000m DROP CONSTRAINT IF EXISTS bridge_traj_sailing_cell_3034_1000m_trajectory_id_fkey;
                 """)
     connection.commit()
 
