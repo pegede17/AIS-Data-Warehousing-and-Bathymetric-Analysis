@@ -76,6 +76,7 @@ def fill_bridge_table_50m(date):
         if (i % 100000 == 0):
             dw_conn_wrapper.commit()
         bridge_table.insert(row)
+    print(i, " rows inserted")
 
     connection.commit()
     dw_conn_wrapper.commit()
