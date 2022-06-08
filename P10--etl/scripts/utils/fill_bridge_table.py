@@ -173,7 +173,7 @@ def readd_constraints():
     cur.execute("""ALTER TABLE bridge_traj_sailing_cell_3034 ENABLE TRIGGER ALL;
                     ALTER TABLE bridge_traj_sailing_cell_3034 ADD CONSTRAINT bridge_traj_sailing_cell_3034_cell_id_fkey
                         FOREIGN KEY (cell_id)
-                        REFERENCES dim_cell_3034_1000m (cell_id)
+                        REFERENCES dim_cell_3034m (cell_id)
                         ON UPDATE CASCADE;
                     ALTER TABLE bridge_traj_sailing_cell_3034 ADD CONSTRAINT bridge_traj_sailing_cell_3034_trajectory_id_fkey
                         FOREIGN KEY (trajectory_id)
@@ -183,16 +183,16 @@ def readd_constraints():
                         PRIMARY KEY (cell_id, trajectory_id);
                     """)
 
-    cur.execute("""ALTER TABLE bridge_traj_sailing_cell_3034 ENABLE TRIGGER ALL;
-                    ALTER TABLE bridge_traj_sailing_cell_3034 ADD CONSTRAINT bridge_traj_sailing_cell_3034_cell_id_fkey
+    cur.execute("""ALTER TABLE bridge_traj_sailing_cell_3034_1000m ENABLE TRIGGER ALL;
+                    ALTER TABLE bridge_traj_sailing_cell_3034_1000m ADD CONSTRAINT bridge_traj_sailing_cell_3034_1000m_cell_id_fkey
                         FOREIGN KEY (cell_id)
                         REFERENCES dim_cell_3034_1000m (cell_id)
                         ON UPDATE CASCADE;
-                    ALTER TABLE bridge_traj_sailing_cell_3034 ADD CONSTRAINT bridge_traj_sailing_cell_3034_trajectory_id_fkey
+                    ALTER TABLE bridge_traj_sailing_cell_3034_1000m ADD CONSTRAINT bridge_traj_sailing_cell_3034_1000m_trajectory_id_fkey
                         FOREIGN KEY (trajectory_id)
                         REFERENCES fact_trajectory_sailing (trajectory_id)
                         ON UPDATE CASCADE;
-                    ALTER TABLE bridge_traj_sailing_cell_3034 ADD CONSTRAINT bridge_traj_sailing_cell_3034_pkey
+                    ALTER TABLE bridge_traj_sailing_cell_3034_1000m ADD CONSTRAINT bridge_traj_sailing_cell_3034_1000m_pkey
                         PRIMARY KEY (cell_id, trajectory_id);
                     """)
 
