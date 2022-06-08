@@ -65,14 +65,14 @@ def fill_bridge_table(date):
         fieldsep=',',
         rowsep='\\r\n',
         nullsubst=str(None),
-        bulksize=10000,
+        bulksize=100000,
         usefilename=False,
     )
 
     i = 0
     for row in bridge_data:
         i += 1
-        if (i % 100000 == 0):
+        if (i % 10000 == 0):
             print(i)
         bridge_table.insert(row)
 
