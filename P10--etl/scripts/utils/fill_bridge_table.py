@@ -40,7 +40,8 @@ def fill_bridge_table_50m(date):
 
     bridge_data = SQLSource(connection=connection, query=BRIDGE_TABLE_QUERY)
 
-    print("Filling bridge table")
+    print("Removing constraints")
+
     cur.execute("""ALTER TABLE bridge_traj_sailing_cell_3034 DISABLE TRIGGER ALL;
                     ALTER TABLE bridge_traj_sailing_cell_3034 DROP CONSTRAINT bridge_traj_sailing_cell_3034_cell_id_fkey;
                     ALTER TABLE bridge_traj_sailing_cell_3034 DROP CONSTRAINT bridge_traj_sailing_cell_3034_pkey;
@@ -68,6 +69,7 @@ def fill_bridge_table_50m(date):
         usefilename=False
     )
 
+    print("Filling bridge table")
     i = 0
     for row in bridge_data:
         i += 1
