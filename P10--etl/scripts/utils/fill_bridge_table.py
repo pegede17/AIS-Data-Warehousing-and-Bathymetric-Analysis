@@ -49,8 +49,6 @@ def fill_bridge_table_50m(date):
 
     bridge_data = SQLSource(connection=connection, query=BRIDGE_TABLE_QUERY)
 
-    print(BRIDGE_TABLE_QUERY)
-
     def pgbulkloader(name, attributes, fieldsep, rowsep, nullval, filehandle):
         cursor = connection.cursor()
         cursor.copy_from(file=filehandle, table=name, sep=fieldsep, null=str(nullval),
