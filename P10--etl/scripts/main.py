@@ -7,8 +7,8 @@ from pandas import date_range
 from utils.cleantrajectory import clean_and_reconstruct
 from utils.ais_loader import load_data_into_db
 from utils.initializer import initialize_db
-from utils.fact_cell_filler import fill_fact_cell
-from utils.fill_bridge_table import fill_bridge_table
+from utils.fact_cell_filler import fill_fact_cell_50m, fill_fact_cell_1000m
+from utils.fill_bridge_table import fill_bridge_table_50m, fill_bridge_table_1000m, readd_constraints
 import configparser
 from datetime import datetime
 import configparser
@@ -72,15 +72,33 @@ def main(argv):
             try:
                 CLEANING_START_TIMER = perf_counter()
                 print("Cleaning " + str(current_date))
-                # clean_and_reconstruct(
-                #     config=config, date_to_lookup=current_date)
-                fill_bridge_table(current_date)
+                clean_and_reconstruct(
+                    config=config, date_to_lookup=current_date)
                 CLEANING_END_TIMER = perf_counter()
                 CLEANING_TIME_ELAPSED = timedelta(
                     seconds=(CLEANING_END_TIMER - CLEANING_START_TIMER))
                 print(f"Cleaning duration: {CLEANING_TIME_ELAPSED}")
+
+                BRIDGE_START_TIMER = perf_counter()
+                fill_bridge_table_50m(current_date)
+                fill_bridge_table_1000m(current_date)
+                BRIDGE_END_TIMER = perf_counter()
+                BRIDGE_TIME_ELAPSED = timedelta(
+                    seconds=(BRIDGE_END_TIMER - BRIDGE_START_TIMER))
+
+                print(f"Bridge duration: {BRIDGE_TIME_ELAPSED}")
+
+                CONSTRAINTS_START_TIMER = perf_counter()
+                readd_constraints()
+                CONSTRAINTS_END_TIMER = perf_counter()
+                CONSTRAINTS_TIME_ELAPSED = timedelta(
+                    seconds=(CONSTRAINTS_END_TIMER - CONSTRAINTS_START_TIMER))
+
+                print(f"CONSTRAINTS duration: {CONSTRAINTS_TIME_ELAPSED}")
+
                 FACT_CELL_START_TIMER = perf_counter()
-                # fill_fact_cell(current_date)
+                fill_fact_cell_50m(current_date)
+                fill_fact_cell_1000m(current_date)
                 FACT_CELL_END_TIMER = perf_counter()
                 FACT_CELL_TIME_ELAPSED = timedelta(
                     seconds=(FACT_CELL_END_TIMER - FACT_CELL_START_TIMER))

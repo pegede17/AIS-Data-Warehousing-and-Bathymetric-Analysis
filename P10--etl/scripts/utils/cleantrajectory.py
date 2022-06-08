@@ -549,6 +549,10 @@ def clean_and_reconstruct(config, date_to_lookup):
                 inserted_stopped_records += insert_trajectory(
                     trajectory, False)
 
+    connection.commit()
+    cur.execute(ASSIGN_TRUST_QUERY)
+    connection.commit()
+
     END_TRAJ_TIME = perf_counter()
 
     sailing_audit_obj['processed_records'] = processed_records
@@ -586,7 +590,6 @@ def clean_and_reconstruct(config, date_to_lookup):
     print("Creating connection commit!!")
     connection.commit()
     cur.execute(ENABLE_TRIGGERS)
-    cur.execute(ASSIGN_TRUST_QUERY)
     connection.commit()
 
     print("Creating __dw_conn commit!!")
