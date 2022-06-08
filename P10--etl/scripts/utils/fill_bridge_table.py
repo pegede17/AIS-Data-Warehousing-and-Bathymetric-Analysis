@@ -68,7 +68,12 @@ def fill_bridge_table(date):
         bulksize=10000,
         usefilename=False,
     )
+
+    i = 0
     for row in bridge_data:
+        i += 1
+        if (i % 100000 == 0):
+            print(i)
         bridge_table.insert(row)
 
     # bridge_df.to_sql('bridge_traj_sailing_cell_3034', index=False, con=engine,
