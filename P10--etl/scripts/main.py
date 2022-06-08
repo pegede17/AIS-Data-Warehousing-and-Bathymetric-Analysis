@@ -70,14 +70,14 @@ def main(argv):
 
         if args.cr:
             try:
-                CLEANING_START_TIMER = perf_counter()
-                print("Cleaning " + str(current_date))
-                clean_and_reconstruct(
-                    config=config, date_to_lookup=current_date)
-                CLEANING_END_TIMER = perf_counter()
-                CLEANING_TIME_ELAPSED = timedelta(
-                    seconds=(CLEANING_END_TIMER - CLEANING_START_TIMER))
-                print(f"Cleaning duration: {CLEANING_TIME_ELAPSED}")
+                # CLEANING_START_TIMER = perf_counter()
+                # print("Cleaning " + str(current_date))
+                # clean_and_reconstruct(
+                #     config=config, date_to_lookup=current_date)
+                # CLEANING_END_TIMER = perf_counter()
+                # CLEANING_TIME_ELAPSED = timedelta(
+                #     seconds=(CLEANING_END_TIMER - CLEANING_START_TIMER))
+                # print(f"Cleaning duration: {CLEANING_TIME_ELAPSED}")
 
                 BRIDGE_START_TIMER = perf_counter()
                 fill_bridge_table_50m(current_date)
