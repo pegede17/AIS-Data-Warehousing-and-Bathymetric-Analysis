@@ -173,7 +173,7 @@ def readd_constraints():
     cur.execute("""ALTER TABLE bridge_traj_sailing_cell_3034 ENABLE TRIGGER ALL;
                     ALTER TABLE bridge_traj_sailing_cell_3034 ADD CONSTRAINT bridge_traj_sailing_cell_3034_cell_id_fkey
                         FOREIGN KEY (cell_id)
-                        REFERENCES dim_cell_3034m (cell_id)
+                        REFERENCES dim_cell_3034 (cell_id)
                         ON UPDATE CASCADE;
                     ALTER TABLE bridge_traj_sailing_cell_3034 ADD CONSTRAINT bridge_traj_sailing_cell_3034_trajectory_id_fkey
                         FOREIGN KEY (trajectory_id)
