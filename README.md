@@ -31,7 +31,6 @@ We have provided an argument based main file in which many of the ETL operations
 * `-sd <DD/MM/YYYY>` For ETL processes you can specify the start date for data processing
 * `-ed <DD/MM/YYYY>` For ETL processes you can specify the end date for data processing
 *  `-l` Performs data loading on data specified by the `-ed` and `-sd` arguments
-* `-c` Performs data cleaning on data specified by the `-ed` and `-sd` arguments
 * `-cr` Combination of data loading and cleaning based on the `-ed` and `-sd` arguments
 
 To run one of the operations, you will have to navigate to the `P10--ETL` folder and in the terminal run the `scripts/main.py` file with any of the arguments.
