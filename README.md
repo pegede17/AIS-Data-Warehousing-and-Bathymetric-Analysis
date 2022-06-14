@@ -1,6 +1,6 @@
 # AIS-Data-Warehousing-and-Bathymetric-Analysis &middot; [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/your/your-project/blob/master/LICENSE)
 
- <div style="text-align:center">
+ <p align="center">
      <a href="https://www.youtube.com/" target="_blank">
          <img src="images/speciale--play.jpg" />
      </a>
